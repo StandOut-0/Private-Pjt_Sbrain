@@ -1,0 +1,482 @@
+
+
+
+
+일정
+8월 26일까지 Frontend를 우선 구현해보자. 
+오늘이 8월 10일(월)이고, 8월 26일(수)까지라면 주말을 제외하면 13일처럼 보이지만, 8월 17일은 광복절 대체공휴일이라 제외해야 한다. 따라서 실제 작업일은 11일이다.
+
+Day 1 — 서비스 구조 및 기획
+8/10
+ 서비스 이름 확정 ✓
+ 핵심 사용자 정의 ✓
+ User Flow 정리 ✓
+ Sitemap 작성 ✓
+ 화면 목록 확정 ✓
+ Navigation 구조 확정 ✓
+ Agent 목록 확정 ✓
+ MVP 범위 확정 ✓
+산출물
+ 서비스 기획안 ✓
+ User Flow ✓
+ Sitemap ✓
+ Screen List ✓
+
+
+Day 2 — Wireframe
+
+8/11
+
+Login
+Login
+Google Login
+Demo Login
+관리자 Face Authentication
+
+사용자 영역
+Dashboard
+Dashboard
+
+Projects
+Project List
+Project Create
+Project Detail
+Project Overview
+Document Viewer
+Chatbot
+Agent 실행
+결과물 생성
+Project Detail 반영
+
+Coming Soon
+Feature Preview
+Settings
+Settings Popup
+관리자 영역
+
+Dashboard
+Dashboard
+
+Projects
+Project List
+Project Detail
+
+Task Management
+
+Agent Management
+Agent Detail
+Supervisor
+Planning
+Creative
+Engineering
+Frontend
+Backend
+Data
+AI
+Reflection
+
+Results Management
+Document Upload
+
+Coming Soon Management
+Coming Soon List
+Coming Soon Detail / Editor
+
+Settings
+Settings Popup
+
+산출물
+전체 화면 Wireframe + User Flow + Admin Flow
+
+
+
+
+
+
+
+Day 3 — 공통 UI
+
+8/12
+
+공통 Layout
+Navbar
+Sidebar
+Container
+
+공통 Component
+Card
+Button
+Modal
+Badge
+Progress
+Table
+Dropdown
+Alert
+Input
+Select
+Tabs
+
+공통 상태
+Loading
+Empty
+Error
+
+UI 기준
+색상
+폰트
+간격
+Border
+상태 표현
+
+목표
+사이트맵에 정의된 모든 화면에서 공통 UI 적용
+
+
+
+
+
+
+
+
+Day 4 — Dashboard
+
+8/13
+사용자 Dashboard
+사용자 Greeting
+프로젝트 목록
+최근 프로젝트
+프로젝트 상태
+진행률
+최근 결과물
+프로젝트 바로가기
+Chatbot 바로가기
+Coming Soon Preview
+
+관리자 Dashboard
+전체 프로젝트 현황
+Task 현황
+Agent 현황
+Results 현황
+시스템 현황
+목표
+
+사용자 / 관리자 Dashboard 화면 Frontend 완성
+
+
+
+
+
+
+
+
+
+
+Day 5 — Projects
+
+8/14
+
+사용자
+
+Project List
+프로젝트 목록
+Project Card
+프로젝트 상태
+프로젝트 생성
+
+Project Create
+프로젝트 생성 Form
+프로젝트명
+프로젝트 설명
+생성 UI
+
+Project Detail
+Project Overview
+프로젝트 기본 정보
+프로젝트 상태
+프로젝트 진행 상황
+Document Viewer 연결
+Chatbot 연결
+
+Project List
+프로젝트 목록 조회
+Project Detail
+프로젝트 상세 조회
+
+
+
+
+
+
+Day 6 — Chatbot
+
+8/18
+
+Project Chatbot
+Chatbot 화면
+대화 영역
+사용자 메시지
+AI 메시지
+입력 영역
+전송 버튼
+Thinking 상태
+Agent 실행 상태
+결과 표시
+파일 첨부 UI
+
+목표
+사용자가 프로젝트 안에서 AI에게 작업을 요청하고 결과를 확인하는 Chatbot UI 완성
+※ 실제 Agent / LLM 실행은 하지 않음.
+
+
+
+
+
+
+Day 7 — Agent Management
+
+8/19
+Agent Management
+Agent 목록
+Agent 상태
+Agent 역할
+Agent 정보
+
+Agent Detail
+Agent 기본 정보
+Agent 상태
+Agent 역할
+Model 정보
+Prompt 정보
+실행 정보
+
+목표
+관리자가 Agent 구성과 상태를 조회할 수 있는 Frontend 완성
+
+
+
+
+
+
+
+
+Day 8 — Results Management
+
+8/20
+Results Management
+결과물 목록
+결과물 상태
+프로젝트별 결과물
+결과물 상세
+파일 목록
+파일 미리보기
+다운로드 UI
+
+Document Upload
+파일 업로드 UI
+업로드 영역
+파일 선택
+업로드 상태
+업로드 완료 상태
+
+목표
+관리자가 결과물과 Document를 확인하고 업로드할 수 있는 화면 Frontend 완성
+
+
+
+
+
+
+
+
+Day 9 — Task Management / 관리자 Projects
+
+8/21
+Task Management
+Task Management 화면
+Task 목록 / 현황
+Task 상태
+Task 실행 정보
+Task 상세 조회
+관리자가 Task를 운영/CRUD하는 화면이 아니라 Task 현황을 조회하는 화면으로 구현.
+목표
+관리자 영역의 프로젝트 / Task 조회 화면 Frontend 완성
+
+
+
+
+
+
+
+
+Day 10 — Coming Soon / Settings
+
+8/24
+
+사용자 Coming Soon
+
+Feature Preview
+Coming Soon 화면
+기능 소개
+Preview UI
+
+관리자 Coming Soon Management
+
+Coming Soon List
+Coming Soon 목록
+상태
+
+Coming Soon Detail / Editor
+Coming Soon 상세
+Editor UI
+내용 편집 UI
+저장 UI
+
+Settings
+Settings Popup
+사용자 Settings
+관리자 Settings
+설정 항목 UI
+저장 / 닫기 UI
+
+목표
+Coming Soon + Settings 화면 Frontend 완성
+
+
+
+
+
+
+
+Day 11 — 전체 화면 연결
+
+8/25
+Login
+Login
+ ├── Google Login
+ ├── Demo Login
+ └── 관리자 Face Authentication
+
+사용자 Flow
+Login
+  ↓
+Dashboard
+  ↓
+Projects
+  ↓
+Project List
+  ↓
+Project Detail
+  ├── Project Overview
+  │      └── Document Viewer
+  │
+  └── Chatbot
+         ↓
+      Agent 실행
+         ↓
+      결과물 생성
+         ↓
+      Project Detail 반영
+
+관리자 Flow
+Login
+  ↓
+관리자 Dashboard
+  ├── Projects
+  │     ├── Project List
+  │     └── Project Detail
+  │
+  ├── Task Management
+  │
+  ├── Agent Management
+  │     └── Agent Detail
+  │
+  ├── Results Management
+  │     └── Document Upload
+  │
+  ├── Coming Soon Management
+  │     ├── Coming Soon List
+  │     └── Coming Soon Detail / Editor
+  │
+  └── Settings
+
+공통 연결
+Sidebar
+Navbar
+Button
+Modal
+Dropdown
+Form
+화면 이동
+뒤로가기
+Settings Popup
+
+
+
+
+
+
+
+
+
+
+
+
+Day 12 — Frontend 완료 / QA
+
+8/26
+
+전체 화면 확인
+Login
+Dashboard
+Projects
+Project Detail
+Project Overview
+Document Viewer
+Chatbot
+Coming Soon
+Settings
+Admin Dashboard
+Admin Projects
+Task Management
+Agent Management
+Agent Detail
+Results Management
+Document Upload
+Coming Soon Management
+Coming Soon Editor
+
+UI / UX QA
+전체 Navigation
+Sidebar
+Navbar
+Button Interaction
+Modal
+Dropdown
+Form
+Loading
+Empty
+Error
+Responsive
+UI 디자인 통일
+
+Flow QA
+User Flow
+Admin Flow
+Project Flow
+Chatbot Flow
+Coming Soon Flow
+Agent 조회 Flow
+Results 조회 Flow
+
+
+
+
+
+
+
+8/26 — Frontend Freeze
+Frontend 완료 기준
+8월 26일부터는 새로운 Frontend 화면을 추가하지 않고 필요한 경우 기존 화면만 수정하는 방식으로 진행하며 다음 단계에 집중한다 .
+Frontend → Backend → DB → Agent → LLM/RAG → 성능평가
+
+

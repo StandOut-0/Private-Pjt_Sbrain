@@ -1,0 +1,241 @@
+
+
+데이터 저장 구조
+1. USER
+user_id PK
+name
+email
+created_at
+
+2. PROJECT
+project_id PK
+user_id FK
+project_name
+description
+status
+created_at
+
+3. TASK
+task_id PK
+project_id FK
+title
+description
+priority
+status
+created_at
+
+4. AGENT
+agent_id PK
+agent_name
+role
+description
+
+5. AGENT_EXECUTION
+execution_id PK
+task_id FK
+agent_id FK
+model_id FK
+input
+output
+status
+started_at
+finished_at
+
+6. ARTIFACT
+artifact_id PK
+task_id FK
+agent_id FK
+project_id FK
+artifact_type
+title
+description
+file_path
+file_url
+version
+created_at
+
+7. KNOWLEDGE_DOCUMENT
+document_id PK
+user_id FK
+title
+content
+file_path
+created_at
+
+8.VECTOR_MEMORY
+vector_id PK
+document_id FK
+embedding
+metadata
+
+9.MEMORY
+memory_id PK
+user_id FK
+type
+content
+importance_score
+created_at
+
+10.PROMPT_HISTORY
+prompt_id PK
+agent_id FK
+model_id FK
+input
+prompt
+response
+score
+created_at
+
+11.MODEL_INFO
+model_id PK
+model_name
+provider
+model_type
+version
+parameter_size
+fine_tuned
+performance_score
+
+12.REFLECTION_REPORT
+report_id PK
+project_id FK
+summary
+evaluation
+improvement
+created_at
+
+13. AGENT_MODEL
+agent_model_id PK
+agent_id FK
+model_id FK
+priority
+is_active
+created_at
+
+---------------------------------
+
+Table USER {
+  user_id int [pk]
+  name varchar
+  email varchar
+  created_at datetime
+}
+
+Table PROJECT {
+  project_id int [pk]
+  user_id int [ref: > USER.user_id]
+  project_name varchar
+  description text
+  status varchar
+  created_at datetime
+}
+
+Table TASK {
+  task_id int [pk]
+  project_id int [ref: > PROJECT.project_id]
+  title varchar
+  description text
+  priority varchar
+  status varchar
+  created_at datetime
+}
+
+Table AGENT {
+  agent_id int [pk]
+  agent_name varchar
+  role varchar
+  description text
+}
+
+Table MODEL_INFO {
+  model_id int [pk]
+  model_name varchar
+  provider varchar
+  model_type varchar
+  version varchar
+  parameter_size varchar
+  fine_tuned boolean
+  performance_score float
+}
+
+Table AGENT_MODEL {
+  agent_model_id int [pk]
+  agent_id int [ref: > AGENT.agent_id]
+  model_id int [ref: > MODEL_INFO.model_id]
+  priority int
+  is_active boolean
+  created_at datetime
+}
+
+Table AGENT_EXECUTION {
+  execution_id int [pk]
+  task_id int [ref: > TASK.task_id]
+  agent_id int [ref: > AGENT.agent_id]
+  model_id int [ref: > MODEL_INFO.model_id]
+  input text
+  output text
+  status varchar
+  started_at datetime
+  finished_at datetime
+}
+
+Table ARTIFACT {
+  artifact_id int [pk]
+  task_id int [ref: > TASK.task_id]
+  agent_id int [ref: > AGENT.agent_id]
+  project_id int [ref: > PROJECT.project_id]
+  artifact_type varchar
+  title varchar
+  description text
+  file_path varchar
+  file_url varchar
+  version varchar
+  created_at datetime
+}
+
+Table KNOWLEDGE_DOCUMENT {
+  document_id int [pk]
+  user_id int [ref: > USER.user_id]
+  title varchar
+  content text
+  file_path varchar
+  created_at datetime
+}
+
+Table VECTOR_MEMORY {
+  vector_id int [pk]
+  document_id int [ref: > KNOWLEDGE_DOCUMENT.document_id]
+  embedding text
+  metadata json
+}
+
+Table MEMORY {
+  memory_id int [pk]
+  user_id int [ref: > USER.user_id]
+  type varchar
+  content text
+  importance_score float
+  created_at datetime
+}
+
+Table PROMPT_HISTORY {
+  prompt_id int [pk]
+  agent_id int [ref: > AGENT.agent_id]
+  model_id int [ref: > MODEL_INFO.model_id]
+  input text
+  prompt text
+  response text
+  score float
+  created_at datetime
+}
+
+Table REFLECTION_REPORT {
+  report_id int [pk]
+  project_id int [ref: > PROJECT.project_id]
+  summary text
+  evaluation text
+  improvement text
+  created_at datetime
+}
+
+Ref: "MODEL_INFO"."parameter_size" < "MODEL_INFO"."model_name"

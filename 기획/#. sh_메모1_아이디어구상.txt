@@ -1,0 +1,144 @@
+내가 만들고 싶은건 또다른 나를 만드는것이다. 
+
+머신을 나눠 agent형으로 
+기획도하고
+디자인 포토샵도 하고. 
+퍼블리싱도 하고
+프론트도하고
+백도하고..
+코드리뷰도 해주는
+데이터전처리도하고..
+디자인생성기( 포토샵) + 보고서생성기 + 기획서생성기 등등..
+
+사람과 대화하는 것처럼 오늘 내가 원하는 뉴스, 날씨도 뽑아서 브리핑받으면 좋지않을까?
+내가 원하는 대로 일을 수행하는 든든한 내 주니어가 생기는 거다. 
+
+T5가 다양한 작업을 하나의 모델에서 할 수 있다는데 활용하고
+RLHF 사람의 선호도를 이용하는 걸 사용해보고
+RFT 최신추세 추론을 사용해보고
+Qwen2.5 3B / 7B 실무에서 인기가 높다는 한국에 강한 모델을 사용하고
+DALL·E 모델로 포토샵을 하는등...
+
+또 내가 배운 커리큘럼을 모두 활용해보고싶다. 
+sql, database MySQL 사용하기, 웹크롤링 사용하기 테이터분석, 머신러닝, 디비러닝, 모델검증 및 평가, 자연어데이터처리, 자연어딥러닝, llm, 프롬프트 엔지니어링, 파인튜닝, 자연어-이미지멀티 모달, Django 프레임워크.. 클라우드를 모두 활용하고싶다
+
+------------------------------------------------------------------------------------------------------------------
+
+
+
+브랜딩 결정 ------------------------------------------
+1B262C 0F4C75 3282B8 BBE1FA
+https://colorhunt.co/palette/1b262c0f4c753282b8bbe1fa
+https://colorhunt.co/palette/f9f7f7dbe2ef3f72af112d4e
+https://colorhunt.co/palette/0a2947f3e4c9d3d4c08b5e3c
+
+Second Brain
+또 다른 나를 만드는 개인 AI 업무 파트너 Agent 플랫폼
+
+
+
+
+에이전트 결정 ------------------------------------------
+
+조율
+총괄 조율 에이전트
+Supervisor Agent (PMO / Project Manager / Orchestrator)
+사용자 요청 분석, 작업 분해(Task Decomposition), 적절한 Agent 선택, Agent 간 순서 관리, 결과 통합
+Planning Agent 호출, Data Agent 호출, AI Agent 호출, Backend Agent 호출, Frontend Agent 호출, Reflection Agent 검증
+LangGraph (Agent Workflow 관리)
+ReAct (Reason + Act)
+MCP (Tool 연결)
+A2A (Agent 간 통신)
+LLM Prompt Engineering
+
+전략
+전략 기획 에이전트
+Planning Agent (기획/전략) PM + Strategist
+서비스 아이디어 구체화, 요구사항 정의, 기능 명세 작성, 사용자 시나리오 작성, 일정/우선순위 제안
+PRD, 요구사항 정의서, User Flow, Feature List
+LLM
+Prompt Engineering
+RAG
+NLP
+T5
+
+창의
+창의 디자인 에이전트
+Creative Agent (디자인) Designer + Creative Director
+UX/UI 설계, 이미지 생성, 디자인 개선, 브랜드 방향 제안
+Wireframe, Prototype, Design Guide
+Multimodal AI
+Image Generation Model
+DALL·E
+CNN
+GAN
+Image Captioning
+
+초기에는 구현과 시스템이 분리되면 좋지만 Frontend + Backend는 따로 두기보다 Engineering Agent(개발 구현 에이전트)로 묶는것은 어떠할지 고려
+구현
+프론트엔드 구현 에이전트
+Frontend Agent 화면 구현, 컴포넌트 생성, 사용자 경험 개선
+React/Vue, Component, UI 구현
+React / Vue
+HTML/CSS/JavaScript
+Component Architecture
+Streamlit
+
+시스템
+백엔드 시스템 에이전트
+Backend Agent API 설계, 서버 개발, 인증/비즈니스 로직 구현
+Django/FastAPI, API, DB 연결
+Django Framework
+FastAPI
+REST API
+MySQL
+ORM
+Database Design
+
+분석
+데이터 인텔리전스 에이전트
+Data Agent
+데이터 수집, 크롤링, SQL, ETL, 분석
+Python
+Web Crawling
+SQL / MySQL
+Pandas
+NumPy
+데이터 전처리
+데이터 시각화
+ETL Pipeline
+
+지능
+AI 연구개발 에이전트
+AI Agent
+ML/DL 모델 개발, LLM 적용, Prompt Engineering, Fine-tuning, Evaluation
+Machine Learning
+Deep Learning
+PyTorch / TensorFlow
+NLP
+LLM
+Qwen2.5
+T5
+PEFT
+LoRA / QLoRA
+Fine-tuning
+Model Evaluation
+
+성찰
+성찰·개선 에이전트
+Reflection Agent (성찰 Agent)
+결과를 돌아봄, 리포트, 개선점을 찾음, 히스토리 기록
+Evaluation Framework
+LLM Judge
+RAG Memory
+Vector Database
+데이터 분석
+Report Generation
+
+
+
+
+
+
+
+

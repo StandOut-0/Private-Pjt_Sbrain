@@ -1,0 +1,512 @@
+SECOND BRAIN — BRANDING GUIDE 브랜드 가이드
+"사용자는 하나의 AI와 대화하지만, 내부에서는 여러 전문 Agent가 협업하여 프로젝트를 수행하는 개인 AI 업무 파트너"
+
+
+
+
+브랜드명: Second Brain
+프로젝트명: Second Brain
+
+한 줄 소개
+또 다른 나를 만드는 개인 AI 업무 파트너 Agent 플랫폼
+
+브랜드 정의
+Second Brain은 사용자가 하나의 AI와 대화하는 것만으로 기획, 조사, 분석, 디자인, 개발, 검증 등의 업무를 수행할 수 있도록 여러 전문 AI Agent를 조율하는 개인 업무 파트너 플랫폼이다.
+
+
+
+
+
+핵심 개념
+사용자는 하나의 AI와 대화한다. - Supervisor Agent가 요청을 분석한다.- 필요한 전문 Agent를 선택하고 조율한다.- 각 Agent가 자신의 역할에 맞는 작업을 수행한다.- 결과물을 프로젝트 단위로 축적한다.- Second Brain이 사용자의 업무를 함께 수행하는 '또 다른 나'로 발전한다.
+
+
+
+
+BRAND PHILOSOPHY 철학
+"AI에게 일을 시키는 것이 아니라, AI와 함께 일을 완성한다."
+Second Brain의 AI는 단순한 질문 응답 도구가 아니다.
+사용자의 요구를 이해하고, 필요한 작업을 분해하고, 전문 Agent를 조율하고, 결과물을 만들고, 검증하며, 프로젝트의 맥락을 지속적으로 축적한다. 따라서 Second Brain은 'AI Assistant'보다 'AI Work Partner'에 가깝다.
+
+
+
+
+
+VALUE - PRIMARY VALUE(CORE) 핵심가치
+나를 대신해 일하는 AI 파트너
+사용자가 직접 모든 작업을 수행하는 것이 아니라 Second Brain이 사용자의 의도를 이해하고 필요한 업무를 대신 수행한다.
+
+VALUE - SECONDARY VALUES 세부가치
+실행: 질문에 답하는 것을 넘어 실제 결과물을 만든다.
+협업: 여러 전문 Agent가 하나의 목표를 위해 협업한다.
+전문성: 기획, 디자인, 개발, 데이터, AI 등 각 업무에 특화된 Agent가 역할을 수행한다.
+축적: 프로젝트에서 생성된 문서, 코드, 데이터, 결과물을 지속적으로 축적하고 관리한다.
+검증: Agent가 생성한 결과를 검토하고 개선하여 완성도를 높인다.
+
+BRAND PROMISE 브랜드 약속, 고객에게 제공하겠다고 다짐하는 핵심가치와 경험의 약속
+"당신이 해야 할 일을,Second Brain이 함께 생각하고 실행합니다."
+"사용자는 복잡한 작업 과정을 직접 관리하지 않아도 됩니다."
+"하나의 요청만 전달하면 Second Brain이 필요한 작업을 분석하고 적절한 Agent를 조율하여 결과물을 만들어냅니다."
+
+BRAND POSITIONING 브랜드 포지셔닝, 타깃 고객의 머릿속에서 브랜드가 차지할 고유한 자리를 의도적으로 정의.
+기존 AI Chatbot: 질문 - 답변 - 대화 종료
+Second Brain: 사용자 요청 - 의도 분석 - 업무 분해 - 전문 Agent 선택 - Agent 협업 - 결과 생성 - 검증 / 개선 - 프로젝트에 축적
+
+POSITIONING STATEMENT, 포지셔닝 스테이트먼트 선언문, 목표 고객의 마음속에 자사 브랜드나 제품이 어떠한 독보적인 가치로 자리잡을지 정의하는 내부 가이드 문장.
+Second Brain은 단순히 답을 제공하는 AI가 아니라 사용자의 업무를 실제로 수행하고 결과물을 만들어내는 개인 AI 업무 파트너이다.
+
+
+
+
+
+TARGET USER - PRIMARY TARGET: 개인 업무 생산성을 높이고 싶은 직장인
+주요 니즈
+반복적인 업무를 줄이고 싶다.
+자료조사와 정리에 시간이 많이 걸린다.
+기획부터 결과물까지 빠르게 만들고 싶다.
+여러 AI 도구를 따로 사용하는 것이 번거롭다.
+업무 결과물을 프로젝트 단위로 관리하고 싶다.
+
+TARGET USER - SECONDARY TARGET: 개발자
+주요 니즈
+프로젝트 기획과 개발 업무를 함께 관리하고 싶다.
+Frontend / Backend / Data / AI 작업을 분리해서 관리하고 싶다.
+AI Agent를 활용해 개발 생산성을 높이고 싶다.
+코드뿐만 아니라 문서와 결과물까지 함께 관리하고 싶다.
+
+
+
+
+
+
+
+BRAND PERSONALITY 브랜드 개성, 소비자가 브랜ㄷ와의 접촉을 통해 형성, 브랜드를 차별화하는 수단으로 선호도를 증가시키는 역할.성격.
+Second Brain은 다음과 같은 성격을 가진다.
+Professional: 전문적이다.
+Reliable: 신뢰할 수 있다.
+Intelligent: 똑똑하고 논리적이다.
+Practical: 실제로 일을 처리한다.
+Calm: 과장하지 않고 차분하다.
+Precise: 명확하고 정확하다.
+Independent: 사용자가 일일이 지시하지 않아도 필요한 작업을 판단한다.
+
+
+
+
+TONE & MANNER 톤앤메너, 전체적인 분위기, 말하는 방식, 태도를 일관되게 유지한다. 
+기본 톤: 전문적이고 신뢰감 있는 AI
+말투는 지나치게 친근하거나 장난스럽지 않다.
+전문적인 업무 환경에서 사용할 수 있는 수준의
+간결하고 명확한 커뮤니케이션을 사용한다.
+
+DO: 
+명확하게 말한다.
+필요한 정보를 구조적으로 전달한다.
+작업 결과를 구체적으로 설명한다.
+진행 상황을 알려준다.
+사용자가 다음 행동을 쉽게 이해할 수 있도록 한다.
+AI가 무엇을 했는지 투명하게 보여준다.
+
+DON'T: 
+과도하게 감탄하지 않는다.
+불필요하게 친근한 말투를 사용하지 않는다.
+근거 없이 "완벽합니다"라고 말하지 않는다.
+AI 능력을 과장하지 않는다.
+사용자가 이해하기 어려운 전문용어를 불필요하게 사용하지 않는다.
+
+
+
+
+
+
+
+
+
+
+COMMUNICATION PRINCIPLE, 커뮤니케이션 원칙, 오해를 줄이고 뜻을 정확하게 주고받기 위한 핵심기준, 효과적 소통의 7C 원칙
+"말보다 결과를 보여준다."
+Second Brain의 커뮤니케이션은 AI가 얼마나 똑똑한지를 설명하는 것보다 무엇을 수행했는지를 보여주는 데 집중한다.
+예: 
+좋지 않은 표현: "제가 최선을 다해 분석해 보겠습니다!")
+Second Brain의 표현: "요청을 분석하고 있습니다. 기획 → 자료조사 → 결과 검증 순서로 진행합니다."
+
+-------------------------------참고-----------------------------------
+명확성과 정확성의 7C 원칙명확성(Clarity): 메시지의 목적을 한눈에 알 수 있게 쉽게 표현합니다.
+간결성(Conciseness): 불필요한 말을 빼고 핵심만 짧게 전달합니다.
+구체성(Concreteness): 모호한 표현 대신 구체적인 사실과 숫자를 씁니다.
+정확성(Correctness): 문법, 맞춤법, 사실관계에 오류가 없어야 합니다.
+일관성(Coherency): 내용이 논리적이고 앞뒤가 맞아야 합니다.
+완전성(Completeness): 상대방이 행동하거나 이해하는 데 필요한 정보를 빠짐없이 줍니다.
+공손함(Courtesy): 상대방을 존중하는 태도와 언어를 유지합니다.
+
+기본적 소통 태도 원칙
+역지사지(Empathy): 상대방의 입장에서 생각하고 공감합니다.
+적극적 경청(Active Listening): 말을 끊지 않고 주의 깊게 끝까지 듣습니다.
+피드백(Feedback): 메시지가 잘 전달되었는지 확인하고 반응합니다
+
+
+
+
+
+
+
+
+
+BRAND KEYWORD 브랜드 키워드 - Core Keywords
+Second Brain
+AI Partner
+Personal AI
+AI Agent
+Multi-Agent
+Work Automation
+Project
+Execution
+Collaboration
+Productivity
+Knowledge
+Context
+Result
+Reflection
+
+BRAND KEYWORD 브랜드 키워드 - 한국어 키워드
+또 다른 나
+개인 AI
+AI 업무 파트너
+업무 자동화
+전문 Agent
+협업
+실행
+프로젝트
+생산성
+지식 축적
+업무 맥락
+결과물
+검증
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+TAGLINE 태그라인 브랜드 전체의 정체성을 오래도록 표현한다.
+PRIMARY TAGLINE: "또 다른 나를 만드는 AI 업무 파트너"
+SECONDARY TAGLINES: 
+"나 대신 생각하고, 실행하고, 완성하는 AI"
+"하나의 AI와 대화하고, 여러 Agent가 일합니다."
+"당신의 업무를 이해하는 또 하나의 두뇌"
+"질문에 답하는 AI에서, 일을 하는 AI로."
+"말하는 AI가 아니라, 일하는 AI."
+
+TAGLINE 사용 우선순위
+브랜드 소개:또 다른 나를 만드는 AI 업무 파트너
+서비스 설명:나 대신 생각하고, 실행하고, 완성하는 AI
+제품 차별점:하나의 AI와 대화하고, 여러 Agent가 일합니다.
+
+
+
+
+
+
+
+
+
+
+Slogan 슬로건 특정 광고나 마케팅 캠페인에 맞춰 유연하게 바꾼다.
+Slogan - GENERAL
+"일을 맡기세요. Second Brain이 합니다."
+"당신의 다음 일을, AI에게 맡겨보세요."
+"혼자 일하지 않아도 됩니다."
+"당신의 업무에 또 하나의 두뇌를 더하세요."
+
+Slogan - AI PARTNER AI 파트너
+"AI에게 질문하지 말고, 일을 맡겨보세요."
+"답하는 AI를 넘어, 일하는 AI."
+"말하면, 일이 시작됩니다."
+"당신이 말하는 순간, Second Brain이 움직입니다."
+
+Slogan - MULTI-AGENT 멀티에이전트
+"하나의 요청, 여러 전문 Agent의 협업."
+"한 명에게 말하면, 팀이 움직입니다."
+"하나의 AI 뒤에서 여러 전문가가 일합니다."
+"당신은 하나의 AI와 대화하고, Agent들은 함께 일합니다."
+
+Slogan - PRODUCTIVITY 생산력
+"반복되는 일은 AI에게."
+"당신은 결정하고, AI는 실행합니다."
+"해야 할 일을 줄이고, 해야 할 일에 집중하세요."
+"당신의 시간을 돌려주는 AI."
+
+Slogan - PROJECT / EXECUTION 프로젝트 실행, 전략/일정/예산 등의 설계
+"아이디어에서 결과물까지."
+"생각에서 실행까지, 한 곳에서."
+"말 한마디로 프로젝트를 시작하세요."
+"계획하고, 실행하고, 검증하고, 완성합니다."
+
+Slogan - MVP / LAUNCH 최소기능제품, 핵심 기능만 넣은 최소 기능 제품
+MVP 초기에는 Second Brain의 복잡한 Multi-Agent 구조보다 'AI에게 실제 일을 맡길 수 있다'는 경험을 강조한다.
+
+Slogan - 보조 문구 추천 Launch Slogan
+"AI에게 질문하지 말고, 일을 맡겨보세요."
+"Second Brain은 당신의 요청을 이해하고 필요한 Agent를 조율해 실제 결과물을 만듭니다."
+
+SLOGAN 운영 원칙
+ - Slogan은 고정하지 않는다.
+ - 캠페인과 제품 상황에 따라 변경한다.
+ - 하나의 캠페인에서는 하나의 핵심 메시지만 사용한다.
+ - 기술 자체보다 사용자 가치를 우선한다.
+ - Multi-Agent라는 기술 용어는
+ - 제품 차별점을 설명할 때 사용하고,
+ - 대중적인 광고 문구에서는 쉽게 표현한다.
+ - Slogan은 짧고 기억하기 쉬워야 한다.
+ - Tagline과 Slogan의 역할을 혼동하지 않는다.
+
+
+
+
+
+
+
+
+
+BRAND MESSAGE - SHORT MESSAGE
+Second Brain은 사용자의 업무를 대신 수행하는 개인 AI 업무 파트너입니다.
+
+BRAND MESSAGE - MEDIUM MESSAGE
+Second Brain은 하나의 AI와 대화하는 것만으로 기획, 조사, 데이터, 디자인, 개발, AI 등의 업무를 여러 전문 Agent가 협업하여 수행하도록 만드는 개인 AI 업무 파트너 플랫폼입니다.
+
+BRAND MESSAGE - LONG MESSAGE
+Second Brain은 사용자의 요청을 이해하고 필요한 업무를 스스로 분해한 뒤 Supervisor Agent가 적절한 전문 Agent를 조율합니다.
+Planning, Creative, Engineering, Data, AI, Reflection 등의 전문 Agent가 각각의 역할을 수행하고 생성된 문서,코드, 데이터, 지식과 결과물은 프로젝트 단위로 축적됩니다.
+사용자는 복잡한 업무 프로세스를 직접 관리하지 않아도 됩니다.
+하나의 AI에게 원하는 것을 말하면 Second Brain이 필요한 작업을 계획하고 실행하며 결과를 검증하여 하나의 완성된 결과물로 만들어갑니다.
+
+
+
+
+
+
+
+
+PRODUCT EXPERIENCE 사용자 경험
+사용자 경험의 핵심: ASK → THINK → WORK → REVIEW → RESULT
+Ask: 사용자가 원하는 것을 말한다.
+Think: Supervisor가 요청을 분석하고 작업을 계획한다.
+Work: 전문 Agent들이 필요한 작업을 수행한다.
+Review: Reflection Agent가 결과를 검증하고 개선한다.
+Result: 완성된 결과물이 프로젝트에 반영된다.
+
+
+
+
+
+
+
+AGENT BRANDING
+Supervisor: 전체 업무를 분석하고 전문 Agent를 조율하는 중심 Agent
+Planning: 사용자의 요구를 분석하고 계획과 문서를 만드는 Agent
+Creative: 서비스의 디자인 및 창작 업무를 담당하는 Agent
+Engineering: 실제 시스템 구현을 담당하는 Agent
+Frontend: 사용자 인터페이스 구현을 담당하는 Agent
+Backend: 서버 및 API 구현을 담당하는 Agent
+Data: 데이터 처리와 분석을 담당하는 Agent
+AI: AI / ML 관련 작업을 담당하는 Agent
+Reflection: 결과를 검토하고 문제점을 찾아 개선하는 Agent
+
+
+AGENT COMMUNICATION PRINCIPLE 에이전트 통신 원칙
+각 Agent는 독립적으로 존재하는 것이 아니라 하나의 프로젝트 목표를 달성하기 위한 전문 업무 담당자로 표현한다.
+즉, "AI 여러 개" 가 아니라 "하나의 팀으로 움직이는 전문 Agent"
+
+
+
+
+
+
+
+
+
+
+
+VISUAL DIRECTION 전체적인 디자인 방향
+Professional, Modern, Minimal, Technical, Reliable
+
+UI 키워드
+Clean, Structured, Information-focused, Dashboard-oriented, High readability, Subtle interaction, Clear status visualization
+
+피해야 할 디자인
+ - 과도한 AI 느낌의 네온 효과
+ - 지나치게 화려한 Gradient
+ - 장식적인 3D 로봇 이미지
+ - 게임처럼 보이는 UI
+ - 과도한 애니메이션
+ - 신뢰성을 떨어뜨리는 캐릭터 중심 디자인
+
+Second Brain은
+"AI 서비스처럼 보이는 것"보다 "실제로 업무를 수행하는 전문 도구처럼 보이는 것"을 우선한다.
+
+
+
+
+
+
+
+COLOR DIRECTION
+용도:업무 화면, 문서, Dashboard, Project, Result
+
+COLOR DIRECTION - Primary
+Deep Navy / Dark Blue 계열
+의미:신뢰, 전문성, 기술, 안정성
+
+COLOR DIRECTION - Secondary
+Blue / Indigo 계열
+의미:AI, 지능, 연결, 확장
+
+COLOR DIRECTION - Neutral
+White, Light Gray, Dark Gray
+
+COLOR DIRECTION - Status Colors
+Success: Green
+Processing: Blue
+Warning: Yellow / Orange
+Error: Red
+
+
+
+
+
+
+
+
+
+
+TYPOGRAPHY DIRECTION 타이포그래피 디렉션, 서체
+한국어: Pretendard 계열을 기본 방향으로 사용
+영문 / 숫자: Inter 계열을 기본 방향으로 사용
+
+Typography Principle 타이포그래피 원리, 시각적으로 아름답고 읽기 쉽게 배열하고 구성하는 디자인 규칙
+화려한 타이포그래피보다 정보 전달과 가독성을 우선한다.
+Dashboard, Project, Agent, Result 등 정보량이 많은 화면에서도 명확하게 읽힐 수 있어야 한다.
+
+
+
+
+
+
+
+
+LOGO CONCEPT
+Second Brain이라는 이름에서 "두 번째 두뇌"와 "나와 AI의 연결"을 시각적으로 표현한다.
+
+Concept 01: 두 개의 Brain / Node 구조
+사용자(Human Brain)와 AI(Second Brain)를 상징하는 2개의 노드가 오버랩되거나 연결되는 형태.
+원 2개가 겹쳐지면서 생성되는 교집합 형태, 혹은 대칭형 라인 아트. 과하지 않은 깔끔한 백터 그래픽.
+브랜드의 핵심 슬로건인 "또 다른 나"와 "나와 AI의 연결"을 가장 직관적이고 심플하게 전달. 대시보드 아이콘이나 파비콘(Favicon)으로 축소했을 때도 가독성이 가장 뛰어나다.
+
+Concept 02: 두 개의 레이어가 연결된 구조
+Second Brain의 'S' 철자를 기반으로, 상단(Supervisor)과 하단(Specialized Agents)이 치밀하게 연계되어 돌아가는 네트워크 라인.
+끊어지지 않고 이어지는 하나의 굵은 선(Monoline) 구조. 직선과 곡선의 조화.
+"하나의 AI 뒤에서 여러 Agent가 팀으로 협업한다"는 메커니즘을 상징. 체계적이고 구조화된(Structured) 느낌을 주어 개발자 타깃층에게 강한 신뢰감을 준다.
+
+Concept 03: 사용자와 AI가 연결된 Dual Core
+중앙의 Supervisor 노드를 중심으로 주변의 전문 Agent 노드들이 균형 있게 배치된 큐브/육각형 형태.
+미니멀한 기하학(Geometry) 구조. 중앙 코어에서 외곽으로 확장되는 밸런스 있는 형태.
+챗봇의 '대화창' 형태를 벗어나 실제 업무를 분해하고 통제하는 '플랫폼/시스템'이라는 인상을 줍니다. 대시보드 기반 UI 방향성과 시각적 궤를 같이한다.
+
+Concept 04: S 형태와 Neural Network를 결합한 심볼
+알파벳 'S'와 'B'를 결합하되, B의 두 원형 공간을 두 개의 두뇌(Dual Core)로 재해석한 타이포그래픽 심볼.
+굵은 샌세리프(Sans-serif) 형태 기반의 폰트 심볼. 심플하고 절제된 오피스 툴 느낌.
+AI 브랜드의 흔한 그래픽 패턴(반짝이는 별, 복잡한 신경망)을 완벽히 배제하고, Notion이나 Linear처럼 실용적이고 현대적인 B2B SaaS 느낌을 극대화한다.
+
+ = concept 1 채택.
+
+
+
+LOGO PRINCIPLE
+복잡한 AI Network를 그대로 표현하지 않는다.
+작고 단순한 형태에서도 Second Brain이라는 브랜드를 인식할 수 있도록 단순하고 확장성 있는 심볼을 지향한다.
+
+
+
+PRODUCT NAMING SYSTEM
+제품명: Second Brain
+주요 기능명: Dashboard, Projects, Chatbot, Agent, Results, Coming Soon, Settings
+Agent 이름: Supervisor, Planning, Creative, Engineering, Frontend, Backend, Data, AI, Reflection
+
+
+
+
+
+
+Naming Principle 네이밍 원칙
+기능명을 지나치게 AI스럽게 만들지 않는다.
+좋음 예:Project, Result, Agent, Planning, Reflection
+지양: BrainX, Ultra AI, Magic Agent, Super Intelligence, Quantum Brain
+
+
+
+
+
+BRAND DIFFERENTIATION 브랜드 차별점
+Second Brain의 핵심 차별점은 "AI를 여러 개 제공한다"가 아니다. 핵심은
+사용자 - 하나의 대화 인터페이스 - Supervisor - 전문 Agent 협업 - 업무 수행 - 결과 검증 - 프로젝트 축적 이라는 구조이다.
+즉, "Multi-Agent 기술" 자체가 브랜드가 아니라 "사용자의 일을 대신 수행하는 개인 AI" 가 브랜드의 핵심이다.
+
+
+
+
+
+MVP BRAND MESSAGE
+MVP에서는 모든 기능을 강조하지 않는다.
+첫 번째 핵심 경험은 사용자 요청 - Supervisor - Planning - 결과 생성 - Reflection - 완성된 결과 이다.
+
+
+
+
+
+MVP 대표 사용 사례
+사용자:"반려동물 산책 기록 서비스를 만들어줘."
+Second Brain: Supervisor → 요청 분석 Planning → 서비스 기획 및 PRD 작성 Reflection → 결과 검토 및 개선 
+최종 결과→ 프로젝트에 기획 결과물 저장
+이 경험을 통해 사용자는 "AI에게 질문했다"가 아니라 "AI에게 일을 맡겼다" 라고 느껴야 한다.
+
+
+
+
+
+
+
+BRAND EXPERIENCE GOAL 브랜드 경험 목표, 고객이 기억하기를 원하는 구체적인 인식과 감정의 지향점
+사용자가 Second Brain을 처음 사용한 뒤 다음과 같은 인식을 갖는 것이 목표다. "이건 ChatGPT 같은 챗봇이 아니라 나 대신 일을 해주는 AI구나." 그리고 반복 사용 후에는 "내 업무 방식을 이해하는 또 하나의 나가 되어가고 있구나." 라는 경험으로 발전한다.
+
+
+
+
+
+
+ONE SENTENCE BRAND DEFINITION 한 줄 브랜드 정의, 브랜드가 누구를 위해, 어떤 가치를 제공하며, 왜 존재하는지를 단 하나의 문장으로 명확하게 설명한 핵심 요약
+Second Brain은 "사용자의 업무를 이해하고,필요한 전문 Agent를 조율하여,실제 결과물까지 만들어주는 개인 AI 업무 파트너 플랫폼이다."
+
+
+
+
+
+BRAND CORE 브랜드 코어, 브랜드의 핵심 가치와 존재 이유
+WHO: 개인 업무 생산성을 높이고 싶은 직장인과 개발자
+WHAT: 개인의 업무를 대신 수행하는 AI Agent 플랫폼
+HOW: Supervisor가 여러 전문 Agent를 조율하여 업무를 수행
+WHY: 사용자가 반복적이고 복잡한 업무에서 벗어나 더 중요한 일에 집중할 수 있도록 하기 위해
+
+
+
+
+
+ULTIMATE VISION 얼티밋 궁극적인 비전
+"나를 이해하고, 나와 함께 일하며, 점점 나를 닮아가는 또 하나의 두뇌."

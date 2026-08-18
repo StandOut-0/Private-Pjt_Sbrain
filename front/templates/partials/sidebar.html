@@ -1,0 +1,59 @@
+<nav class="sb-sidebar">
+  <a class="sb-nav-item {% if active_menu == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:index' %}">
+    <i class="bi bi-grid"></i> Dashboard
+  </a>
+
+  <div class="sb-nav-group">
+    <a class="sb-nav-item {% if active_menu == 'projects' %}active{% endif %}"
+       data-bs-toggle="collapse" href="#sb-nav-projects" role="button" aria-expanded="true">
+      <i class="bi bi-folder2-open"></i> Projects
+      <i class="bi bi-chevron-down ms-auto small"></i>
+    </a>
+    <div class="collapse show" id="sb-nav-projects">
+      <a class="sb-nav-sub" href="{% url 'projects:list' %}">전체 목록</a>
+      {% for project in nav_projects %}
+        <a class="sb-nav-sub {% if active_project_id == project.id %}active{% endif %}"
+           href="{% url 'projects:detail' project.id %}">
+          <span class="sb-dot sb-dot-{{ project.status }}"></span>{{ project.title }}
+        </a>
+      {% endfor %}
+    </div>
+  </div>
+
+  <a class="sb-nav-item {% if active_menu == 'comingsoon' %}active{% endif %}" href="{% url 'comingsoon:index' %}">
+    <i class="bi bi-stars"></i> Coming Soon
+  </a>
+
+  <div class="sb-nav-label">관리자</div>
+  {% if sb_user.is_admin %}
+    <a class="sb-nav-item {% if active_menu == 'tasks' %}active{% endif %}" href="{% url 'management:tasks' %}">
+      <i class="bi bi-list-check"></i> Tasks 관리
+    </a>
+    <a class="sb-nav-item {% if active_menu == 'agents' %}active{% endif %}" href="{% url 'management:agents' %}">
+      <i class="bi bi-cpu"></i> Agents 관리
+    </a>
+    {% if active_menu == 'agents' %}
+      <div class="sb-agent-tree">
+        <a class="sb-nav-sub {% if active_agent == 'supervisor' %}active{% endif %}" href="{% url 'management:agent_detail' 'supervisor' %}">Supervisor</a>
+        <a class="sb-nav-sub {% if active_agent == 'planning' %}active{% endif %}" href="{% url 'management:agent_detail' 'planning' %}">Planning</a>
+        <a class="sb-nav-sub {% if active_agent == 'creative' %}active{% endif %}" href="{% url 'management:agent_detail' 'creative' %}">Creative</a>
+        <a class="sb-nav-sub {% if active_agent == 'engineering' %}active{% endif %}" href="{% url 'management:agent_detail' 'engineering' %}">Engineering</a>
+        <a class="sb-nav-sub ps-5 {% if active_agent == 'frontend' %}active{% endif %}" href="{% url 'management:agent_detail' 'frontend' %}">Frontend</a>
+        <a class="sb-nav-sub ps-5 {% if active_agent == 'backend' %}active{% endif %}" href="{% url 'management:agent_detail' 'backend' %}">Backend</a>
+        <a class="sb-nav-sub {% if active_agent == 'data' %}active{% endif %}" href="{% url 'management:agent_detail' 'data' %}">Data</a>
+        <a class="sb-nav-sub {% if active_agent == 'ai' %}active{% endif %}" href="{% url 'management:agent_detail' 'ai' %}">AI</a>
+        <a class="sb-nav-sub {% if active_agent == 'reflection' %}active{% endif %}" href="{% url 'management:agent_detail' 'reflection' %}">Reflection</a>
+      </div>
+    {% endif %}
+    <a class="sb-nav-item {% if active_menu == 'results' %}active{% endif %}" href="{% url 'management:results' %}">
+      <i class="bi bi-folder-check"></i> Results 관리
+    </a>
+    <a class="sb-nav-item {% if active_menu == 'comingsoon_manage' %}active{% endif %}" href="{% url 'comingsoon:manage' %}">
+      <i class="bi bi-lightbulb"></i> Coming Soon 관리
+    </a>
+  {% else %}
+    <span class="sb-nav-item disabled"><i class="bi bi-lock"></i> Tasks 관리</span>
+    <span class="sb-nav-item disabled"><i class="bi bi-lock"></i> Agents 관리</span>
+    <span class="sb-nav-item disabled"><i class="bi bi-lock"></i> Results 관리</span>
+  {% endif %}
+</nav>

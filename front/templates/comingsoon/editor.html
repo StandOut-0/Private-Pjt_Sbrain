@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}Coming Soon Editor — Second Brain{% endblock %}
+{% block content %}
+<div class="sb-breadcrumb">Coming Soon &gt; {% if document.slug %}{{ document.title }}{% else %}새 아이디어{% endif %}</div>
+
+<form method="post">
+  {% csrf_token %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="sb-section-title mb-0">Coming Soon Editor</h1>
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary btn-sm" type="submit">저장</button>
+      <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:manage' %}">목록</a>
+    </div>
+  </div>
+
+  <div class="sb-card mb-3">
+    <div class="row g-2">
+      <div class="col-md-6">
+        <label class="form-label small">제목</label>
+        <input class="form-control form-control-sm" name="title" value="{{ document.title }}" required>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label small">한 줄 설명</label>
+        <input class="form-control form-control-sm" name="summary" value="{{ document.summary }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">상태</label>
+        <select class="form-select form-select-sm" name="status">
+          {% for status in statuses %}<option value="{{ status }}" {% if document.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">분야</label>
+        <select class="form-select form-select-sm" name="category">
+          {% for category in categories %}<option value="{{ category }}" {% if document.category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">관련 기술 (쉼표 구분)</label>
+        <input class="form-control form-control-sm" name="technologies" value="{{ document.technologies|join:', ' }}">
+      </div>
+      <div class="col-md-3">
+        <label class="form-label small">관련 Agent (쉼표 구분)</label>
+        <input class="form-control form-control-sm" name="related_agents" value="{{ document.related_agents|join:', ' }}">
+      </div>
+    </div>
+  </div>
+
+  <div class="sb-editor-grid">
+    <div class="sb-card">
+      <div class="sb-card-title">Markdown Editor</div>
+      <textarea class="form-control" name="body" id="sb-md-input">{{ document.body }}</textarea>
+      <p class="small text-secondary mt-2 mb-0">이미지는 붙여넣기 / 드래그 앤 드롭으로 첨부할 수 있습니다. (파일 저장 연동 예정)</p>
+    </div>
+    <div class="sb-card">
+      <div class="sb-card-title">Preview</div>
+      <div class="sb-preview" id="sb-md-preview"></div>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.5/dist/purify.min.js"></script>
+<script>
+  const input = document.getElementById('sb-md-input');
+  const preview = document.getElementById('sb-md-preview');
+
+  function render() {
+    preview.innerHTML = DOMPurify.sanitize(marked.parse(input.value || ''));
+  }
+
+  input.addEventListener('input', render);
+  input.addEventListener('paste', function (event) {
+    const item = Array.from(event.clipboardData.items).find((entry) => entry.type.startsWith('image/'));
+    if (!item) return;
+    event.preventDefault();
+    window.sbToast('이미지 첨부는 파일 저장 연동 후 지원됩니다.', 'secondary');
+  });
+  render();
+</script>
+{% endblock %}

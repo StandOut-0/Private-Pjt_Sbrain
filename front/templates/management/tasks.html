@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Task Management — Second Brain{% endblock %}
+{% block content %}
+<h1 class="sb-section-title">Task Management</h1>
+
+<form class="sb-card mb-3" method="get">
+  <div class="row g-2 align-items-center">
+    <div class="col-md-5">
+      <input class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="Task 검색">
+    </div>
+    <div class="col-md-3">
+      <select class="form-select form-select-sm" name="project">
+        <option value="">전체 Project</option>
+        {% for project in projects %}
+          <option value="{{ project.title }}" {% if filters.project == project.title %}selected{% endif %}>{{ project.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <select class="form-select form-select-sm" name="status">
+        <option value="">전체 Status</option>
+        <option value="running" {% if filters.status == 'running' %}selected{% endif %}>진행 중</option>
+        <option value="done" {% if filters.status == 'done' %}selected{% endif %}>완료</option>
+        <option value="failed" {% if filters.status == 'failed' %}selected{% endif %}>실패</option>
+        <option value="waiting" {% if filters.status == 'waiting' %}selected{% endif %}>대기</option>
+      </select>
+    </div>
+    <div class="col-md-1 d-grid">
+      <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+  </div>
+</form>
+
+<div class="sb-card mb-4">
+  <table class="table table-sm align-middle mb-0">
+    <thead>
+      <tr class="small text-secondary">
+        <th>Task</th><th>Project</th><th>Status</th><th>Agent</th><th>실행시간</th><th>시작</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for task in tasks %}
+        <tr>
+          <td class="small">{{ task.name }}</td>
+          <td class="small">{{ task.project }}</td>
+          <td class="small"><span class="sb-dot sb-dot-{{ task.status }}"></span>{{ task.status_label }}</td>
+          <td class="small">{{ task.agent }}</td>
+          <td class="small">{{ task.duration }}</td>
+          <td class="small text-secondary">{{ task.started_at }}</td>
+          <td class="text-end">
+            <button class="btn btn-outline-secondary btn-sm"
+                    onclick="window.sbToast('Task를 다시 실행합니다.', 'primary')">재실행</button>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="7" class="text-secondary small text-center py-4">조건에 맞는 Task가 없습니다.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="sb-card-title">Task Performance</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="sb-metric"><div class="sb-metric-value">{{ metrics.success_rate }}</div><div class="sb-metric-label">성공률</div></div></div>
+  <div class="col-md-4"><div class="sb-metric"><div class="sb-metric-value">{{ metrics.avg_duration }}</div><div class="sb-metric-label">평균 실행시간</div></div></div>
+  <div class="col-md-4"><div class="sb-metric"><div class="sb-metric-value">{{ metrics.error_rate }}</div><div class="sb-metric-label">오류율</div></div></div>
+</div>
+
+<div class="sb-card">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div class="sb-card-title mb-0">Task 실행 추이</div>
+    <div class="btn-group btn-group-sm" role="group">
+      <button class="btn btn-outline-secondary active" type="button" data-trend="daily">일간</button>
+      <button class="btn btn-outline-secondary" type="button" data-trend="weekly">주간</button>
+    </div>
+  </div>
+  <div class="d-flex align-items-end gap-2" id="sb-trend" style="height: 160px;"></div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  const trendData = {
+    daily: { values: {{ trend.daily }}, labels: {{ trend.daily_labels|safe }} },
+    weekly: { values: {{ trend.weekly }}, labels: {{ trend.weekly_labels|safe }} },
+  };
+
+  function renderTrend(key) {
+    const target = document.getElementById('sb-trend');
+    const data = trendData[key];
+    const max = Math.max.apply(null, data.values);
+    target.innerHTML = data.values
+      .map(function (value, index) {
+        const height = Math.round((value / max) * 130);
+        return (
+          '<div class="text-center flex-fill">' +
+          '<div class="small text-secondary">' + value + '</div>' +
+          '<div style="height:' + height + 'px;background:var(--sb-accent);border-radius:6px 6px 0 0;"></div>' +
+          '<div class="small text-secondary mt-1">' + data.labels[index] + '</div>' +
+          '</div>'
+        );
+      })
+      .join('');
+  }
+
+  document.querySelectorAll('[data-trend]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      document.querySelectorAll('[data-trend]').forEach((item) => item.classList.remove('active'));
+      button.classList.add('active');
+      renderTrend(button.dataset.trend);
+    });
+  });
+
+  renderTrend('daily');
+</script>
+{% endblock %}

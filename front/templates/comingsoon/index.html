@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Coming Soon — Second Brain{% endblock %}
+{% block content %}
+<div class="sb-card text-center py-5 mb-4">
+  <h1 class="h4">Coming Soon</h1>
+  <p class="text-secondary mb-1">아직 준비 중인 기능입니다.</p>
+  <p class="text-secondary small">SECOND BRAIN은 고객 만족도를 위해 끊임없이 도전합니다.</p>
+  <a class="small" href="{% url 'dashboard:index' %}">← Dashboard로 돌아가기</a>
+</div>
+
+<div class="sb-card-title">기능 미리보기</div>
+<div class="row g-3">
+  {% for document in documents %}
+    <div class="col-md-6">
+      <a class="sb-card sb-project-card" href="{% url 'comingsoon:detail' document.slug %}">
+        <div class="d-flex justify-content-between align-items-start">
+          <div class="fw-semibold">{{ document.title }}</div>
+          <span class="sb-chip">{{ document.status }}</span>
+        </div>
+        <p class="small text-secondary mb-2">{{ document.summary }}</p>
+        <div>{% for tech in document.technologies %}<span class="sb-chip">{{ tech }}</span>{% endfor %}</div>
+      </a>
+    </div>
+  {% empty %}
+    <div class="col-12"><p class="text-secondary small">등록된 아이디어가 없습니다.</p></div>
+  {% endfor %}
+</div>
+{% endblock %}

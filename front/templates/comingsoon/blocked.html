@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}접근 제한 — Second Brain{% endblock %}
+{% block content %}
+<div class="sb-card text-center py-5">
+  <h1 class="h5">관리자 전용 기능입니다.</h1>
+  <p class="text-secondary small mb-3">체험 / 일반 사용자는 Dashboard, Projects, Coming Soon을 이용할 수 있습니다.</p>
+  <a class="btn btn-primary btn-sm" href="{% url 'dashboard:index' %}">Dashboard로 돌아가기</a>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}{{ project.title }} — Second Brain{% endblock %}
+{% block content %}
+<div class="sb-breadcrumb">Projects &gt; {{ project.code }}</div>
+<h1 class="sb-section-title">{{ project.code }}: {{ project.title }}</h1>
+
+<div class="sb-card mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-2">
+    <span class="small text-secondary">전체 진행률</span>
+    <span class="fw-semibold">{{ project.progress }}%</span>
+  </div>
+  <div class="sb-progress mb-3"><div class="sb-progress-bar" style="width: {{ project.progress }}%"></div></div>
+  <div>
+    {% for stage in project.stages %}
+      <span class="sb-chip"><span class="sb-dot sb-dot-{{ stage.state }}"></span>{{ stage.name }}</span>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="sb-card mb-4">
+  <div class="sb-card-title">프로젝트 결과물</div>
+  {% include 'partials/artifact_browser.html' with tree=project.tree %}
+</div>
+
+<button class="btn btn-primary sb-chat-fab" type="button" id="sb-chat-open">
+  <i class="bi bi-chat-dots me-1"></i> AI
+</button>
+
+<section class="sb-chat-panel" id="sb-chat-panel">
+  <div class="sb-chat-head">
+    <span>Second Brain</span>
+    <button class="btn btn-sm sb-icon-btn" type="button" id="sb-chat-close"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="sb-chat-body" id="sb-chat-body">
+    <div class="sb-msg sb-msg-ai">안녕하세요! 👋
+프로젝트를 빠르게 구현할 수 있도록 아래 내용을 작성해주세요.
+내용을 한 번에 보내주시면 됩니다.</div>
+    <div class="sb-msg sb-msg-ai">[프로젝트 구현 가이드]
+{% for line in chat_guide %}{{ line }}
+{% endfor %}
+※ 모르는 항목은 비워두셔도 됩니다.</div>
+  </div>
+  <form class="sb-chat-foot" id="sb-chat-form" data-url="{% url 'projects:chat_reply' project.id %}">
+    {% csrf_token %}
+    <input class="form-control form-control-sm" id="sb-chat-input" placeholder="메시지 입력..." autocomplete="off">
+    <button class="btn btn-outline-secondary btn-sm" type="button" title="음성 입력"><i class="bi bi-mic"></i></button>
+    <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-send"></i></button>
+  </form>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/artifact_browser.js' %}"></script>
+<script src="{% static 'js/chat.js' %}"></script>
+{% endblock %}

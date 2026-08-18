@@ -1,0 +1,22 @@
+<header class="sb-topbar">
+  <a class="sb-brand" href="{% url 'dashboard:index' %}">SECOND BRAIN</a>
+  <div class="sb-topbar-actions">
+    <button class="btn btn-sm sb-icon-btn" type="button" id="sb-notification-btn" title="알림">
+      <i class="bi bi-bell"></i>
+    </button>
+    <button class="btn btn-sm sb-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#sb-settings-modal" title="설정">
+      <i class="bi bi-gear"></i>
+    </button>
+    <div class="dropdown">
+      <button class="btn btn-sm sb-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        <i class="bi bi-person-circle me-1"></i>{{ sb_user.name }}
+        <span class="badge sb-badge-role ms-1">{{ sb_user.role_label }}</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><span class="dropdown-item-text small text-secondary">{{ sb_user.email|default:'demo@secondbrain.dev' }}</span></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">로그아웃</a></li>
+      </ul>
+    </div>
+  </div>
+</header>

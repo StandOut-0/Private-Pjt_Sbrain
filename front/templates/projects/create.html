@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}프로젝트 생성 — Second Brain{% endblock %}
+{% block content %}
+<div class="sb-breadcrumb">Projects &gt; 새 프로젝트</div>
+<h1 class="sb-section-title">프로젝트 생성</h1>
+
+<form class="sb-card" method="post" style="max-width: 640px;">
+  {% csrf_token %}
+  <div class="mb-3">
+    <label class="form-label small">프로젝트 이름</label>
+    <input class="form-control" name="title" placeholder="예: 반려동물 용품 쇼핑몰" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label small">한 줄 설명</label>
+    <input class="form-control" name="summary" placeholder="무엇을 만들고 싶은지 간단히 적어주세요.">
+  </div>
+  <div class="mb-3">
+    <label class="form-label small">목표</label>
+    <textarea class="form-control" name="goal" rows="4"
+              placeholder="예: 반려동물 용품 쇼핑몰을 기획하고 랜딩페이지까지 만들어줘."></textarea>
+  </div>
+  <div class="d-flex gap-2">
+    <button class="btn btn-primary" type="submit">생성</button>
+    <a class="btn btn-outline-secondary" href="{% url 'projects:list' %}">취소</a>
+  </div>
+</form>
+{% endblock %}

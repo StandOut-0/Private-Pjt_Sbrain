@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 > nul
 REM Second Brain 개발 서버 실행 (Windows)
 REM 가상환경 생성 -> 패키지 설치 -> DB 준비 -> 서버 실행 까지 한 번에 처리한다.
 

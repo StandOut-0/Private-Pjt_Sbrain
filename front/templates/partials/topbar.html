@@ -1,5 +1,9 @@
+{% load static %}
 <header class="sb-topbar">
-  <a class="sb-brand" href="{% url 'dashboard:index' %}">SECOND BRAIN</a>
+  <a class="sb-brand" href="{% url 'dashboard:index' %}" aria-label="Second Brain">
+    <img class="sb-logo sb-logo-light" src="{% static 'img/logo/logo_dark_lan.png' %}" alt="Second Brain">
+    <img class="sb-logo sb-logo-dark" src="{% static 'img/logo/logo_light_lan.png' %}" alt="Second Brain">
+  </a>
   <div class="sb-topbar-actions">
     <button class="btn btn-sm sb-icon-btn" type="button" id="sb-notification-btn" title="알림">
       <i class="bi bi-bell"></i>

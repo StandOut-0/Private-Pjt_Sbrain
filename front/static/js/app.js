@@ -64,6 +64,20 @@
       });
     });
 
+    const loading = document.getElementById('sb-loading');
+    const loadingText = document.getElementById('sb-loading-text');
+    window.sbLoading = function (show, text) {
+      if (!loading) return;
+      if (text && loadingText) loadingText.textContent = text;
+      loading.hidden = !show;
+    };
+
+    document.querySelectorAll('[data-sb-loading]').forEach(function (form) {
+      form.addEventListener('submit', function () {
+        window.sbLoading(true, form.dataset.sbLoading);
+      });
+    });
+
     const bell = document.getElementById('sb-notification-btn');
     if (bell) {
       bell.addEventListener('click', function () {

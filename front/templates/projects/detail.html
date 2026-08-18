@@ -41,7 +41,8 @@
 {% endfor %}
 ※ 모르는 항목은 비워두셔도 됩니다.</div>
   </div>
-  <form class="sb-chat-foot" id="sb-chat-form" data-url="{% url 'projects:chat_reply' project.id %}">
+  <form class="sb-chat-foot" id="sb-chat-form" data-url="{% url 'projects:chat_reply' project.id %}"
+        data-loading-src="{% static 'img/loading.gif' %}">
     {% csrf_token %}
     <input class="form-control form-control-sm" id="sb-chat-input" placeholder="메시지 입력..." autocomplete="off">
     <button class="btn btn-outline-secondary btn-sm" type="button" title="음성 입력"><i class="bi bi-mic"></i></button>

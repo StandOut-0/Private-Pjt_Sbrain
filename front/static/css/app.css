@@ -90,6 +90,53 @@ body.sb-body {
   font-size: 15px;
 }
 
+.sb-brand { display: inline-flex; align-items: center; }
+
+.sb-logo { height: 26px; width: auto; display: block; }
+.sb-logo-full { height: 132px; width: auto; }
+
+.sb-logo-dark { display: none; }
+[data-bs-theme='dark'] .sb-logo-light { display: none; }
+[data-bs-theme='dark'] .sb-logo-dark { display: block; }
+
+/* Loading */
+.sb-loading {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(27, 38, 44, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.sb-loading[hidden] { display: none; }
+
+.sb-loading-box {
+  background: var(--sb-surface);
+  border-radius: 16px;
+  padding: 20px 28px 16px;
+  text-align: center;
+  box-shadow: 0 18px 40px rgba(27, 38, 44, 0.28);
+}
+
+.sb-loading-box img { width: 180px; height: auto; }
+
+.sb-loading-text {
+  font-size: 13px;
+  color: var(--sb-muted);
+}
+
+.sb-msg-typing {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--sb-muted);
+}
+
+.sb-msg-typing img { width: 44px; height: auto; }
+
 .sb-topbar-actions {
   display: flex;
   align-items: center;

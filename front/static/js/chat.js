@@ -26,12 +26,22 @@ document.addEventListener('DOMContentLoaded', function () {
     body.scrollTop = body.scrollHeight;
   }
 
+  function showTyping() {
+    const typing = document.createElement('div');
+    typing.className = 'sb-msg sb-msg-ai sb-msg-typing';
+    typing.innerHTML = '<img src="' + form.dataset.loadingSrc + '" alt=""><span>Supervisor Agent 가 작업 중입니다...</span>';
+    body.appendChild(typing);
+    body.scrollTop = body.scrollHeight;
+    return typing;
+  }
+
   form.addEventListener('submit', function (event) {
     event.preventDefault();
     const text = input.value.trim();
     if (!text) return;
     append(text, 'user');
     input.value = '';
+    const typing = showTyping();
 
     fetch(form.dataset.url, {
       method: 'POST',
@@ -40,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
     })
       .then((response) => response.json())
       .then((data) => append(data.reply, 'ai'))
-      .catch(() => append('일시적인 오류가 발생했습니다. 다시 시도해주세요.', 'ai'));
+      .catch(() => append('일시적인 오류가 발생했습니다. 다시 시도해주세요.', 'ai'))
+      .finally(() => typing.remove());
   });
 });

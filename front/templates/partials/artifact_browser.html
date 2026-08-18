@@ -1,0 +1,40 @@
+{# tree: [{name, files: [{name, kind, size, updated_at, agent}]}] #}
+<div class="row g-3">
+  <div class="col-lg-5">
+    <div class="sb-tree" data-sb-tree>
+      {% for folder in tree %}
+        <div class="sb-tree-folder"><i class="bi bi-folder2 me-1"></i>{{ folder.name }}</div>
+        {% for file in folder.files %}
+          <button type="button" class="sb-tree-file"
+                  data-file-name="{{ file.name }}"
+                  data-file-kind="{{ file.kind }}"
+                  data-file-size="{{ file.size }}"
+                  data-file-agent="{{ file.agent }}"
+                  data-file-updated="{{ file.updated_at }}">
+            <i class="bi {% if file.kind == 'image' %}bi-image{% elif file.kind == 'pdf' %}bi-file-earmark-pdf{% elif file.kind == 'sheet' %}bi-file-earmark-spreadsheet{% else %}bi-file-earmark-text{% endif %}"></i>
+            {{ file.name }}
+          </button>
+        {% endfor %}
+      {% empty %}
+        <p class="text-secondary small mb-0">생성된 결과물이 없습니다.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div class="fw-semibold small" data-sb-viewer-title>파일을 선택해주세요</div>
+      <div class="small text-secondary" data-sb-viewer-meta></div>
+    </div>
+    <div class="sb-viewer mb-3" data-sb-viewer>
+      <i class="bi bi-file-earmark-text fs-1"></i>
+      <div>DOCUMENT VIEWER</div>
+      <div class="small">좌측에서 결과물을 선택하면 이곳에 표시됩니다.</div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+      <button class="btn btn-outline-secondary btn-sm" type="button" data-sb-action="share">↗ 공유</button>
+      <button class="btn btn-outline-secondary btn-sm" type="button" data-sb-action="download">↓ 다운로드</button>
+      <button class="btn btn-primary btn-sm" type="button" data-sb-action="zip">ZIP으로 다운로드</button>
+    </div>
+  </div>
+</div>

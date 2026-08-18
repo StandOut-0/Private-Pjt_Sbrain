@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}{{ agent.name }} — Second Brain{% endblock %}
+{% block content %}
+<div class="sb-breadcrumb">Agent Management &gt; {{ agent.name }}</div>
+<h1 class="sb-section-title">{{ agent.name }}</h1>
+
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="sb-card mb-3">
+      <div class="sb-card-title">역할</div>
+      <p class="small mb-0">{{ agent.role }}</p>
+    </div>
+
+    <div class="sb-card mb-3">
+      <div class="sb-card-title">현재 작업</div>
+      <div class="small text-secondary mb-2">{{ agent.project }}</div>
+      <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="fw-semibold small">{{ agent.task }}</span>
+        <span class="small"><span class="sb-dot sb-dot-{{ agent.status }}"></span>{{ agent.status_label }}</span>
+      </div>
+      <ul class="list-unstyled mb-0">
+        {% for step in agent.steps %}
+          <li class="small py-1">
+            {% if step.state == 'done' %}<i class="bi bi-check2 text-success me-1"></i>
+            {% elif step.state == 'running' %}<span class="sb-dot sb-dot-running"></span>
+            {% else %}<span class="sb-dot sb-dot-todo"></span>{% endif %}
+            {{ step.name }}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if children %}
+      <div class="sb-card mb-3">
+        <div class="sb-card-title">하위 Worker</div>
+        <div class="row g-2">
+          {% for child in children %}
+            <div class="col-md-6">
+              <a class="sb-card sb-project-card" href="{% url 'management:agent_detail' child.key %}">
+                <div class="fw-semibold small">{{ child.name }}</div>
+                <div class="small"><span class="sb-dot sb-dot-{{ child.status }}"></span>{{ child.status_label }}</div>
+                <div class="small text-secondary">{{ child.short }}</div>
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="sb-card mb-3">
+      <div class="sb-card-title">Agent Flow</div>
+      <div class="sb-ascii">{{ agent.flow }}</div>
+    </div>
+
+    <div class="sb-card mb-3">
+      <div class="sb-card-title">사용 기술</div>
+      {% for tech in agent.tech %}<span class="sb-chip">{{ tech }}</span>{% endfor %}
+    </div>
+
+    <div class="sb-card">
+      <div class="sb-card-title">성능</div>
+      <div class="row g-2">
+        {% for metric in agent.metrics %}
+          <div class="col-6">
+            <div class="sb-metric">
+              <div class="sb-metric-value">{{ metric.value }}</div>
+              <div class="sb-metric-label">{{ metric.label }}</div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

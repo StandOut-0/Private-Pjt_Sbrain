@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Projects — Second Brain{% endblock %}
+{% block content %}
+{% if projects %}
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="sb-section-title mb-0">My Projects</h1>
+    <a class="btn btn-primary btn-sm" href="{% url 'projects:create' %}">+ 새 프로젝트</a>
+  </div>
+
+  <div class="row g-3">
+    {% for project in projects %}
+      <div class="col-md-4">
+        <a class="sb-card sb-project-card" href="{% url 'projects:detail' project.id %}">
+          <div class="small text-secondary">{{ project.code }}</div>
+          <div class="fw-semibold">{{ project.title }}</div>
+          <p class="small text-secondary mb-3">{{ project.summary }}</p>
+          <div class="small mb-2"><span class="sb-dot sb-dot-{{ project.status }}"></span>{{ project.status_label }}</div>
+          <div class="sb-progress"><div class="sb-progress-bar" style="width: {{ project.progress }}%"></div></div>
+          <div class="d-flex justify-content-between small text-secondary mt-1">
+            <span>{{ project.progress }}%</span><span>{{ project.updated_at }}</span>
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <div class="sb-card text-center py-5">
+    <h2 class="h5">아직 프로젝트가 없습니다.</h2>
+    <p class="text-secondary">AI와 함께 첫 프로젝트를 시작해보세요.</p>
+    <a class="btn btn-primary" href="{% url 'projects:create' %}">+ 프로젝트 생성</a>
+  </div>
+{% endif %}
+{% endblock %}

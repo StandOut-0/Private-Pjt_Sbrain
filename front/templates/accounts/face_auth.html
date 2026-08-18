@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}관리자 인증 — Second Brain{% endblock %}
+{% block layout %}
+<div class="sb-auth">
+  <div class="sb-auth-card" style="width: 520px;">
+    <h1 class="h5 sb-auth-title mb-2">관리자 인증</h1>
+    <p class="text-secondary mb-4">얼굴 인증을 진행해주세요</p>
+
+    {% if error %}<div class="alert alert-danger py-2 small">{{ error }}</div>{% endif %}
+
+    <div class="sb-camera mb-3">
+      <div class="text-center">
+        <i class="bi bi-camera-video fs-1 d-block mb-2"></i>
+        CAMERA<br><span class="small">◯ 얼굴 위치</span>
+      </div>
+    </div>
+    <p class="text-secondary small">얼굴을 카메라 중앙에 맞춰주세요</p>
+
+    <form method="post" class="d-grid gap-2" data-sb-loading="얼굴을 확인하고 있습니다...">
+      {% csrf_token %}
+      <button class="btn btn-primary" name="result" value="success" type="submit">얼굴 인증</button>
+      <button class="btn btn-outline-secondary btn-sm" name="result" value="fail" type="submit">인증 실패 시나리오</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

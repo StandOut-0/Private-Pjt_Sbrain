@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Second Brain{% endblock %}
+{% block content %}
+<h1 class="sb-section-title">Dashboard</h1>
+
+<div class="sb-card mb-4">
+  <div class="sb-card-title">최근 프로젝트</div>
+  <div class="row g-3">
+    {% for project in projects %}
+      <div class="col-md-4">
+        <a class="sb-card sb-project-card" href="{% url 'projects:detail' project.id %}">
+          <div class="small text-secondary">{{ project.code }}</div>
+          <div class="fw-semibold mb-2">{{ project.title }}</div>
+          <div class="small mb-2"><span class="sb-dot sb-dot-{{ project.status }}"></span>{{ project.status_label }}</div>
+          <div class="sb-progress"><div class="sb-progress-bar" style="width: {{ project.progress }}%"></div></div>
+          <div class="small text-secondary mt-1">{{ project.progress }}%</div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="sb-card mb-4">
+  <div class="sb-card-title">진행 중인 Task</div>
+  <div class="row g-3">
+    {% for task in tasks %}
+      <div class="col-md-4">
+        <div class="sb-card h-100">
+          <div class="small"><span class="sb-dot sb-dot-{{ task.status }}"></span>{{ task.status_label }}</div>
+          <div class="fw-semibold small mt-1">{{ task.name }}</div>
+          <div class="small text-secondary mt-1">{{ task.project }} · {{ task.agent }} Agent</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="row g-3">
+  {% if sb_user.is_admin %}
+    <div class="col-md-6">
+      <div class="sb-card h-100">
+        <div class="sb-card-title">Agent 실행 현황</div>
+        {% for execution in agent_executions %}
+          <div class="d-flex justify-content-between align-items-center py-1 small">
+            <span><span class="sb-dot sb-dot-{{ execution.status }}"></span>{{ execution.name }}</span>
+            <span class="text-secondary">{{ execution.count }}회</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+  <div class="{% if sb_user.is_admin %}col-md-6{% else %}col-12{% endif %}">
+    <div class="sb-card h-100">
+      <div class="sb-card-title">최근 결과물</div>
+      {% for artifact in artifacts %}
+        <a class="d-flex justify-content-between align-items-center py-1 small text-decoration-none text-body"
+           href="{% url 'projects:detail' artifact.project_id %}">
+          <span><i class="bi bi-file-earmark me-2"></i>{{ artifact.name }}</span>
+          <span class="text-secondary">{{ artifact.project }}</span>
+        </a>
+      {% empty %}
+        <p class="text-secondary small mb-0">아직 생성된 결과물이 없습니다.</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

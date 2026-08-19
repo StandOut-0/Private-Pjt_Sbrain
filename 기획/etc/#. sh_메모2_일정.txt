@@ -27,9 +27,8 @@ Day 2 — Wireframe
 
 8/11
 
-Login
-Login
-Google Login
+Login 
+Google Login 
 Demo Login
 관리자 Face Authentication
 

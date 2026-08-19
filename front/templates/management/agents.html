@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Agents — Second Brain{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="sb-section-title mb-0">Agents</h1>
+  <span class="small text-secondary">실행 중 {{ running_count }} / {{ total_count }}</span>
+</div>
+
+<a class="sb-card sb-project-card mb-4" href="{% url 'management:agent_detail' supervisor.key %}">
+  <div class="d-flex justify-content-between align-items-center">
+    <div>
+      <div class="fw-semibold">{{ supervisor.name }}</div>
+      <div class="small text-secondary">{{ supervisor.short }}</div>
+    </div>
+    <span class="small"><span class="sb-dot sb-dot-{{ supervisor.status }}"></span>{{ supervisor.status_label }}</span>
+  </div>
+</a>
+
+<div class="sb-card-title">Worker Agents</div>
+<div class="row g-3">
+  {% for agent in workers %}
+    <div class="col-md-4">
+      <a class="sb-card sb-project-card" href="{% url 'management:agent_detail' agent.key %}">
+        <div class="fw-semibold">{{ agent.name }}</div>
+        <div class="small mb-2"><span class="sb-dot sb-dot-{{ agent.status }}"></span>{{ agent.status_label }}</div>
+        <div class="small text-secondary">{{ agent.short }}</div>
+        {% if agent.children %}
+          <div class="mt-2">
+            {% for child in agent.children %}<span class="sb-chip">{{ child|title }}</span>{% endfor %}
+          </div>
+        {% endif %}
+      </a>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

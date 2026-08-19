@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Results  — Second Brain{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="sb-section-title mb-0">Results </h1>
+  <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#sb-upload-modal">
+    + 문서 업로드
+  </button>
+</div>
+
+<form class="sb-card mb-3" method="get">
+  <div class="row g-2">
+    <div class="col-md-4">
+      <select class="form-select form-select-sm" name="project" onchange="this.form.submit()">
+        <option value="">전체 프로젝트</option>
+        {% for project in projects %}
+          <option value="{{ project.id }}" {% if selected.id == project.id %}selected{% endif %}>{{ project.title }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-8">
+      <input class="form-control form-control-sm" name="q" placeholder="결과물 검색">
+    </div>
+  </div>
+</form>
+
+<div class="sb-card mb-4">
+  <div class="sb-card-title">{% if selected %}{{ selected.title }} 결과물{% else %}전체 프로젝트 결과물{% endif %}</div>
+  {% include 'partials/artifact_browser.html' with tree=tree %}
+</div>
+
+<div class="sb-card-title">Knowledge / RAG 관리</div>
+<div class="row g-3 mb-4">
+  {% for stat in knowledge_stats %}
+    <div class="col-6 col-md-3">
+      <div class="sb-metric"><div class="sb-metric-value">{{ stat.value }}</div><div class="sb-metric-label">{{ stat.label }}</div></div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="sb-card mb-4">
+  <div class="sb-card-title">Vector DB / RAG</div>
+  <table class="table table-sm align-middle mb-0">
+    <thead><tr class="small text-secondary"><th>Project</th><th>Document</th><th>Chunks</th><th>Status</th></tr></thead>
+    <tbody>
+      {% for document in vector_documents %}
+        <tr>
+          <td class="small">{{ document.project }}</td>
+          <td class="small">{{ document.document }}</td>
+          <td class="small">{{ document.chunks }}</td>
+          <td class="small">
+            <span class="sb-dot {% if document.status == 'Indexed' %}sb-dot-done{% else %}sb-dot-running{% endif %}"></span>{{ document.status }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="sb-card-title">Search Evaluation</div>
+<div class="row g-3">
+  {% for metric in search_metrics %}
+    <div class="col-md-4">
+      <div class="sb-metric"><div class="sb-metric-value">{{ metric.value }}</div><div class="sb-metric-label">{{ metric.label }}</div></div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="modal fade" id="sb-upload-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" id="sb-upload-form">
+      <div class="modal-header">
+        <h5 class="modal-title">문서 업로드</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label small">프로젝트</label>
+        <select class="form-select form-select-sm mb-3" name="project">
+          {% for project in projects %}<option value="{{ project.id }}">{{ project.title }}</option>{% endfor %}
+        </select>
+
+        <label class="form-label small">업로드 파일</label>
+        <div class="sb-viewer mb-2" style="min-height: 160px;">
+          <i class="bi bi-file-earmark-arrow-up fs-2"></i>
+          <div class="small">파일을 선택해주세요</div>
+          <div class="small">PDF / DOCX / TXT / MD / XLSX</div>
+        </div>
+        <input class="form-control form-control-sm" type="file" name="document"
+               accept=".pdf,.docx,.txt,.md,.xlsx">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">취소</button>
+        <button type="submit" class="btn btn-primary btn-sm">업로드</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'js/artifact_browser.js' %}"></script>
+<script>
+  document.getElementById('sb-upload-form').addEventListener('submit', function (event) {
+    event.preventDefault();
+    bootstrap.Modal.getInstance(document.getElementById('sb-upload-modal')).hide();
+    window.sbToast('문서를 업로드했습니다. Chunking / Embedding을 시작합니다.', 'primary');
+  });
+</script>
+{% endblock %}

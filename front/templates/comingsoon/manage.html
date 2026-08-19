@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Coming Soon Management — Second Brain{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h1 class="sb-section-title mb-0">Coming Soon Management</h1>
+  <a class="btn btn-primary btn-sm" href="{% url 'comingsoon:editor_new' %}">+ 아이디어 추가</a>
+</div>
+
+<form class="sb-card mb-3" method="get">
+  <div class="row g-2">
+    <div class="col-md-2">
+      <select class="form-select form-select-sm" name="status">
+        <option value="">전체 상태</option>
+        {% for status in statuses %}<option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <select class="form-select form-select-sm" name="category">
+        <option value="">전체 분야</option>
+        {% for category in categories %}<option value="{{ category }}" {% if filters.category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="col-md-6"><input class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="검색"></div>
+
+      <!-- 검색 버튼 -->
+    <div class="col-md-2">
+      <button type="submit" class="btn btn-primary btn-sm w-100">
+        검색
+      </button>
+    </div>
+  </div>
+</form>
+
+<div class="sb-card">
+  {% for document in documents %}
+    <div class="d-flex justify-content-between align-items-start border-bottom py-3">
+      <div>
+        <div class="fw-semibold">{{ document.title }} <span class="sb-chip ms-1">{{ document.status }}</span></div>
+        <div class="small text-secondary">{{ document.summary }}</div>
+        <div class="small text-secondary mt-1">관련 기술: {{ document.technologies|join:' / ' }}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:detail' document.slug %}">보기</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:editor' document.slug %}">수정</a>
+        <form method="post" action="{% url 'comingsoon:delete' document.slug %}"
+              onsubmit="return confirm('삭제한 문서는 deleted 폴더로 이동합니다. 진행할까요?')">
+          {% csrf_token %}
+          <button class="btn btn-outline-danger btn-sm" type="submit">삭제</button>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <p class="text-secondary small mb-0">등록된 아이디어가 없습니다.</p>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -27,6 +27,15 @@ def project_detail(request, project_id=None):
         # 관리자: 전체 프로젝트
         projects = mockdata.get_projects()
 
+        # 전체 서비스 진행률
+        if projects:
+            total_progress = round(
+                sum(project.get('progress', 0) for project in projects)
+                / len(projects)
+            )
+        else:
+            total_progress = 0
+
         # 모든 프로젝트의 결과물을 하나의 트리로 통합
         project_tree = []
 
@@ -40,6 +49,7 @@ def project_detail(request, project_id=None):
         context = {
             'projects': projects,
             'project_tree': project_tree,
+            'total_progress': total_progress,
             'active_menu': 'projects',
             'is_all_services': True,
         }

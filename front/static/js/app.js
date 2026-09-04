@@ -84,5 +84,40 @@
         window.sbToast('Planning Agent 작업이 완료되었습니다.', 'primary');
       });
     }
+
+    // Relative time formatting
+    function formatRelativeTime(dateString) {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSec = Math.floor(diffMs / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHour = Math.floor(diffMin / 60);
+      const diffDay = Math.floor(diffHour / 24);
+
+      if (diffSec < 60) return '방금 전';
+      if (diffMin < 60) return diffMin + '분 전';
+      if (diffHour < 24) return diffHour + '시간 전';
+      if (diffDay === 1) return '어제';
+      if (diffDay < 7) return diffDay + '일 전';
+      return dateString;
+    }
+
+    // Apply relative time to elements with data-sb-relative-time
+    document.querySelectorAll('[data-sb-relative-time]').forEach(function (el) {
+      const originalTime = el.textContent;
+      const relativeTime = formatRelativeTime(originalTime);
+      if (relativeTime && relativeTime !== originalTime) {
+        el.textContent = relativeTime;
+        el.title = originalTime;
+      }
+    });
+
+    // Initialize Bootstrap tooltips
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    const tooltipList = [...tooltipTriggerList].map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
   });
 })();

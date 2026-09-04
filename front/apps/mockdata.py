@@ -15,10 +15,10 @@ PROJECTS = [
         'progress': 70,
         'updated_at': '2026-08-11',
         'stages': [
-            {'name': 'Planning', 'state': 'done'},
-            {'name': 'Data', 'state': 'done'},
-            {'name': 'Design', 'state': 'running'},
-            {'name': 'Development', 'state': 'todo'},
+            {'name': 'Planning', 'state': 'done', 'progress': 25},
+            {'name': 'Data', 'state': 'done', 'progress': 25},
+            {'name': 'Design', 'state': 'running', 'progress': 20},
+            {'name': 'Development', 'state': 'todo', 'progress': 0},
         ],
         'tree': [
             {
@@ -60,10 +60,10 @@ PROJECTS = [
         'progress': 100,
         'updated_at': '2026-08-09',
         'stages': [
-            {'name': 'Planning', 'state': 'done'},
-            {'name': 'Data', 'state': 'done'},
-            {'name': 'AI', 'state': 'done'},
-            {'name': 'Reflection', 'state': 'done'},
+            {'name': 'Planning', 'state': 'done', 'progress': 25},
+            {'name': 'Data', 'state': 'done', 'progress': 25},
+            {'name': 'AI', 'state': 'done', 'progress': 25},
+            {'name': 'Reflection', 'state': 'done', 'progress': 25},
         ],
         'tree': [
             {
@@ -90,7 +90,7 @@ PROJECTS = [
         'progress': 0,
         'updated_at': '2026-08-11',
         'stages': [
-            {'name': 'Planning', 'state': 'todo'},
+            {'name': 'Planning', 'state': 'todo', 'progress': 0},
         ],
         'tree': [],
     },

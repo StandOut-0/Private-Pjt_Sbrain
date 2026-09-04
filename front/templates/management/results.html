@@ -3,7 +3,7 @@
 {% block title %}Results  — Second Brain{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="sb-section-title mb-0">Results </h1>
+  <h1 class="sb-section-title mb-4">Results </h1>
   <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#sb-upload-modal">
     + 문서 업로드
   </button>
@@ -26,11 +26,11 @@
 </form>
 
 <div class="sb-card mb-4">
-  <div class="sb-card-title">{% if selected %}{{ selected.title }} 결과물{% else %}전체 프로젝트 결과물{% endif %}</div>
+  <div class="sb-card-title mb-2">{% if selected %}{{ selected.title }} 결과물{% else %}전체 프로젝트 결과물{% endif %}</div>
   {% include 'partials/artifact_browser.html' with tree=tree %}
 </div>
 
-<div class="sb-card-title">Knowledge / RAG 관리</div>
+<div class="sb-card-title mb-2">Knowledge / RAG 관리</div>
 <div class="row g-3 mb-4">
   {% for stat in knowledge_stats %}
     <div class="col-6 col-md-3">
@@ -40,7 +40,7 @@
 </div>
 
 <div class="sb-card mb-4">
-  <div class="sb-card-title">Vector DB / RAG</div>
+  <div class="sb-card-title mb-2">Vector DB / RAG</div>
   <table class="table table-sm align-middle mb-0">
     <thead><tr class="small text-secondary"><th>Project</th><th>Document</th><th>Chunks</th><th>Status</th></tr></thead>
     <tbody>
@@ -58,7 +58,7 @@
   </table>
 </div>
 
-<div class="sb-card-title">Search Evaluation</div>
+<div class="sb-card-title mb-2">Search Evaluation</div>
 <div class="row g-3">
   {% for metric in search_metrics %}
     <div class="col-md-4">
@@ -75,9 +75,15 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <label class="form-label small">프로젝트</label>
+        <!-- <label class="form-label small">프로젝트</label>
         <select class="form-select form-select-sm mb-3" name="project">
           {% for project in projects %}<option value="{{ project.id }}">{{ project.title }}</option>{% endfor %}
+        </select> -->
+
+        <label class="form-label small">지시사항</label>
+        <select class="form-select form-select-sm mb-3" name="instruction_type">
+          <option value="common">🌐 전체 공통 지시사항 (모든 프로젝트에 적용)</option>
+          <option value="project">📁 프로젝트별 지시사항 (현재 프로젝트에만 적용)</option>
         </select>
 
         <label class="form-label small">업로드 파일</label>

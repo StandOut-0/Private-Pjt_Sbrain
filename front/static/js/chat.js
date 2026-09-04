@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const input = document.getElementById('sb-chat-input');
   const openBtn = document.getElementById('sb-chat-open');
   const closeBtn = document.getElementById('sb-chat-close');
+  const expandBtn = document.getElementById('sb-chat-expand');
   const csrf = form.querySelector('[name=csrfmiddlewaretoken]').value;
 
   function toggle(open) {
@@ -18,10 +19,83 @@ document.addEventListener('DOMContentLoaded', function () {
   openBtn.addEventListener('click', () => toggle(true));
   closeBtn.addEventListener('click', () => toggle(false));
 
+  if (expandBtn) {
+    expandBtn.addEventListener('click', () => {
+      panel.classList.toggle('expanded');
+    });
+  }
+
+  // Initialize chat tabs (for static tabs in HTML)
+  function initChatTabs() {
+    const allTabBtns = document.querySelectorAll('.sb-chat-tab-btn');
+    const tabContent = document.getElementById('tab-content');
+
+    const tabData = {
+      'guide': '[프로젝트 구현 가이드]<br>1. 주요 상품 / 서비스:<br>2. 주요 고객층:<br>3. 만들고 싶은 서비스:<br>4. 필요한 주요 기능:<br>5. 참고 서비스 / 디자인:<br>※ 모르는 항목은 비워두셔도 됩니다.</div>',
+      'logo': '<div>로고 디자인 가이드<br>브랜드의 정체성을 나타내는 로고를 디자인합니다.</div>',
+      'onepage': '<div>원페이지 디자인 가이드<br>핵심 정보를 한 페이지에 효과적으로 전달합니다.</div>',
+      'survey': '<div>설문조사페이지 디자인 가이드<br>사용자 의견을 수집하는 설문폼을 디자인합니다.</div>'
+    };
+
+    allTabBtns.forEach(btn => {
+      btn.addEventListener('click', function() {
+        allTabBtns.forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+
+        const tabKey = this.dataset.tab;
+        if (tabContent && tabData[tabKey]) {
+          tabContent.innerHTML = tabData[tabKey];
+        }
+      });
+    });
+  }
+
+  initChatTabs();
+
   function append(text, role) {
     const message = document.createElement('div');
     message.className = 'sb-msg sb-msg-' + role;
-    message.textContent = text;
+
+    // Check if message contains tab content (mock implementation)
+    if (role === 'ai' && text.includes('[프로젝트 구현 가이드]')) {
+      const tabsHtml = `<div class="sb-chat-tabs"><button class="sb-chat-tab-btn active" data-tab="tab1">프로젝트 구현 가이드</button>
+          <button class="sb-chat-tab-btn" data-tab="tab2">로고만들기</button>
+          <button class="sb-chat-tab-btn" data-tab="tab3">원페이지만들기</button>
+          <button class="sb-chat-tab-btn" data-tab="tab4">설문조사페이지만들기</button>
+        </div>
+        <div class="sb-chat-tab-content active" id="tab1">
+          <pre>${text}</pre>
+        </div>
+        <div class="sb-chat-tab-content" id="tab2">
+          <p>로고 디자인 가이드가 여기에 표시됩니다.</p>
+        </div>
+        <div class="sb-chat-tab-content" id="tab3">
+          <p>원페이지 디자인 가이드가 여기에 표시됩니다.</p>
+        </div>
+        <div class="sb-chat-tab-content" id="tab4">
+          <p>설문조사페이지 디자인 가이드가 여기에 표시됩니다.</p>
+        </div>
+      `;
+      message.innerHTML = tabsHtml;
+
+      // Add tab click handlers
+      const tabBtns = message.querySelectorAll('.sb-chat-tab-btn');
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          tabBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+
+          const tabId = this.dataset.tab;
+          message.querySelectorAll('.sb-chat-tab-content').forEach(content => {
+            content.classList.remove('active');
+          });
+          message.querySelector('#' + tabId).classList.add('active');
+        });
+      });
+    } else {
+      message.textContent = text;
+    }
+
     body.appendChild(message);
     body.scrollTop = body.scrollHeight;
   }

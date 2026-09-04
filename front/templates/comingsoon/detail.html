@@ -3,7 +3,7 @@
 {% block content %}
 <div class="sb-breadcrumb">Coming Soon &gt; {{ document.title }}</div>
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="sb-section-title mb-0">{{ document.title }}</h1>
+  <h1 class="sb-section-title mb-4">{{ document.title }}</h1>
   {% if sb_user.is_admin %}
     <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:editor' document.slug %}">수정</a>
   {% endif %}
@@ -15,16 +15,16 @@
   </div>
   <div class="col-lg-4">
     <div class="sb-card mb-3">
-      <div class="sb-card-title">현재 상태</div>
+      <div class="sb-card-title mb-2">현재 상태</div>
       <span class="sb-chip">{{ document.status }}</span>
       <span class="sb-chip">{{ document.category }}</span>
     </div>
     <div class="sb-card mb-3">
-      <div class="sb-card-title">관련 학습 내용</div>
+      <div class="sb-card-title mb-2">관련 학습 내용</div>
       {% for tech in document.technologies %}<span class="sb-chip">{{ tech }}</span>{% endfor %}
     </div>
     <div class="sb-card mb-3">
-      <div class="sb-card-title">관련 Agent</div>
+      <div class="sb-card-title mb-2">관련 Agent</div>
       {% for agent in document.related_agents %}<span class="sb-chip">{{ agent }}</span>{% endfor %}
     </div>
     <div class="sb-card">

@@ -4,10 +4,61 @@
     <img class="sb-logo sb-logo-light" src="{% static 'img/logo/logo_dark_lan.png' %}" alt="Second Brain">
     <img class="sb-logo sb-logo-dark" src="{% static 'img/logo/logo_light_lan.png' %}" alt="Second Brain">
   </a>
+  <div class="sb-topbar-search">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-transparent border-end-0"><i class="bi bi-search"></i></span>
+      <input type="text" class="form-control border-start-0" placeholder="프로젝트, 문서, Task를 검색하세요." id="sb-global-search">
+    </div>
+  </div>
   <div class="sb-topbar-actions">
-    <button class="btn btn-sm sb-icon-btn" type="button" id="sb-notification-btn" title="알림">
-      <i class="bi bi-bell"></i>
-    </button>
+    <div class="dropdown">
+      <button class="btn btn-sm sb-icon-btn position-relative" type="button" data-bs-toggle="dropdown" title="알림">
+        <i class="bi bi-bell"></i>
+        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="sb-notification-badge">3</span>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end sb-notification-dropdown" id="sb-notification-dropdown">
+        <li class="dropdown-header small text-secondary">최근 알림</li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item sb-notification-item unread" href="#">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold small">프로젝트 작업 완료</div>
+                <div class="small text-secondary">PRD-001 프로젝트의 Planning Agent가 완료되었습니다.</div>
+              </div>
+              <span class="badge bg-success ms-2">완료</span>
+            </div>
+            <div class="small text-secondary mt-1">방금 전 · PRD-001</div>
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item sb-notification-item unread" href="#">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold small">Agent 실행 오류</div>
+                <div class="small text-secondary">Data Agent에서 오류가 발생했습니다.</div>
+              </div>
+              <span class="badge bg-danger ms-2">오류</span>
+            </div>
+            <div class="small text-secondary mt-1">3분 전 · PRD-002</div>
+          </a>
+        </li>
+        <li>
+          <a class="dropdown-item sb-notification-item" href="#">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <div class="fw-semibold small">결과물 생성 완료</div>
+                <div class="small text-secondary">새로운 문서가 생성되었습니다.</div>
+              </div>
+              <span class="badge bg-primary ms-2">생성</span>
+            </div>
+            <div class="small text-secondary mt-1">1시간 전 · PRD-001</div>
+          </a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-center small" href="#">모든 알림 보기</a></li>
+      </ul>
+    </div>
     <button class="btn btn-sm sb-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#sb-settings-modal" title="설정">
       <i class="bi bi-gear"></i>
     </button>

@@ -1,23 +1,35 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard — Second Brain{% endblock %}
 {% block content %}
-<h1 class="sb-section-title">Dashboard</h1>
+<div class="d-flex justify-content-between align-items-start">
+  <h1 class="sb-section-title mb-4">Dashboard</h1>
+  <a href="{% url 'projects:create' %}" class="btn btn-primary btn-sm me-2">+ 새 프로젝트</a>
+</div>
 
 <div class="sb-card mb-4">
-  <div class="sb-card-title d-flex justify-content-between align-items-center">
+  <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
   <span>최근 프로젝트</span>
-  <a href="{% url 'projects:list' %}" class="small text-decoration-none">
-    자세히 →
-  </a>
+  <div>
+    <a href="{% url 'projects:list' %}" class="small text-decoration-none">
+      자세히 →
+    </a>
+  </div>
 </div>
   <div class="row g-3">
     {% for project in projects %}
       <div class="col-md-4">
-        <a class="sb-card sb-project-card" href="{% url 'projects:detail' project.id %}">
+        <a class="sb-card sb-project-card position-relative" href="{% url 'projects:detail' project.id %}">
+          <span class="small text-secondary position-absolute top-0 end-0 m-3" data-sb-relative-time>{{ project.updated_at }}</span>
           <div class="small text-secondary">{{ project.code }}</div>
           <div class="fw-semibold mb-2">{{ project.title }}</div>
           <div class="small mb-2"><span class="sb-dot sb-dot-{{ project.status }}"></span>{{ project.status_label }}</div>
-          <div class="sb-progress"><div class="sb-progress-bar" style="width: {{ project.progress }}%"></div></div>
+          <div class="sb-progress">
+            <!-- <div class="sb-progress-bar" style="width: {{ project.progress }}%"></div> -->
+            {% for stage in project.stages %}
+              <div class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></div>
+            {% endfor %}
+          </div>
+
           <div class="small text-secondary mt-1">{{ project.progress }}%</div>
         </a>
       </div>
@@ -26,7 +38,7 @@
 </div>
 
 <div class="sb-card mb-4">
-  <div class="sb-card-title d-flex justify-content-between align-items-center">
+  <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
     <span>Task 진행현황</span>
     <a href="{% url 'management:tasks' %}" class="small text-decoration-none">
       자세히 →
@@ -49,7 +61,7 @@
   {% if sb_user.is_admin %}
     <div class="col-md-6">
       <div class="sb-card h-100">
-        <div class="sb-card-title d-flex justify-content-between align-items-center">
+        <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
           <span>Agent 실행현황</span>
           <a href="{% url 'management:agents' %}" class="small text-decoration-none">
             자세히 →
@@ -66,7 +78,7 @@
   {% endif %}
   <div class="{% if sb_user.is_admin %}col-md-6{% else %}col-12{% endif %}">
     <div class="sb-card h-100">
-      <div class="sb-card-title d-flex justify-content-between align-items-center">
+      <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
         <span>최근 결과물</span>
         <a href="{% url 'management:results' %}" class="small text-decoration-none">
           자세히 →

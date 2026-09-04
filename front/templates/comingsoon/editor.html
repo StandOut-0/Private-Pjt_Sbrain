@@ -6,7 +6,7 @@
 <form method="post">
   {% csrf_token %}
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="sb-section-title mb-0">Coming Soon Editor</h1>
+    <h1 class="sb-section-title mb-4">Coming Soon Editor</h1>
     <div class="d-flex gap-2">
       <button class="btn btn-primary btn-sm" type="submit">저장</button>
       <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:manage' %}">목록</a>
@@ -48,12 +48,12 @@
 
   <div class="sb-editor-grid">
     <div class="sb-card">
-      <div class="sb-card-title">Markdown Editor</div>
+      <div class="sb-card-title mb-2">Markdown Editor</div>
       <textarea class="form-control" name="body" id="sb-md-input">{{ document.body }}</textarea>
       <p class="small text-secondary mt-2 mb-0">이미지첨부는 google drive링크로 첨부해주세요. 불편할 경우 추가개발.</p>
     </div>
     <div class="sb-card">
-      <div class="sb-card-title">Preview</div>
+      <div class="sb-card-title mb-2">Preview</div>
       <div class="sb-preview" id="sb-md-preview"></div>
     </div>
   </div>

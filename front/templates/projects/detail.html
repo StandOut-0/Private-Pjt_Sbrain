@@ -16,22 +16,23 @@
   <!-- 관리자: 전체 서비스 -->
   <div class="sb-breadcrumb">Projects &gt; 전체 서비스</div>
 
-  <h1 class="sb-section-title">전체 서비스</h1>
+  <h1 class="sb-section-title mb-4">전체 서비스</h1>
 
 
   <!-- 전체 프로젝트 진행률 -->
-  <div class="sb-card mb-4">
-
-    <div class="sb-card-title mb-3">
+   
+    <div class="sb-card-title mb-2 mb-3">
       전체 진행률
     </div>
+  <div class="sb-card mb-4">
+
 
     {% for project in projects %}
 
       <div class="d-flex justify-content-between align-items-center mb-2">
 
         <div>
-          <div class="small text-secondary">
+          <div class="small text-secondary small">
             {{ project.code }}
           </div>
 
@@ -48,28 +49,16 @@
 
 
       <div class="sb-progress mb-3">
-
-        <div
-          class="sb-progress-bar"
-          style="width: {{ project.progress }}%">
-        </div>
-
+        {% for stage in project.stages %}
+          <div class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></div>
+        {% endfor %}
       </div>
-
 
       <div class="mb-3">
-
         {% for stage in project.stages %}
-
-          <span class="sb-chip">
-            <span class="sb-dot sb-dot-{{ stage.state }}"></span>
-            {{ stage.name }}
-          </span>
-
+          <span class="sb-chip sb-chip-{{ stage.name|lower }}">{{ stage.name }}</span>
         {% endfor %}
-
       </div>
-
 
       {% if not forloop.last %}
         <hr>
@@ -87,11 +76,10 @@
 
 
   <!-- 통합 프로젝트 결과물 -->
+  <div class="sb-card-title mb-2">프로젝트 결과물</div>
   <div class="sb-card mb-4">
 
-    <div class="sb-card-title">
-      프로젝트 결과물
-    </div>
+    
 
     {% include 'partials/artifact_browser.html' with tree=project_tree %}
 
@@ -105,37 +93,52 @@
     Projects &gt; {{ project.code }}
   </div>
 
-  <h1 class="sb-section-title">
+  <h1 class="sb-section-title mb-4">
     {{ project.code }}: {{ project.title }}
   </h1>
 
+  <div class="sb-card-title mb-2">전체 진행률</div>
   <div class="sb-card mb-4">
 
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <span class="small text-secondary">전체 진행률</span>
-      <span class="fw-semibold">{{ project.progress }}%</span>
-    </div>
+
+     <div class="d-flex justify-content-between align-items-center mb-2">
+
+        <div>
+          <div class="small text-secondary small">
+            {{ project.code }}
+          </div>
+
+          <div class="fw-semibold">
+            {{ project.title }}
+          </div>
+        </div>
+
+        <span class="fw-semibold">
+          {{ project.progress }}%
+        </span>
+
+      </div>
+
 
     <div class="sb-progress mb-3">
-      <div
-        class="sb-progress-bar"
-        style="width: {{ project.progress }}%">
-      </div>
-    </div>
-
-    <div>
       {% for stage in project.stages %}
-        <span class="sb-chip">
-          <span class="sb-dot sb-dot-{{ stage.state }}"></span>
-          {{ stage.name }}
-        </span>
+        <div class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></div>
       {% endfor %}
     </div>
 
+    
+      <div class="">
+        {% for stage in project.stages %}
+          <span class="sb-chip sb-chip-{{ stage.name|lower }}">
+            {{ stage.name }}
+          </span>
+        {% endfor %}
+      </div>
+
   </div>
 
+  <div class="sb-card-title mb-2">프로젝트 결과물</div>
   <div class="sb-card mb-4">
-    <div class="sb-card-title">프로젝트 결과물</div>
 
     {% include 'partials/artifact_browser.html' with tree=project.tree %}
   </div>
@@ -145,6 +148,7 @@
     type="button"
     id="sb-chat-open">
     <i class="bi bi-chat-dots me-1"></i> AI
+    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger sb-chat-badge" id="sb-chat-badge" style="display: none;">3</span>
   </button>
 
   <section class="sb-chat-panel" id="sb-chat-panel">
@@ -152,34 +156,31 @@
     <div class="sb-chat-head">
       <span>Second Brain</span>
 
-      <button
-        class="btn btn-sm sb-icon-btn"
-        type="button"
-        id="sb-chat-close">
-        <i class="bi bi-x-lg"></i>
-      </button>
+      <div class="d-flex gap-2">
+        <button
+          class="btn btn-sm sb-icon-btn"
+          type="button"
+          id="sb-chat-expand"
+          title="크게 보기">
+          <i class="bi bi-arrows-fullscreen"></i>
+        </button>
+        <button
+          class="btn btn-sm sb-icon-btn"
+          type="button"
+          id="sb-chat-close">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
     </div>
 
     <div class="sb-chat-body" id="sb-chat-body">
 
-      <div class="sb-msg sb-msg-ai">
-        안녕하세요! 👋
-        프로젝트를 빠르게 구현할 수 있도록 아래 내용을 작성해주세요.
-        내용은 한 번에 보내주시면 됩니다.
-      </div>
-
-      <div class="sb-msg sb-msg-ai">
-        [프로젝트 구현 가이드]
-
-        {% for line in chat_guide %}
-          {{ line }}
-        {% endfor %}
-
-        ※ 모르는 항목은 비워두셔도 됩니다.
-      </div>
-
-    </div>
-
+      <div class="sb-msg sb-msg-ai">안녕하세요! 👋 
+프로젝트를 빠르게 구현하고싶다면 아래 내용을 작성해주세요. 내용은 한 번에 보내주시면 됩니다.</div>
+      <div class="sb-msg sb-msg-ai"><div class="sb-chat-tabs"><button class="sb-chat-tab-btn active" data-tab="guide">프로젝트 구현 가이드</button>
+          <button class="sb-chat-tab-btn" data-tab="logo">로고만들기</button>
+          <button class="sb-chat-tab-btn" data-tab="onepage">원페이지만들기</button>
+          <button class="sb-chat-tab-btn" data-tab="survey">설문조사페이지만들기</button></div><div class="sb-chat-tab-content" id="tab-content"><div>[프로젝트 구현 가이드]</div>{% for line in chat_guide %}<div>{{ line }}</div>{% endfor %}<div>※ 모르는 항목은 비워두셔도 됩니다.</div></div></div></div>
     <form
       class="sb-chat-foot"
       id="sb-chat-form"

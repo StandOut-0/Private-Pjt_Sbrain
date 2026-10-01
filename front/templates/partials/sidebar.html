@@ -44,11 +44,18 @@
     <a class="sb-nav-item {% if active_menu == 'tasks' %}active{% endif %}" href="{% url 'management:tasks' %}">
       <i class="bi bi-list-check"></i> Tasks
     </a>
-    <a class="sb-nav-item {% if active_menu == 'agents' %}active{% endif %}" href="{% url 'management:agents' %}">
-      <i class="bi bi-cpu"></i> Agents
-    </a>
-    {% if active_menu == 'agents' %}
-      <div class="sb-agent-tree">
+    <div class="sb-nav-group">
+      <a class="sb-nav-item {% if active_menu == 'agents' %}active{% endif %}"
+        data-bs-toggle="collapse"
+        href="#sb-nav-agents"
+        role="button"
+        aria-expanded="true"
+        aria-controls="sb-nav-agents">
+        <i class="bi bi-cpu"></i> Agents
+        <i class="bi bi-chevron-down ms-auto small"></i>
+      </a>
+      <div class="collapse show sb-agent-tree" id="sb-nav-agents">
+        <a class="sb-nav-sub {% if active_menu == 'agents' and not active_agent %}active{% endif %}" href="{% url 'management:agents' %}"><i class="bi bi-list-ul me-2"></i>전체 목록</a>
         <a class="sb-nav-sub {% if active_agent == 'supervisor' %}active{% endif %}" href="{% url 'management:agent_detail' 'supervisor' %}">Supervisor</a>
         <a class="sb-nav-sub {% if active_agent == 'planning' %}active{% endif %}" href="{% url 'management:agent_detail' 'planning' %}">Planning</a>
         <a class="sb-nav-sub {% if active_agent == 'creative' %}active{% endif %}" href="{% url 'management:agent_detail' 'creative' %}">Creative</a>
@@ -59,7 +66,7 @@
         <a class="sb-nav-sub {% if active_agent == 'ai' %}active{% endif %}" href="{% url 'management:agent_detail' 'ai' %}">AI</a>
         <a class="sb-nav-sub {% if active_agent == 'reflection' %}active{% endif %}" href="{% url 'management:agent_detail' 'reflection' %}">Reflection</a>
       </div>
-    {% endif %}
+    </div>
     <a class="sb-nav-item {% if active_menu == 'results' %}active{% endif %}" href="{% url 'management:results' %}">
       <i class="bi bi-folder-check"></i> Results
     </a>

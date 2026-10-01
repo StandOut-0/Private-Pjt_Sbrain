@@ -1,48 +1,21 @@
 {% extends 'base.html' %}
 {% block title %}Tasks — Second Brain{% endblock %}
 {% block content %}
-<h1 class="sb-section-title mb-4">Tasks</h1>
+<div class="sb-ops-header"><div><h1 class="sb-section-title mb-1">Tasks</h1><p class="sb-ops-subtitle">Task와 Execution을 한 화면에서 모니터링하고 운영합니다.</p></div><div class="sb-ops-header-actions"><div class="sb-task-tabs sb-ops-view-switch"><button class="sb-task-tab active" data-tab="tasks">Tasks</button><button class="sb-task-tab" data-tab="executions">Executions</button></div></div></div>
 
 
 
-<form class="sb-card mb-3" method="get">
-  <div class="row g-2 align-items-center">
-    <div class="col-md-5">
-      <input class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="Task 검색">
-    </div>
-    <div class="col-md-3">
-      <select class="form-select form-select-sm" name="project">
-        <option value="">전체 Project</option>
-        {% for project in projects %}
-          <option value="{{ project.title }}" {% if filters.project == project.title %}selected{% endif %}>{{ project.title }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <select class="form-select form-select-sm" name="status">
-        <option value="">전체 Status</option>
-        <option value="running" {% if filters.status == 'running' %}selected{% endif %}>진행 중</option>
-        <option value="done" {% if filters.status == 'done' %}selected{% endif %}>완료</option>
-        <option value="failed" {% if filters.status == 'failed' %}selected{% endif %}>실패</option>
-        <option value="waiting" {% if filters.status == 'waiting' %}selected{% endif %}>대기</option>
-      </select>
-    </div>
-    <div class="col-md-1 d-grid">
-      <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-search"></i></button>
-    </div>
-  </div>
-</form>
-
-<div class="sb-card-title mb-2">Task Performance</div>
-<div class="row g-3 mb-4">
-  <div class="col-md-4"><div class="sb-metric"><div class="sb-metric-value">{{ metrics.success_rate }}</div><div class="sb-metric-label">성공률</div></div></div>
-  <div class="col-md-4"><div class="sb-metric"><div class="sb-metric-value">{{ metrics.avg_duration }}</div><div class="sb-metric-label">평균 실행시간</div></div></div>
-  <div class="col-md-4"><div class="sb-metric"><div class="sb-metric-value">{{ metrics.error_rate }}</div><div class="sb-metric-label">오류율</div></div></div>
-</div>
+<div class="sb-ops-overview-grid mb-4">
+<div class="sb-ops-overview-block"><div class="sb-card-title mb-2" id="sb-performance-title">Task Performance</div>
+<div class="sb-ops-metric-list">
+  <div class="sb-metric"><div class="sb-metric-value">{{ metrics.success_rate }}</div><div class="sb-metric-label">성공률</div></div>
+  <div class="sb-metric"><div class="sb-metric-value">{{ metrics.avg_duration }}</div><div class="sb-metric-label">평균 실행시간</div></div>
+  <div class="sb-metric"><div class="sb-metric-value">{{ metrics.error_rate }}</div><div class="sb-metric-label">오류율</div></div>
+</div></div>
 
 
-<div class="sb-card-title mb-2">Task 실행 추이</div>
-<div class="sb-card mb-4">
+<div class="sb-ops-overview-block"><div class="sb-card-title mb-2" id="sb-trend-title">Task Trend</div>
+<div class="sb-card">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div class="btn-group btn-group-sm" role="group">
       <button class="btn btn-outline-secondary active" type="button" data-trend="daily">일간</button>
@@ -50,30 +23,91 @@
     </div>
   </div>
   <div class="d-flex align-items-end gap-2" id="sb-trend" style="height: 160px;"></div>
-</div>
+</div></div></div>
 
 
-<div class="sb-card-title mb-2">Activity Log</div>
+
+
+<div class="sb-card-title mb-2" id="sb-management-title">Task Management</div>
 <div class="sb-card mb-4">
-  <div class="sb-activity-log">
-    {% for task in tasks %}
-      <div class="sb-activity-item">
-        <div class="d-flex justify-content-between align-items-start mb-1">
-          <div class="d-flex align-items-center gap-2">
-            <span class="sb-activity-time small text-secondary">{{ task.started_at }}</span>
-            <span class="fw-semibold small">{{ task.agent }}</span>
-          </div>
-          <div class="d-flex gap-2">
-            <span class="badge sb-badge-{{ task.status }}">{{ task.status_label }}</span>
-            <span class="badge bg-secondary sb-badge-type">필수</span>
-          </div>
-        </div>
-        <div class="small mb-1">{{ task.name }}</div>
-        <div class="small text-secondary">{{ task.project }}</div>
+
+<form class="sb-task-filter mb-3" method="get">
+  <div class="row g-2 align-items-center">
+    <div class="col-md-3"><select class="form-select form-select-sm" name="project"><option value="">전체 Project</option>{% for project in projects %}<option value="{{ project.title }}" {% if filters.project == project.title %}selected{% endif %}>{{ project.title }}</option>{% endfor %}</select></div>
+    <div class="col-md-3"><select class="form-select form-select-sm" name="status"><option value="">전체 Status</option><option value="running" {% if filters.status == 'running' %}selected{% endif %}>진행 중</option><option value="done" {% if filters.status == 'done' %}selected{% endif %}>완료</option><option value="failed" {% if filters.status == 'failed' %}selected{% endif %}>실패</option><option value="waiting" {% if filters.status == 'waiting' %}selected{% endif %}>대기</option></select></div>
+    <div class="col-md"><input class="form-control form-control-sm" id="sb-management-search" name="q" value="{{ filters.q }}" placeholder="Task 검색"></div>
+    <div class="col-md-auto d-grid"><button class="btn btn-primary btn-sm px-3" type="submit"><i class="bi bi-search"></i></button></div>
+  </div>
+</form>
+
+  <div class="sb-task-content">
+    <div class="sb-task-panel active" data-panel="tasks">
+      <div class="table-responsive">
+        <table class="table table-sm sb-task-table">
+          <thead>
+            <tr>
+              <th style="width: 15%;">시간</th>
+              <th style="width: 15%;">Agent</th>
+              <th style="width: 25%;">Task 이름</th>
+              <th style="width: 15%;">Project</th>
+              <th style="width: 10%;">상태</th>
+              <th style="width: 10%; text-align: right;">실행시간</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+            <tr>
+              <td class="small text-secondary">{{ task.started_at }}</td>
+              <td class="small fw-semibold">{{ task.agent }}</td>
+              <td class="small">{{ task.name }}</td>
+              <td class="small text-secondary">{{ task.project }}</td>
+              <td><span class="badge sb-badge-{{ task.status }}">{{ task.status_label }}</span></td>
+              <td class="small text-end">{{ task.duration }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="6" class="text-center text-secondary small py-4">조건에 맞는 Task가 없습니다.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-    {% empty %}
-      <p class="text-secondary small text-center py-4 mb-0">조건에 맞는 Task가 없습니다.</p>
-    {% endfor %}
+    </div>
+
+    <div class="sb-task-panel" data-panel="executions">
+      <div class="table-responsive">
+        <table class="table table-sm sb-task-table">
+          <thead>
+            <tr>
+              <th style="width: 12%;">Execution ID</th>
+              <th style="width: 15%;">Agent</th>
+              <th style="width: 10%;">상태</th>
+              <th style="width: 10%;">실행시간</th>
+              <th style="width: 15%; text-align: right;">Input Tokens</th>
+              <th style="width: 15%; text-align: right;">Output Tokens</th>
+              <th style="width: 13%; text-align: right;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+            <tr>
+              <td class="small text-secondary">EXE-{{ task.id }}</td>
+              <td class="small fw-semibold">{{ task.agent }}</td>
+              <td><span class="badge sb-badge-{{ task.status }}">{{ task.status_label }}</span></td>
+              <td class="small">{{ task.duration }}</td>
+              <td class="small text-end">{{ task.input_tokens|default:0 }}</td>
+              <td class="small text-end">{{ task.output_tokens|default:0 }}</td>
+              <td class="small fw-semibold text-end">{{ task.total_tokens|default:0 }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7" class="text-center text-secondary small py-4">조건에 맞는 Execution이 없습니다.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -91,19 +125,23 @@
   function renderTrend(key) {
     const target = document.getElementById('sb-trend');
     const data = trendData[key];
-    const max = Math.max.apply(null, data.values);
-    target.innerHTML = data.values
-      .map(function (value, index) {
-        const height = Math.round((value / max) * 130);
-        return (
-          '<div class="text-center flex-fill">' +
-          '<div class="small text-secondary">' + value + '</div>' +
-          '<div style="height:' + height + 'px;background:var(--sb-accent);border-radius:6px 6px 0 0;"></div>' +
-          '<div class="small text-secondary mt-1">' + data.labels[index] + '</div>' +
-          '</div>'
-        );
-      })
-      .join('');
+    const width = 760;
+    const height = 190;
+    const pad = { top: 18, right: 20, bottom: 32, left: 28 };
+    const max = Math.max.apply(null, data.values.concat([1]));
+    const range = Math.max(data.values.length - 1, 1);
+    const points = data.values.map(function (value, index) {
+      const x = pad.left + (index / range) * (width - pad.left - pad.right);
+      const y = pad.top + (1 - value / max) * (height - pad.top - pad.bottom);
+      return { x: x, y: y, value: value };
+    });
+    const line = points.map(function (point) { return point.x + ',' + point.y; }).join(' ');
+    const area = pad.left + ',' + (height - pad.bottom) + ' ' + line + ' ' + (width - pad.right) + ',' + (height - pad.bottom);
+    target.innerHTML = '<svg class="sb-trend-chart" viewBox="0 0 ' + width + ' ' + height + '" role="img" aria-label="실행 추이 선그래프">' +
+      '<defs><linearGradient id="sb-trend-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2563eb" stop-opacity=".22"/><stop offset="1" stop-color="#2563eb" stop-opacity="0"/></linearGradient></defs>' +
+      '<line x1="' + pad.left + '" x2="' + (width - pad.right) + '" y1="' + (height - pad.bottom) + '" y2="' + (height - pad.bottom) + '" class="sb-trend-axis"/><polygon points="' + area + '" class="sb-trend-area"/><polyline points="' + line + '" class="sb-trend-line"/>' +
+      points.map(function (point, index) { return '<circle cx="' + point.x + '" cy="' + point.y + '" r="4" class="sb-trend-point"><title>' + data.labels[index] + ': ' + point.value + '</title></circle><text x="' + point.x + '" y="' + (height - 10) + '" text-anchor="middle" class="sb-trend-label">' + data.labels[index] + '</text>'; }).join('') +
+      '</svg>';
   }
 
   document.querySelectorAll('[data-trend]').forEach(function (button) {
@@ -115,5 +153,36 @@
   });
 
   renderTrend('daily');
+
+  // Initialize task tabs
+  function initTaskTabs() {
+    const taskTabs = document.querySelectorAll('.sb-task-tab');
+    const taskPanels = document.querySelectorAll('.sb-task-panel');
+
+    taskTabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const tabName = this.dataset.tab;
+
+        // Update tab active state
+        taskTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update panel visibility
+        taskPanels.forEach(panel => {
+          panel.classList.remove('active');
+          if (panel.dataset.panel === tabName) {
+            panel.classList.add('active');
+          }
+        });
+        const isExecutionView = tabName === 'executions';
+        document.getElementById('sb-performance-title').textContent = isExecutionView ? 'Executions Performance' : 'Task Performance';
+        document.getElementById('sb-trend-title').textContent = isExecutionView ? 'Executions Trend' : 'Task Trend';
+        document.getElementById('sb-management-title').textContent = isExecutionView ? 'Execution Management' : 'Task Management';
+        document.getElementById('sb-management-search').placeholder = isExecutionView ? 'executions 검색' : 'Task 검색';
+      });
+    });
+  }
+
+  initTaskTabs();
 </script>
 {% endblock %}

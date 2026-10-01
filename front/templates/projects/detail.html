@@ -20,69 +20,76 @@
 
 
   <!-- 전체 프로젝트 진행률 -->
-   
-    <div class="sb-card-title mb-2 mb-3">
-      전체 진행률
+  <div class="row g-4">
+    <div class="col-lg-4">
+      <div class="sb-card-title mb-2 mb-3">
+        프로젝트 목록
+      </div>
+      <div class="sb-card mb-4">
+
+        {% for project in projects %}
+
+          <div class="sb-project-list-item {% if forloop.first %}active{% endif %}" data-project-id="{{ project.id }}">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+
+              <div>
+                <div class="small text-secondary small">
+                  {{ project.code }}
+                </div>
+
+                <div class="fw-semibold">
+                  {{ project.title }}
+                </div>
+              </div>
+
+              <span class="fw-semibold">
+                {{ project.progress }}%
+              </span>
+
+            </div>
+
+            <div class="sb-progress mb-3">
+              {% for stage in project.stages %}
+                <div class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></div>
+              {% endfor %}
+            </div>
+
+            <div class="mb-3">
+              {% for stage in project.stages %}
+                <span class="sb-chip sb-chip-{{ stage.name|lower }}">{{ stage.name }}</span>
+              {% endfor %}
+            </div>
+
+          </div>
+
+        {% empty %}
+
+          <p class="text-secondary mb-0">
+            등록된 서비스가 없습니다.
+          </p>
+
+        {% endfor %}
+
+      </div>
     </div>
-  <div class="sb-card mb-4">
 
+    <!-- 통합 프로젝트 결과물 -->
+    <div class="col-lg-8">
+      <div class="sb-card-title mb-2">프로젝트 결과물</div>
+      <div class="sb-card mb-4">
 
-    {% for project in projects %}
-
-      <div class="d-flex justify-content-between align-items-center mb-2">
-
-        <div>
-          <div class="small text-secondary small">
-            {{ project.code }}
-          </div>
-
-          <div class="fw-semibold">
-            {{ project.title }}
-          </div>
+        <div id="project-artifacts-container">
+          {% for project in projects %}
+            <div class="project-artifacts {% if forloop.first %}active{% endif %}" data-project-id="{{ project.id }}">
+              <div class="small text-secondary mb-2">{{ project.title }} 결과물</div>
+              {% include 'partials/artifact_browser.html' with tree=project.tree %}
+            </div>
+          {% endfor %}
         </div>
 
-        <span class="fw-semibold">
-          {{ project.progress }}%
-        </span>
-
       </div>
-
-
-      <div class="sb-progress mb-3">
-        {% for stage in project.stages %}
-          <div class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></div>
-        {% endfor %}
-      </div>
-
-      <div class="mb-3">
-        {% for stage in project.stages %}
-          <span class="sb-chip sb-chip-{{ stage.name|lower }}">{{ stage.name }}</span>
-        {% endfor %}
-      </div>
-
-      {% if not forloop.last %}
-        <hr>
-      {% endif %}
-
-    {% empty %}
-
-      <p class="text-secondary mb-0">
-        등록된 서비스가 없습니다.
-      </p>
-
-    {% endfor %}
-
-  </div>
-
-
-  <!-- 통합 프로젝트 결과물 -->
-  <div class="sb-card-title mb-2">프로젝트 결과물</div>
-  <div class="sb-card mb-4">
-
-    
-
-    {% include 'partials/artifact_browser.html' with tree=project_tree %}
-
+    </div>
   </div>
 
 
@@ -97,50 +104,378 @@
     {{ project.code }}: {{ project.title }}
   </h1>
 
-  <div class="sb-card-title mb-2">전체 진행률</div>
-  <div class="sb-card mb-4">
-
-
-     <div class="d-flex justify-content-between align-items-center mb-2">
-
-        <div>
-          <div class="small text-secondary small">
-            {{ project.code }}
-          </div>
-
-          <div class="fw-semibold">
-            {{ project.title }}
-          </div>
-        </div>
-
-        <span class="fw-semibold">
-          {{ project.progress }}%
-        </span>
-
-      </div>
-
-
-    <div class="sb-progress mb-3">
-      {% for stage in project.stages %}
-        <div class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></div>
-      {% endfor %}
-    </div>
-
-    
-      <div class="">
-        {% for stage in project.stages %}
-          <span class="sb-chip sb-chip-{{ stage.name|lower }}">
-            {{ stage.name }}
-          </span>
-        {% endfor %}
-      </div>
-
-  </div>
-
   <div class="sb-card-title mb-2">프로젝트 결과물</div>
   <div class="sb-card mb-4">
 
     {% include 'partials/artifact_browser.html' with tree=project.tree %}
+  </div>
+
+  <div class="sb-card-title mb-2 sb-pipeline-section-title">Agent Pipeline <span class="sb-pipeline-live" aria-label="실시간 실행 중"></span></div>
+  <div class="sb-agent-pipeline mb-4" aria-label="Agent Pipeline">
+      <div class="sb-pipeline-head">
+        <div>
+          <div class="sb-pipeline-overall"><div class="sb-pipeline-overall-label"><span>전체 진행률</span><strong>{{ project.progress }}%</strong></div><div class="sb-pipeline-progress-track">{% for stage in project.stages %}<span class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></span>{% endfor %}</div><div class="sb-pipeline-stage-list">{% for stage in project.stages %}<span><i class="sb-pipeline-stage-dot {{ stage.name|lower }}"></i>{{ stage.name }}</span>{% endfor %}</div></div>
+        </div>
+        <div class="sb-pipeline-summary"><strong>2</strong><span>진행 중</span><i></i><strong>4</strong><span>완료</span></div>
+      </div>
+
+      <div class="sb-pipeline-flow">
+        <div class="sb-pipeline-column sb-pipeline-entry">
+          <div class="sb-agent-node is-done"><div class="sb-agent-icon"><i class="bi bi-broadcast-pin"></i></div><div><b>Supervisor</b><small>작업 조율</small></div><span class="sb-agent-state">완료</span></div>
+          <div class="sb-agent-node is-done"><div class="sb-agent-icon"><i class="bi bi-list-task"></i></div><div><b>Task Queue</b><small>작업 대기열</small></div><span class="sb-agent-state">완료</span></div>
+        </div>
+        <div class="sb-pipeline-connector"><span></span></div>
+        <div class="sb-pipeline-column sb-pipeline-branch">
+          <div class="sb-pipeline-branch-label">분석 &amp; 제작</div>
+          <div class="sb-agent-node is-done"><div class="sb-agent-icon"><i class="bi bi-clipboard2-check"></i></div><div><b>Planning</b><small>요구사항 분석</small></div><span class="sb-agent-state">완료</span></div>
+          <div class="sb-agent-node is-waiting"><div class="sb-agent-icon"><i class="bi bi-palette"></i></div><div><b>Creative</b><small>콘텐츠 설계</small></div><span class="sb-agent-state">대기</span></div>
+          <div class="sb-agent-node is-waiting"><div class="sb-agent-icon"><i class="bi bi-code-slash"></i></div><div><b>Engineering</b><small>구현 및 개발</small></div><span class="sb-agent-state">대기</span></div>
+        </div>
+        <div class="sb-pipeline-connector"><span></span></div>
+        <div class="sb-pipeline-column sb-pipeline-active">
+          <div class="sb-agent-node is-running"><div class="sb-agent-icon"><i class="bi bi-database"></i></div><div><b>Data</b><small>데이터 정리</small></div><span class="sb-agent-state">진행 중</span></div>
+          <div class="sb-agent-node is-running"><div class="sb-agent-icon"><i class="bi bi-stars"></i></div><div><b>AI</b><small>인사이트 생성</small></div><span class="sb-agent-state">진행 중</span></div>
+        </div>
+        <div class="sb-pipeline-connector"><span></span></div>
+        <div class="sb-pipeline-column sb-pipeline-exit">
+          <div class="sb-agent-node is-waiting"><div class="sb-agent-icon"><i class="bi bi-arrow-repeat"></i></div><div><b>Reflection</b><small>품질 점검</small></div><span class="sb-agent-state">대기</span></div>
+          <div class="sb-agent-node is-decision"><div class="sb-agent-icon"><i class="bi bi-shield-check"></i></div><div><b>검증</b><small>결과 확인</small></div><span class="sb-agent-state">대기</span></div>
+          <div class="sb-agent-outcomes"><span class="sb-outcome success"><i class="bi bi-check-lg"></i> 성공</span><span class="sb-outcome retry"><i class="bi bi-arrow-counterclockwise"></i> 재실행</span></div>
+        </div>
+      </div>
+      <div class="sb-pipeline-footer"><span><i class="bi bi-clock"></i> 마지막 실행 2분 전</span><span><i class="bi bi-lightning-charge"></i> 평균 처리 시간 4분 32초</span><button type="button" class="sb-pipeline-detail">실행 상세 보기 <i class="bi bi-arrow-up-right"></i></button></div>
+    </div>
+    <div id="sb-pipeline-container" class="sb-jointjs-container sb-pipeline-legacy" aria-hidden="true"></div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof joint === 'undefined') {
+    console.error('JointJS not loaded');
+    return;
+  }
+
+  const graph = new joint.dia.Graph({}, { cellNamespace: joint.shapes });
+  const paper = new joint.dia.Paper({
+    el: document.getElementById('sb-pipeline-container'),
+    model: graph,
+    width: '100%',
+    height: 400,
+    gridSize: 10,
+    drawGrid: true,
+    background: {
+      color: '#f8f9fa'
+    },
+    cellViewNamespace: joint.shapes
+  });
+
+  // Define custom shapes
+  const rect = joint.shapes.standard.Rectangle;
+  const link = joint.shapes.standard.Link;
+
+  // Node styles
+  const nodeStyles = {
+    done: {
+      fill: '#10b981',
+      stroke: '#059669',
+      strokeWidth: 2
+    },
+    running: {
+      fill: '#fbbf24',
+      stroke: '#f59e0b',
+      strokeWidth: 2,
+      strokeDasharray: '5,5'
+    },
+    todo: {
+      fill: '#e5e7eb',
+      stroke: '#9ca3af',
+      strokeWidth: 2,
+      strokeDasharray: '5,5'
+    },
+    failed: {
+      fill: '#ef4444',
+      stroke: '#dc2626',
+      strokeWidth: 2
+    },
+    decision: {
+      fill: '#3b82f6',
+      stroke: '#2563eb',
+      strokeWidth: 2
+    }
+  };
+
+  // Create nodes
+  const nodes = {
+    supervisor: new rect({
+      position: { x: 50, y: 50 },
+      size: { width: 120, height: 60 },
+      attrs: {
+        body: nodeStyles.done,
+        label: {
+          text: 'Supervisor\n완료',
+          fill: '#fff',
+          fontSize: 12,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    taskQueue: new rect({
+      position: { x: 200, y: 50 },
+      size: { width: 120, height: 60 },
+      attrs: {
+        body: nodeStyles.done,
+        label: {
+          text: 'Task Queue\n완료',
+          fill: '#fff',
+          fontSize: 12,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    planning: new rect({
+      position: { x: 350, y: 30 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.done,
+        label: {
+          text: 'Planning\n완료',
+          fill: '#fff',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    creative: new rect({
+      position: { x: 350, y: 90 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.todo,
+        label: {
+          text: 'Creative\n대기',
+          fill: '#374151',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    engineering: new rect({
+      position: { x: 350, y: 150 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.todo,
+        label: {
+          text: 'Engineering\n대기',
+          fill: '#374151',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    data: new rect({
+      position: { x: 480, y: 90 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.running,
+        label: {
+          text: 'Data\n진행 중',
+          fill: '#1f2937',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    ai: new rect({
+      position: { x: 600, y: 90 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.running,
+        label: {
+          text: 'AI\n진행 중',
+          fill: '#1f2937',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    reflection: new rect({
+      position: { x: 720, y: 90 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.todo,
+        label: {
+          text: 'Reflection\n대기',
+          fill: '#374151',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    decision: new rect({
+      position: { x: 840, y: 90 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.decision,
+        label: {
+          text: '검증 성공?',
+          fill: '#fff',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    success: new rect({
+      position: { x: 960, y: 50 },
+      size: { width: 80, height: 40 },
+      attrs: {
+        body: nodeStyles.done,
+        label: {
+          text: '성공',
+          fill: '#fff',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    result: new rect({
+      position: { x: 1060, y: 50 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.done,
+        label: {
+          text: '결과 통합\n완료',
+          fill: '#fff',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    failed: new rect({
+      position: { x: 960, y: 130 },
+      size: { width: 80, height: 40 },
+      attrs: {
+        body: nodeStyles.failed,
+        label: {
+          text: '실패',
+          fill: '#fff',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    }),
+
+    retry: new rect({
+      position: { x: 1060, y: 130 },
+      size: { width: 100, height: 50 },
+      attrs: {
+        body: nodeStyles.todo,
+        label: {
+          text: 'Retry Policy\n대기',
+          fill: '#fff',
+          fontSize: 11,
+          fontWeight: 'bold'
+        }
+      }
+    })
+  };
+
+  // Add nodes to graph
+  Object.values(nodes).forEach(node => graph.addCell(node));
+
+  // Create links
+  const links = [
+    // Main flow
+    { source: nodes.supervisor, target: nodes.taskQueue, style: { stroke: '#10b981', strokeWidth: 3 } },
+    { source: nodes.taskQueue, target: nodes.planning, style: { stroke: '#10b981', strokeWidth: 2 } },
+    { source: nodes.taskQueue, target: nodes.creative, style: { stroke: '#9ca3af', strokeWidth: 2, strokeDasharray: '5,5' } },
+    { source: nodes.taskQueue, target: nodes.engineering, style: { stroke: '#9ca3af', strokeWidth: 2, strokeDasharray: '5,5' } },
+
+    // Merge to Data
+    { source: nodes.planning, target: nodes.data, style: { stroke: '#f59e0b', strokeWidth: 3 } },
+    { source: nodes.creative, target: nodes.data, style: { stroke: '#9ca3af', strokeWidth: 2, strokeDasharray: '5,5' } },
+    { source: nodes.engineering, target: nodes.data, style: { stroke: '#9ca3af', strokeWidth: 2, strokeDasharray: '5,5' } },
+
+    // Data to AI to Reflection
+    { source: nodes.data, target: nodes.ai, style: { stroke: '#f59e0b', strokeWidth: 3 } },
+    { source: nodes.ai, target: nodes.reflection, style: { stroke: '#9ca3af', strokeWidth: 2 } },
+    { source: nodes.reflection, target: nodes.decision, style: { stroke: '#9ca3af', strokeWidth: 2 } },
+
+    // Decision paths
+    { source: nodes.decision, target: nodes.success, style: { stroke: '#10b981', strokeWidth: 3 } },
+    { source: nodes.decision, target: nodes.failed, style: { stroke: '#ef4444', strokeWidth: 2, strokeDasharray: '5,5' } },
+
+    // Success path
+    { source: nodes.success, target: nodes.result, style: { stroke: '#10b981', strokeWidth: 3 } },
+
+    // Failure path
+    { source: nodes.failed, target: nodes.retry, style: { stroke: '#f59e0b', strokeWidth: 2, strokeDasharray: '5,5' } },
+
+    // Retry paths
+    { source: nodes.retry, target: nodes.taskQueue, style: { stroke: '#f59e0b', strokeWidth: 2, strokeDasharray: '5,5' } },
+    { source: nodes.retry, target: nodes.supervisor, style: { stroke: '#6b7280', strokeWidth: 2, strokeDasharray: '5,5' } }
+  ];
+
+  // Add links to graph
+  links.forEach(linkData => {
+    const pipelineLink = new link({
+      source: linkData.source,
+      target: linkData.target,
+      attrs: {
+        line: {
+          stroke: linkData.style.stroke,
+          strokeWidth: linkData.style.strokeWidth,
+          strokeDasharray: linkData.style.strokeDasharray,
+          targetMarker: {
+            type: 'arrowhead',
+            fill: linkData.style.stroke
+          }
+        }
+      }
+    });
+    graph.addCell(pipelineLink);
+  });
+
+  // Center and scale
+  paper.scaleContentToFit();
+  if (typeof paper.centerContent === 'function') {
+    paper.centerContent();
+  }
+});
+</script>
+
+  <div class="sb-card-title mb-2 sb-history-section-title">프로젝트 이력 <span class="sb-history-count">{{ project.activities|length }} events</span></div>
+  <div class="sb-card sb-history-card mb-4">
+    <div class="sb-history-intro"><div><strong>최근 활동</strong><span>Agent가 남긴 프로젝트 실행 기록입니다.</span></div><i class="bi bi-activity"></i></div>
+    <div class="sb-history-scroll">
+      <div class="sb-timeline">
+      {% for activity in project.activities %}
+        <div class="sb-timeline-item sb-timeline-{{ activity.status }}">
+          <div class="sb-timeline-content">
+            <div class="sb-timeline-time">{{ activity.time }}</div>
+            <div class="sb-timeline-title">{{ activity.title }}</div>
+            <div class="sb-timeline-agent small text-secondary">{{ activity.agent }}</div>
+            <div class="sb-timeline-status">
+              {% if activity.status == 'done' %}<span class="sb-history-status-badge status-done"><i class="bi bi-check-circle"></i> 완료</span>
+              {% elif activity.status == 'running' %}<span class="sb-history-status-badge status-running"><i class="bi bi-play-circle"></i> 진행 중</span>
+              {% elif activity.status == 'warning' %}<span class="sb-history-status-badge is-warning"><i class="bi bi-exclamation-circle"></i> 주의</span>
+              {% elif activity.status == 'failed' %}<span class="sb-history-status-badge is-failed"><i class="bi bi-x-circle"></i> 에러</span>
+              {% else %}<span class="sb-history-status-badge"><i class="bi bi-circle"></i> 대기</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+      </div>
+    </div>
   </div>
 
   <button
@@ -148,11 +483,12 @@
     type="button"
     id="sb-chat-open">
     <i class="bi bi-chat-dots me-1"></i> AI
-    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger sb-chat-badge" id="sb-chat-badge" style="display: none;">3</span>
+    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger sb-chat-badge" id="sb-chat-badge">4</span>
   </button>
 
-  <section class="sb-chat-panel" id="sb-chat-panel">
+  <section >
 
+    <div class="sb-chat-panel" id="sb-chat-panel">
     <div class="sb-chat-head">
       <span>Second Brain</span>
 
@@ -173,14 +509,72 @@
       </div>
     </div>
 
+
     <div class="sb-chat-body" id="sb-chat-body">
 
-      <div class="sb-msg sb-msg-ai">안녕하세요! 👋 
-프로젝트를 빠르게 구현하고싶다면 아래 내용을 작성해주세요. 내용은 한 번에 보내주시면 됩니다.</div>
+    <!-- 채팅방 목록 (크게 보기 모드일 때만 표시) -->
+    <div class="sb-chat-sidebar" id="sb-chat-sidebar">
+      <div class="sb-chat-sidebar-header">
+        <span class="fw-semibold">채팅방</span>
+        <button class="btn btn-sm btn-primary" id="sb-new-chat">
+          <i class="bi bi-plus-lg"></i> 새 대화
+        </button>
+      </div>
+      <div class="sb-chat-rooms">
+        <div class="sb-chat-room active" data-room="planning">
+          <div class="sb-chat-room-icon">
+            <i class="bi bi-clipboard-data"></i>
+          </div>
+          <div class="sb-chat-room-info">
+            <div class="sb-chat-room-name">Planning Agent</div>
+            <div class="sb-chat-room-preview">기획 및 요구사항 분석...</div>
+          </div>
+          <div class="sb-chat-room-badge">3</div>
+        </div>
+        <div class="sb-chat-room" data-room="design">
+          <div class="sb-chat-room-icon">
+            <i class="bi bi-palette"></i>
+          </div>
+          <div class="sb-chat-room-info">
+            <div class="sb-chat-room-name">Design Agent</div>
+            <div class="sb-chat-room-preview">UI/UX 디자인 작업...</div>
+          </div>
+          <div class="sb-chat-room-badge">1</div>
+        </div>
+        <div class="sb-chat-room" data-room="engineering">
+          <div class="sb-chat-room-icon">
+            <i class="bi bi-code-slash"></i>
+          </div>
+          <div class="sb-chat-room-info">
+            <div class="sb-chat-room-name">Engineering Agent</div>
+            <div class="sb-chat-room-preview">Frontend/Backend 개발...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-chat-main">
+      <div class="sb-chat-animation">
+          <div class="sb-chat-gif-container">
+            <img src="{% static 'img/loading.gif' %}" alt="AI 준비 중" class="sb-chat-gif">
+          </div>
+          <div class="sb-chat-welcome-text">
+            <div class="sb-chat-greeting">안녕하세요! 👋</div>
+            <div class="sb-chat-status">준비 중입니다...</div>
+            <div class="sb-chat-loading-text">프로젝트 내용을 살펴보고 있어요.</div>
+          </div>
+      </div>
+
+      <div class="sb-msg sb-msg-ai">프로젝트를 빠르게 구현하고싶다면 아래 내용을 작성해주세요. 내용은 한 번에 보내주시면 됩니다.</div>
       <div class="sb-msg sb-msg-ai"><div class="sb-chat-tabs"><button class="sb-chat-tab-btn active" data-tab="guide">프로젝트 구현 가이드</button>
           <button class="sb-chat-tab-btn" data-tab="logo">로고만들기</button>
           <button class="sb-chat-tab-btn" data-tab="onepage">원페이지만들기</button>
-          <button class="sb-chat-tab-btn" data-tab="survey">설문조사페이지만들기</button></div><div class="sb-chat-tab-content" id="tab-content"><div>[프로젝트 구현 가이드]</div>{% for line in chat_guide %}<div>{{ line }}</div>{% endfor %}<div>※ 모르는 항목은 비워두셔도 됩니다.</div></div></div></div>
+          <button class="sb-chat-tab-btn" data-tab="survey">설문조사페이지만들기</button></div><div class="sb-chat-tab-content" id="tab-content"><div>[프로젝트 구현 가이드]</div>{% for line in chat_guide %}<div>{{ line }}</div>{% endfor %}<div>※ 모르는 항목은 비워두셔도 됩니다.</div></div></div>
+
+
+    </div>
+
+    </div>
     <form
       class="sb-chat-foot"
       id="sb-chat-form"
@@ -209,7 +603,6 @@
       </button>
 
     </form>
-
   </section>
 
 {% endif %}
@@ -221,6 +614,32 @@
 {% if not is_all_services %}
 <script src="{% static 'js/artifact_browser.js' %}"></script>
 <script src="{% static 'js/chat.js' %}"></script>
+{% else %}
+<script>
+  // Project list focus functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const projectItems = document.querySelectorAll('.sb-project-list-item');
+    const artifactContainers = document.querySelectorAll('.project-artifacts');
+
+    projectItems.forEach(item => {
+      item.addEventListener('click', function() {
+        const projectId = this.dataset.projectId;
+
+        // Update active state for project items
+        projectItems.forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update active state for artifact containers
+        artifactContainers.forEach(container => {
+          container.classList.remove('active');
+          if (container.dataset.projectId === projectId) {
+            container.classList.add('active');
+          }
+        });
+      });
+    });
+  });
+</script>
 {% endif %}
 
 {% endblock %}

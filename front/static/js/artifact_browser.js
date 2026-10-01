@@ -36,4 +36,61 @@ document.addEventListener('DOMContentLoaded', function () {
       window.sbToast(selected + (action === 'share' ? ' 공유 링크를 복사했습니다.' : ' 다운로드를 시작합니다.'), 'primary');
     });
   });
+
+  // Drag and drop resizer functionality
+  const resizer = document.getElementById('sb-artifact-resizer');
+  const artifactTree = document.querySelector('.sb-artifact-tree');
+  const artifactViewer = document.querySelector('.sb-artifact-viewer');
+
+  // Keep the file list's scrolling height matched to the preview box.
+  if (viewer) {
+    const syncTreeHeight = function () {
+      const height = viewer.getBoundingClientRect().height;
+      if (height > 0) tree.style.setProperty('--sb-tree-max-height', height + 'px');
+    };
+    syncTreeHeight();
+    if (typeof ResizeObserver !== 'undefined') {
+      const viewerObserver = new ResizeObserver(syncTreeHeight);
+      viewerObserver.observe(viewer);
+    } else {
+      window.addEventListener('resize', syncTreeHeight);
+    }
+  }
+
+  if (resizer && artifactTree && artifactViewer) {
+    let isResizing = false;
+
+    resizer.addEventListener('mousedown', function(e) {
+      isResizing = true;
+      resizer.classList.add('resizing');
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isResizing) return;
+
+      const containerRect = artifactTree.parentElement.getBoundingClientRect();
+      const newTreeWidth = e.clientX - containerRect.left;
+      const containerWidth = containerRect.width;
+
+      // Calculate the three grid columns: tree, resizer, viewer.
+      const treePercentage = (newTreeWidth / containerWidth) * 100;
+
+      // Set minimum and maximum limits
+      if (treePercentage >= 20 && treePercentage <= 60) {
+        const viewerPercentage = 100 - treePercentage;
+        artifactTree.parentElement.style.gridTemplateColumns = treePercentage + '% 8px calc(' + viewerPercentage + '% - 8px)';
+      }
+    });
+
+    document.addEventListener('mouseup', function() {
+      if (isResizing) {
+        isResizing = false;
+        resizer.classList.remove('resizing');
+        document.body.style.cursor = '';
+        document.body.style.userSelect = '';
+      }
+    });
+  }
 });

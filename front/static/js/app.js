@@ -37,6 +37,60 @@
   };
 
   document.addEventListener('DOMContentLoaded', function () {
+    const sidebar = document.getElementById('sb-sidebar');
+    const sidebarToggle = document.getElementById('sb-sidebar-toggle');
+    const sidebarCollapsed = localStorage.getItem('sb-sidebar-collapsed') === 'true';
+    if (sidebar && sidebarToggle) {
+      const sidebarLinks = sidebar.querySelectorAll('a.sb-nav-item, a.sb-nav-sub');
+      const updateSidebarTooltips = function (collapsed) {
+        sidebarLinks.forEach(function (link) {
+          if (!link.dataset.menuLabel) link.dataset.menuLabel = link.textContent.replace(/\s+/g, ' ').trim();
+          if (collapsed) link.title = link.dataset.menuLabel;
+          else link.removeAttribute('title');
+        });
+      };
+      if (sidebarCollapsed) document.body.classList.add('sb-sidebar-collapsed');
+      updateSidebarTooltips(sidebarCollapsed);
+      sidebarToggle.setAttribute('aria-expanded', String(!sidebarCollapsed));
+      sidebarToggle.addEventListener('click', function () {
+        const collapsed = document.body.classList.toggle('sb-sidebar-collapsed');
+        localStorage.setItem('sb-sidebar-collapsed', String(collapsed));
+        updateSidebarTooltips(collapsed);
+        sidebarToggle.setAttribute('aria-expanded', String(!collapsed));
+        sidebarToggle.setAttribute('aria-label', collapsed ? '사이드바 펼치기' : '사이드바 접기');
+        sidebarToggle.title = collapsed ? '사이드바 펼치기' : '사이드바 접기';
+      });
+    }
+    const chatFab = document.getElementById('sb-chat-open');
+    if (chatFab) {
+      let dragging = false;
+      let moved = false;
+      let offsetX = 0;
+      let offsetY = 0;
+      chatFab.addEventListener('pointerdown', function (event) {
+        dragging = true;
+        moved = false;
+        const rect = chatFab.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+        chatFab.setPointerCapture(event.pointerId);
+        chatFab.classList.add('is-dragging');
+      });
+      chatFab.addEventListener('pointermove', function (event) {
+        if (!dragging) return;
+        moved = true;
+        chatFab.style.left = Math.max(8, Math.min(window.innerWidth - chatFab.offsetWidth - 8, event.clientX - offsetX)) + 'px';
+        chatFab.style.top = Math.max(8, Math.min(window.innerHeight - chatFab.offsetHeight - 8, event.clientY - offsetY)) + 'px';
+        chatFab.style.right = 'auto';
+        chatFab.style.bottom = 'auto';
+      });
+      chatFab.addEventListener('pointerup', function (event) {
+        dragging = false;
+        chatFab.classList.remove('is-dragging');
+        if (moved) { event.preventDefault(); chatFab.dataset.dragged = 'true'; setTimeout(() => { delete chatFab.dataset.dragged; }, 250); }
+      });
+      chatFab.addEventListener('click', function (event) { if (chatFab.dataset.dragged === 'true') event.preventDefault(); });
+    }
     const darkToggle = document.getElementById('sb-dark-mode');
     if (darkToggle) {
       darkToggle.checked = settings.dark === true;
@@ -119,5 +173,62 @@
     const tooltipList = [...tooltipTriggerList].map(function (tooltipTriggerEl) {
       return new bootstrap.Tooltip(tooltipTriggerEl);
     });
+
+    // Error Header Test Button
+    const errorTestBtn = document.getElementById('sb-error-test-btn');
+    const errorAlert = document.getElementById('sb-global-error-alert');
+    const errorMessage = document.getElementById('sb-error-message');
+    const errorAction = document.getElementById('sb-error-action');
+
+    if (errorTestBtn && errorAlert) {
+      errorTestBtn.addEventListener('click', function() {
+        showErrorAlert('Project 01의 Agent 실행에 실패했습니다.', '/projects/detail/1');
+      });
+
+      if (errorAction) {
+        errorAction.addEventListener('click', function() {
+          const targetUrl = errorAction.dataset.targetUrl;
+          if (targetUrl) {
+            window.location.href = targetUrl;
+          } else {
+            window.sbToast('관련 프로젝트로 이동합니다.', 'info');
+            hideErrorAlert();
+          }
+        });
+      }
+    }
+
+    // Error Alert 표시 함수
+    function showErrorAlert(message, targetUrl) {
+      if (errorMessage) {
+        errorMessage.textContent = message;
+      }
+      if (errorAction && targetUrl) {
+        errorAction.dataset.targetUrl = targetUrl;
+      }
+      if (errorAlert) {
+        errorAlert.style.display = 'block';
+        document.body.classList.add('has-error');
+      }
+    }
+
+    // Error Alert 숨기기 함수
+    function hideErrorAlert() {
+      if (errorAlert) {
+        errorAlert.style.display = 'none';
+        document.body.classList.remove('has-error');
+      }
+    }
+
+    // 전역 함수로 노출
+    window.showErrorAlert = showErrorAlert;
+    window.hideErrorAlert = hideErrorAlert;
+
+    // 테스트: 치명적인 오류 시뮬레이션 (개발용)
+    // 실제 사용 시에는 API 응답이나 에러 핸들러에서 호출
+    setTimeout(function() {
+      // 테스트를 위해 5초 후 자동으로 오류 표시 (실제 사용 시 제거)
+      // showErrorAlert('치명적인 오류가 발생했습니다. 시스템을 확인해주세요.');
+    }, 5000);
   });
 })();

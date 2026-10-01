@@ -1,6 +1,8 @@
 {# tree: [{name, files: [{name, kind, size, updated_at, agent}]}] #}
-<div class="row g-3">
-  <div class="col-lg-5">
+<div class="sb-artifact-browser">
+  <div class="sb-artifact-toolbar"><div>
+    <small>Agent가 생성한 파일을 탐색하고 미리볼 수 있습니다.</small></div><span class="sb-artifact-hint"><i class="bi bi-arrows-expand"></i> 드래그하여 영역 조절</span></div>
+  <div class="sb-artifact-tree" style="width: 40%;">
     <div class="sb-tree" data-sb-tree>
       {% for folder in tree %}
         <div class="sb-tree-folder"><i class="bi bi-folder2 me-1"></i>{{ folder.name }}</div>
@@ -20,9 +22,14 @@
         <p class="text-secondary small mb-0">생성된 결과물이 없습니다.</p>
       {% endfor %}
     </div>
+    <div class="sb-artifact-tree-footer"><button class="btn btn-primary btn-sm" type="button" data-sb-action="zip"><i class="bi bi-file-earmark-zip me-1"></i> 전체 결과물 ZIP 다운로드</button></div>
   </div>
 
-  <div class="col-lg-7">
+  <div class="sb-artifact-resizer" id="sb-artifact-resizer">
+    <div class="sb-resizer-handle"></div>
+  </div>
+
+  <div class="sb-artifact-viewer" style="width: 60%;">
     <div class="d-flex justify-content-between align-items-center mb-2">
       <div class="fw-semibold small" data-sb-viewer-title>파일을 선택해주세요</div>
       <div class="small text-secondary" data-sb-viewer-meta></div>
@@ -35,7 +42,6 @@
     <div class="d-flex flex-wrap gap-2">
       <button class="btn btn-outline-secondary btn-sm" type="button" data-sb-action="share">↗ 공유</button>
       <button class="btn btn-outline-secondary btn-sm" type="button" data-sb-action="download">↓ 다운로드</button>
-      <button class="btn btn-primary btn-sm" type="button" data-sb-action="zip">ZIP으로 다운로드</button>
     </div>
   </div>
 </div>

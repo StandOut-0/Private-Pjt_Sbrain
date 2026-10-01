@@ -20,6 +20,12 @@ PROJECTS = [
             {'name': 'Design', 'state': 'running', 'progress': 20},
             {'name': 'Development', 'state': 'todo', 'progress': 0},
         ],
+        'activities': [
+            {'time': '12:42', 'title': 'Reflection Agent 완료', 'agent': 'Reflection Agent', 'status': 'done'},
+            {'time': '12:39', 'title': 'Planning Agent 결과 생성', 'agent': 'Planning Agent', 'status': 'done'},
+            {'time': '12:31', 'title': '사용자 요구사항 입력', 'agent': '사용자', 'status': 'done'},
+            {'time': '12:28', 'title': 'Project 생성', 'agent': 'Supervisor Agent', 'status': 'done'},
+        ],
         'tree': [
             {
                 'name': 'Planning',
@@ -98,15 +104,20 @@ PROJECTS = [
 
 TASKS = [
     {'id': 1, 'name': '요구사항 분석 및 PRD 작성', 'project': '쇼핑몰 서비스', 'status': 'done',
-     'status_label': '완료', 'agent': 'Planning', 'duration': '32.4 sec', 'started_at': '2026-08-11 09:12'},
+     'status_label': '완료', 'agent': 'Planning', 'duration': '32.4 sec', 'started_at': '2026-08-11 09:12',
+     'input_tokens': 1240, 'output_tokens': 856, 'total_tokens': 2096},
     {'id': 2, 'name': '경쟁사 데이터 수집', 'project': '쇼핑몰 서비스', 'status': 'running',
-     'status_label': '진행 중', 'agent': 'Data', 'duration': '18.2 sec', 'started_at': '2026-08-11 09:40'},
+     'status_label': '진행 중', 'agent': 'Data', 'duration': '18.2 sec', 'started_at': '2026-08-11 09:40',
+     'input_tokens': 892, 'output_tokens': 423, 'total_tokens': 1315},
     {'id': 3, 'name': '이탈 예측 모델 학습', 'project': 'AI 분석 서비스', 'status': 'failed',
-     'status_label': '실패', 'agent': 'AI', 'duration': '51.7 sec', 'started_at': '2026-08-10 17:03'},
+     'status_label': '실패', 'agent': 'AI', 'duration': '51.7 sec', 'started_at': '2026-08-10 17:03',
+     'input_tokens': 2341, 'output_tokens': 1567, 'total_tokens': 3908},
     {'id': 4, 'name': '쇼핑몰 UI 시안 생성', 'project': '쇼핑몰 서비스', 'status': 'running',
-     'status_label': '진행 중', 'agent': 'Creative', 'duration': '18.4 sec', 'started_at': '2026-08-11 10:02'},
+     'status_label': '진행 중', 'agent': 'Creative', 'duration': '18.4 sec', 'started_at': '2026-08-11 10:02',
+     'input_tokens': 756, 'output_tokens': 389, 'total_tokens': 1145},
     {'id': 5, 'name': '생성 결과 검증 및 개선안 도출', 'project': '쇼핑몰 서비스', 'status': 'waiting',
-     'status_label': '대기', 'agent': 'Reflection', 'duration': '-', 'started_at': '-'},
+     'status_label': '대기', 'agent': 'Reflection', 'duration': '-', 'started_at': '-',
+     'input_tokens': 0, 'output_tokens': 0, 'total_tokens': 0},
 ]
 
 TASK_METRICS = {'success_rate': '94.2%', 'avg_duration': '32.8 sec', 'error_rate': '5.8%'}

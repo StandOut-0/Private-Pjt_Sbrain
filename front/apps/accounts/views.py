@@ -4,6 +4,7 @@ from apps.accounts.session import (
     ROLE_ADMIN,
     ROLE_DEMO,
     ROLE_USER,
+    get_user,
     login_required,
     sign_in,
     sign_out,
@@ -19,7 +20,7 @@ def login(request):
             sign_in(request, '관리자', ROLE_ADMIN, 'admin@secondbrain.dev')
             return redirect('accounts:face_auth')
         sign_in(request, 'Sanghee', ROLE_USER, 'user@secondbrain.dev')
-        return redirect('projects:list')
+        return redirect('dashboard:index')
     return render(request, 'accounts/login.html')
 
 
@@ -28,7 +29,7 @@ def demo_login(request):
     if request.method == 'POST':
         if request.POST.get('code', '').strip().upper() == DEMO_CODE:
             sign_in(request, 'Demo User', ROLE_DEMO)
-            return redirect('projects:list')
+            return redirect('dashboard:index')
         error = '인증 코드가 올바르지 않습니다. 다시 입력해주세요.'
     return render(request, 'accounts/demo_login.html', {'error': error, 'demo_code': DEMO_CODE})
 
@@ -37,6 +38,9 @@ def face_auth(request):
     error = None
     if request.method == 'POST':
         if request.POST.get('result') == 'success':
+            user = get_user(request)
+            if user and user['is_admin']:
+                return redirect('management:tasks')
             return redirect('dashboard:index')
         error = '얼굴 인증에 실패했습니다. 다시 시도해주세요.'
     return render(request, 'accounts/face_auth.html', {'error': error})

@@ -1,28 +1,29 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Coming Soon — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/comingsoon.css' %}?v=20261001-detail">{% endblock %}
 {% block content %}
-<div class="sb-card text-center py-5 mb-4">
-  <h1 class="h4">Coming Soon</h1>
-  <p class="text-secondary mb-1">아직 준비 중인 기능입니다.</p>
-  <p class="text-secondary small">SECOND BRAIN은 고객 만족도를 위해 끊임없이 도전합니다.</p>
-  <a class="small" href="{% url 'dashboard:index' %}">← Dashboard로 돌아가기</a>
-</div>
-
-<div class="sb-card-title mb-2">기능 미리보기</div>
-<div class="row g-3">
+<div class="sb-future">
+  <section class="sb-future-hero" aria-label="준비 중인 기능 소개">
+    <div class="sb-future-hero-copy"><h2>더 나은 생각,<br>더 새로운 가능성.</h2><p>아이디어를 발전시키고, 새로운 기능을 준비하고 있습니다.<br>우리가 만들어 갈 다음 이야기를 미리 살펴보세요.</p><a href="#feature-preview">기능 미리보기 <i class="bi bi-arrow-down" aria-hidden="true"></i></a></div>
+  </section>
+  <section id="feature-preview" aria-labelledby="feature-preview-title">
+  <div class="sb-future-section-head"><div><h2 id="feature-preview-title">기능 미리보기 <span>{{ documents|length }}</span></h2></div><p>카드를 선택하면 자세한 내용을 볼 수 있습니다.</p></div>
+  <div class="sb-future-grid">
   {% for document in documents %}
-    <div class="col-md-6">
-      <a class="sb-card sb-project-card" href="{% url 'comingsoon:detail' document.slug %}">
-        <div class="d-flex justify-content-between align-items-start">
-          <div class="fw-semibold">{{ document.title }}</div>
-          <span class="sb-chip">{{ document.status }}</span>
-        </div>
-        <p class="small text-secondary mb-2">{{ document.summary }}</p>
-        <div>{% for tech in document.technologies %}<span class="sb-chip">{{ tech }}</span>{% endfor %}</div>
+      <a class="sb-future-card" href="{% url 'comingsoon:detail' document.slug %}">
+        <div class="sb-future-card-top"><span class="sb-future-feature-icon"><i class="bi {% cycle 'bi-lightbulb' 'bi-bezier2' 'bi-cpu' 'bi-layers' %}" aria-hidden="true"></i></span><span class="sb-future-status">{{ document.status }}</span></div>
+        <div class="sb-future-category">{{ document.category|default:'새로운 아이디어' }}</div>
+        <h3>{{ document.title }}</h3>
+        <p>{{ document.summary }}</p>
+        <div class="sb-future-tags">{% for tech in document.technologies %}<span>{{ tech }}</span>{% endfor %}</div>
+        <div class="sb-future-card-footer"><span>자세히 살펴보기</span><i class="bi bi-arrow-up-right" aria-hidden="true"></i></div>
       </a>
-    </div>
   {% empty %}
-    <div class="col-12"><p class="text-secondary small">등록된 아이디어가 없습니다.</p></div>
+    <div class="sb-future-empty"><i class="bi bi-lightbulb" aria-hidden="true"></i><h3>다음 아이디어를 기다리고 있어요.</h3><p>등록된 아이디어가 없습니다. 새로운 기능이 준비되면 이곳에서 만나볼 수 있습니다.</p>{% if sb_user.is_admin %}<a href="{% url 'comingsoon:manage' %}">아이디어 관리로 이동 →</a>{% endif %}</div>
   {% endfor %}
+  </div>
+  </section>
+  <footer class="sb-future-footer"><span><i class="bi bi-stars" aria-hidden="true"></i> 작은 아이디어가 더 나은 Second Brain을 만듭니다.</span><a href="{% url 'dashboard:index' %}">Dashboard로 돌아가기 <i class="bi bi-arrow-right" aria-hidden="true"></i></a></footer>
 </div>
 {% endblock %}

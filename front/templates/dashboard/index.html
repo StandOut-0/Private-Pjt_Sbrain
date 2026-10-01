@@ -1,15 +1,25 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Dashboard — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-start">
-  <h1 class="sb-section-title mb-4">Dashboard</h1>
-  <a href="{% url 'projects:create' %}" class="btn btn-primary btn-sm me-2">+ 새 프로젝트</a>
+<div class="sb-overview">
+<section class="sb-overview-hero" aria-label="워크스페이스 소개">
+  <div class="sb-hero-copy"><h2>다음 아이디어를<br>현실로 만들어 보세요.</h2><p>프로젝트 진행 상황을 확인하고, 에이전트와 함께 다음 단계를 시작하세요.</p><a href="{% url 'projects:list' %}">프로젝트 둘러보기 <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+</section>
+<section class="sb-overview-metrics" aria-label="워크스페이스 요약">
+  <a href="{% url 'projects:list' %}"><span class="sb-metric-icon"><i class="bi bi-folder2-open" aria-hidden="true"></i></span><span>전체 프로젝트<strong>{{ projects|length }}<small>개</small></strong></span><i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+  <a href="{% url 'management:tasks' %}"><span class="sb-metric-icon"><i class="bi bi-list-check" aria-hidden="true"></i></span><span>등록된 작업<strong>{{ tasks|length }}<small>개</small></strong></span><i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+  <a href="{% url 'management:agents' %}"><span class="sb-metric-icon"><i class="bi bi-cpu" aria-hidden="true"></i></span><span>에이전트 현황<strong>{{ agent_executions|length }}<small>개</small></strong></span><i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+  <a href="{% url 'management:results' %}"><span class="sb-metric-icon"><i class="bi bi-file-earmark-text" aria-hidden="true"></i></span><span>최근 결과물<strong>{{ artifacts|length }}<small>개</small></strong></span><i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>
+</section>
 </div>
 
-<div class="sb-card mb-4">
+<div class="mb-4">
   <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
-  <span>최근 프로젝트</span>
+  <div class="d-flex align-items-center gap-2"><span>최근 프로젝트</span></div>
   <div>
+    <a href="{% url 'projects:create' %}" class="small text-decoration-none me-3">+ 새 프로젝트</a>
     <a href="{% url 'projects:list' %}" class="small text-decoration-none">
       자세히 →
     </a>
@@ -18,26 +28,32 @@
   <div class="row g-3">
     {% for project in projects %}
       <div class="col-md-4">
-        <a class="sb-card sb-project-card position-relative" href="{% url 'projects:detail' project.id %}">
+        <a class="sb-dashboard-project sb-project-card position-relative" href="{% url 'projects:detail' project.id %}">
           <span class="small text-secondary position-absolute top-0 end-0 m-3" data-sb-relative-time>{{ project.updated_at }}</span>
           <div class="small text-secondary">{{ project.code }}</div>
-          <div class="fw-semibold mb-2">{{ project.title }}</div>
+          <div class="sb-project-symbol"><i class="bi bi-folder2-open" aria-hidden="true"></i></div>
+          <div class="fw-semibold mb-2 sb-project-name">{{ project.title }}</div>
           <div class="small mb-2"><span class="sb-dot sb-dot-{{ project.status }}"></span>{{ project.status_label }}</div>
-          <div class="sb-progress">
-            <!-- <div class="sb-progress-bar" style="width: {{ project.progress }}%"></div> -->
+          <div class="sb-progress mb-2">
             {% for stage in project.stages %}
               <div class="sb-progress-bar {{ stage.name|lower }}" style="width: {{ stage.progress }}%"></div>
             {% endfor %}
           </div>
 
-          <div class="small text-secondary mt-1">{{ project.progress }}%</div>
+          <div class="mb-2">
+            {% for stage in project.stages %}
+              <span class="sb-chip sb-chip-{{ stage.name|lower }} small">{{ stage.name }}</span>
+            {% endfor %}
+          </div>
+
+          <div class="sb-project-completion"><span>전체 진행률</span><strong>{{ project.progress }}%</strong></div>
         </a>
       </div>
-    {% endfor %}
+    {% empty %}<div class="col-12"><div class="sb-overview-empty">첫 프로젝트를 만들고 아이디어를 시작해 보세요.</div></div>{% endfor %}
   </div>
 </div>
 
-<div class="sb-card mb-4">
+<div class="mb-4">
   <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
     <span>Task 진행현황</span>
     <a href="{% url 'management:tasks' %}" class="small text-decoration-none">
@@ -47,37 +63,35 @@
   <div class="row g-3">
     {% for task in tasks %}
       <div class="col-md-4">
-        <div class="sb-card h-100">
+        <div class="sb-dashboard-task h-100">
           <div class="small"><span class="sb-dot sb-dot-{{ task.status }}"></span>{{ task.status_label }}</div>
           <div class="fw-semibold small mt-1">{{ task.name }}</div>
           <div class="small text-secondary mt-1">{{ task.project }} · {{ task.agent }} Agent</div>
         </div>
       </div>
-    {% endfor %}
+    {% empty %}<div class="col-12"><div class="sb-overview-empty">등록된 작업이 없습니다.</div></div>{% endfor %}
   </div>
 </div>
 
 <div class="row g-3">
-  {% if sb_user.is_admin %}
-    <div class="col-md-6">
-      <div class="sb-card h-100">
-        <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
-          <span>Agent 실행현황</span>
-          <a href="{% url 'management:agents' %}" class="small text-decoration-none">
-            자세히 →
-          </a>
-        </div>
-        {% for execution in agent_executions %}
-          <div class="d-flex justify-content-between align-items-center py-1 small">
-            <span><span class="sb-dot sb-dot-{{ execution.status }}"></span>{{ execution.name }}</span>
-            <span class="text-secondary">{{ execution.count }}회</span>
-          </div>
-        {% endfor %}
+  <div class="col-md-6">
+    <div class="sb-card sb-dashboard-subcard h-100">
+      <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
+        <span>Agent 실행현황</span>
+        <a href="{% url 'management:agents' %}" class="small text-decoration-none">
+          자세히 →
+        </a>
       </div>
+      {% for execution in agent_executions %}
+        <div class="d-flex justify-content-between align-items-center py-1 small">
+          <span><span class="sb-dot sb-dot-{{ execution.status }}"></span>{{ execution.name }}</span>
+          <span class="text-secondary">{{ execution.count }}회</span>
+        </div>
+      {% empty %}<p class="text-secondary small mb-0">에이전트 실행 내역이 없습니다.</p>{% endfor %}
     </div>
-  {% endif %}
-  <div class="{% if sb_user.is_admin %}col-md-6{% else %}col-12{% endif %}">
-    <div class="sb-card h-100">
+  </div>
+  <div class="col-md-6">
+    <div class="sb-card sb-dashboard-subcard h-100">
       <div class="sb-card-title mb-2 d-flex justify-content-between align-items-center">
         <span>최근 결과물</span>
         <a href="{% url 'management:results' %}" class="small text-decoration-none">
@@ -95,5 +109,6 @@
       {% endfor %}
     </div>
   </div>
+</div>
 </div>
 {% endblock %}

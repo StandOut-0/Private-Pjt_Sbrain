@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Login — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/login.css' %}?v=20261001-white-overlay">{% endblock %}
 {% block layout %}
-<div class="sb-auth">
+<div class="sb-auth sb-auth-gif">
   <div class="sb-auth-card">
     <h1 class="sb-auth-title mb-4">
       <img class="sb-logo-full sb-logo-light" src="{% static 'img/logo/logo_dark_full.png' %}" alt="Second Brain — 또 다른 나를 만드는 개인 AI 업무 파트너">

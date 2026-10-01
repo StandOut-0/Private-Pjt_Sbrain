@@ -1,7 +1,9 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}관리자 인증 — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/login.css' %}?v=20261001-white-overlay">{% endblock %}
 {% block layout %}
-<div class="sb-auth">
+<div class="sb-auth sb-auth-gif">
   <div class="sb-auth-card" style="width: 520px;">
     <h1 class="h5 sb-auth-title mb-2">관리자 인증</h1>
     <p class="text-secondary mb-4">얼굴 인증을 진행해주세요</p>

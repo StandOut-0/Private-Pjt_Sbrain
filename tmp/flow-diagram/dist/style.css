@@ -1,0 +1,488 @@
+@charset "UTF-8";
+body {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  z-index: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 1080px;
+  height: 400px;
+  overflow: hidden;
+  background: url("https://i.loli.net/2020/05/13/OJYTLba8CQweWIq.png") no-repeat;
+  background-size: cover;
+}
+.container .logos {
+  display: flex;
+  align-items: center;
+  width: 400px;
+  height: 320px;
+  overflow: hidden;
+  border-radius: 0 200px 200px 0;
+  background: radial-gradient(166.55% 283.86% at -39.88% 50%, rgba(255, 255, 255, 0) 65.64%, rgba(0, 238, 255, 0.48) 99%);
+}
+.container .logos .logos-wrap img {
+  height: 40px;
+}
+.container .logos .logos-wrap .box {
+  display: flex;
+  width: 100%;
+  justify-content: space-around;
+  margin-bottom: 30px;
+}
+.container .logos .logos-wrap .box:last-child {
+  margin: unset;
+}
+.container .shenzhi-logo {
+  position: relative;
+  left: -60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 100px;
+  box-shadow: 0px 0px 40px rgba(164, 168, 197, 0.24);
+  background-color: white;
+}
+.container .shenzhi-logo img {
+  z-index: 99;
+  width: 60px;
+}
+.container .account {
+  position: relative;
+  left: 90px;
+}
+.container .lines {
+  position: absolute;
+  width: 482px;
+  height: 100%;
+  z-index: -1;
+  left: 423px;
+  top: 107px;
+}
+.container .lines .line-1 svg {
+  position: absolute;
+}
+.container .lines .line-1 svg:nth-of-type(3) {
+  position: absolute;
+  right: 0;
+  top: 1px;
+}
+.container .lines .line-2 {
+  position: absolute;
+  top: -49px;
+}
+.container .lines .line-2 svg {
+  position: absolute;
+}
+.container .lines .line-3 {
+  position: absolute;
+  top: 40px;
+}
+.container .lines .line-3 svg {
+  position: absolute;
+}
+.container .lines .line-3 svg:nth-of-type(3) {
+  position: relative;
+  right: -89%;
+  top: 87px;
+}
+
+.results {
+  position: absolute;
+  right: 150px;
+  z-index: 99;
+}
+.results .icon {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 52px;
+  height: 52px;
+  background: #ffffff;
+  box-shadow: 0px 8px 40px rgba(164, 168, 197, 0.4);
+  border-radius: 59px;
+  margin-bottom: 38px;
+}
+.results .icon::after {
+  position: absolute;
+  right: -100%;
+  content: "";
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 16px;
+  color: #3b426b;
+}
+.results .icon:last-child {
+  margin-bottom: unset;
+}
+.results .icon:nth-of-type(1)::after {
+  content: "下单";
+}
+.results .icon:nth-of-type(2)::after {
+  content: "领劵";
+}
+.results .icon:nth-of-type(3)::after {
+  content: "发帖";
+}
+.results .icon:nth-of-type(4)::after {
+  content: "个人中心";
+  right: -83px;
+}
+
+#line-1 {
+  stroke-dasharray: 60, 600;
+  stroke-dashoffset: 24;
+  -webkit-animation: line1 3s cubic-bezier(0.77, 0, 0.175, 1) forwards infinite;
+          animation: line1 3s cubic-bezier(0.77, 0, 0.175, 1) forwards infinite;
+}
+@-webkit-keyframes line1 {
+  to {
+    stroke-dashoffset: -620;
+  }
+}
+@keyframes line1 {
+  to {
+    stroke-dashoffset: -620;
+  }
+}
+
+#line-2 {
+  stroke-dasharray: 60, 600;
+  stroke-dashoffset: 24;
+  -webkit-animation: line2 3s cubic-bezier(0.77, 0, 0.175, 1) forwards infinite 0.6s;
+          animation: line2 3s cubic-bezier(0.77, 0, 0.175, 1) forwards infinite 0.6s;
+}
+@-webkit-keyframes line2 {
+  to {
+    stroke-dashoffset: -620;
+  }
+}
+@keyframes line2 {
+  to {
+    stroke-dashoffset: -620;
+  }
+}
+
+#line-3 {
+  stroke-dasharray: 60, 600;
+  stroke-dashoffset: 24;
+  -webkit-animation: line3 3s cubic-bezier(0.77, 0, 0.175, 1) forwards infinite 0.2s;
+          animation: line3 3s cubic-bezier(0.77, 0, 0.175, 1) forwards infinite 0.2s;
+}
+@-webkit-keyframes line3 {
+  to {
+    stroke-dashoffset: -620;
+  }
+}
+@keyframes line3 {
+  to {
+    stroke-dashoffset: -620;
+  }
+}
+
+.container .shenzhi-logo {
+  -webkit-animation: ripple 0.8s linear infinite;
+          animation: ripple 0.8s linear infinite;
+}
+@-webkit-keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(71, 198, 230, 0), 0 0 0 40px rgba(71, 198, 230, 0.18);
+  }
+  100% {
+    box-shadow: 0 0 0 40px rgba(71, 198, 230, 0.18), 0 0 0 60px rgba(71, 198, 230, 0);
+  }
+}
+@keyframes ripple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(71, 198, 230, 0), 0 0 0 40px rgba(71, 198, 230, 0.18);
+  }
+  100% {
+    box-shadow: 0 0 0 40px rgba(71, 198, 230, 0.18), 0 0 0 60px rgba(71, 198, 230, 0);
+  }
+}
+@-webkit-keyframes scale {
+  50% {
+    transform: scale(1.15);
+  }
+  0%, 100% {
+    transform: scale(1);
+  }
+}
+@keyframes scale {
+  50% {
+    transform: scale(1.15);
+  }
+  0%, 100% {
+    transform: scale(1);
+  }
+}
+.container .shenzhi-logo::after {
+  z-index: 0;
+  border-radius: 100%;
+  position: absolute;
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0px 0px 40px rgba(164, 168, 197, 0.24);
+  background-color: white;
+  transform: scale(1);
+  -webkit-animation: scale 2.5s linear infinite;
+          animation: scale 2.5s linear infinite;
+}
+
+.logos-1 {
+  transition: all 0.2s ease;
+  position: relative;
+  margin-right: 20px;
+  will-change: transform;
+  -webkit-animation: logosMoving 10s linear infinite both 1s;
+          animation: logosMoving 10s linear infinite both 1s;
+}
+@-webkit-keyframes logosMoving {
+  to {
+    transform: translateX(105%);
+  }
+}
+@keyframes logosMoving {
+  to {
+    transform: translateX(105%);
+  }
+}
+
+.logos-2 {
+  transition: all 0.2s ease;
+  will-change: transform;
+  -webkit-animation: logosMoving 10s linear infinite both 1s;
+          animation: logosMoving 10s linear infinite both 1s;
+}
+
+.logos-wrap {
+  position: relative;
+  left: -100%;
+}
+
+.logoShow {
+  -webkit-animation: logoShow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 0.2s;
+          animation: logoShow 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards 0.2s;
+}
+@-webkit-keyframes logoShow {
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+    filter: blur(0);
+  }
+}
+@keyframes logoShow {
+  to {
+    opacity: 1;
+    transform: scale3d(1, 1, 1);
+    filter: blur(0);
+  }
+}
+
+.logos-wrap img {
+  opacity: 0;
+  transform: scale3d(0, 0, 0);
+  filter: blur(20px);
+  transition: all 0.3s ease-out;
+  margin: 4px 14px;
+  will-change: transform;
+}
+
+.rule {
+  position: absolute;
+  z-index: 99;
+  right: 180px;
+}
+.rule img {
+  z-index: 99;
+  width: 94px;
+  top: 4px;
+  right: -67px;
+}
+.rule div:nth-of-type(1) {
+  position: relative;
+  right: 100px;
+  top: -40px;
+}
+.rule div:nth-of-type(1)::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+  border-radius: 100%;
+  background: radial-gradient(50% 50% at 50% 50%, #ffffff 0%, #f88787 100%);
+  position: absolute;
+  transform: scale(0);
+  -webkit-animation: popShow3 4s cubic-bezier(0.5, 1, 0.89, 1) infinite;
+          animation: popShow3 4s cubic-bezier(0.5, 1, 0.89, 1) infinite;
+}
+@-webkit-keyframes popShow3 {
+  80% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  91% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+@keyframes popShow3 {
+  80% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  91% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+.rule div:nth-of-type(1)::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+  border-radius: 100%;
+  background: radial-gradient(50% 50% at 50% 50%, #ffffff 0%, #f88787 100%);
+  position: absolute;
+  transform: scale(0);
+  -webkit-animation: popShow 4s cubic-bezier(0.5, 1, 0.89, 1) infinite 0.2s;
+          animation: popShow 4s cubic-bezier(0.5, 1, 0.89, 1) infinite 0.2s;
+}
+@-webkit-keyframes popShow {
+  80% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  91% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+@keyframes popShow {
+  80% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  91% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+.rule div:nth-of-type(2) {
+  position: relative;
+  right: 125px;
+  top: -90px;
+}
+.rule div:nth-of-type(2)::after {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+  border-radius: 100%;
+  background: radial-gradient(50% 50% at 50% 50%, #ffffff 0%, #2e2e2e 100%);
+  position: absolute;
+  transform: scale(0);
+  -webkit-animation: popShow2 4s cubic-bezier(0.5, 1, 0.89, 1) infinite 0.35s;
+          animation: popShow2 4s cubic-bezier(0.5, 1, 0.89, 1) infinite 0.35s;
+}
+@-webkit-keyframes popShow2 {
+  80% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  91% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+@keyframes popShow2 {
+  80% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  91% {
+    opacity: 0.1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.4);
+  }
+}
+.rule div:nth-of-type(2)::before {
+  content: "";
+  display: block;
+  width: 40px;
+  height: 40px;
+  opacity: 0.5;
+  border-radius: 100%;
+  background: radial-gradient(50% 50% at 50% 50%, #ffffff 0%, #2e2e2e 100%);
+  position: absolute;
+  transform: scale(0);
+  -webkit-animation: popShow 4s cubic-bezier(0.5, 1, 0.89, 1) infinite 0.6s;
+          animation: popShow 4s cubic-bezier(0.5, 1, 0.89, 1) infinite 0.6s;
+}
+@keyframes popShow {
+  80% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  91% {
+    opacity: 0.4;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+.rule-2 {
+  position: absolute;
+}
+
+.rule-1 {
+  position: absolute;
+}
+
+.box-1,
+.box-3 {
+  left: -20%;
+  position: relative;
+}
+
+.dr {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  width: 100px;
+}

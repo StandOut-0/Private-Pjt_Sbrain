@@ -52,6 +52,64 @@ document.addEventListener('DOMContentLoaded', function () {
 
   initChatTabs();
 
+  // Initialize response tabs
+  function initResponseTabs() {
+    const responseTabs = document.querySelectorAll('.sb-chat-response-tab');
+    const responsePanels = document.querySelectorAll('.sb-chat-response-panel');
+
+    responseTabs.forEach(tab => {
+      tab.addEventListener('click', function() {
+        const tabName = this.dataset.tab;
+
+        // Update tab active state
+        responseTabs.forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+
+        // Update panel visibility
+        responsePanels.forEach(panel => {
+          panel.classList.remove('active');
+          if (panel.dataset.panel === tabName) {
+            panel.classList.add('active');
+          }
+        });
+      });
+    });
+  }
+
+  initResponseTabs();
+
+  // Initialize chat room switching
+  function initChatRooms() {
+    const chatRooms = document.querySelectorAll('.sb-chat-room');
+    const newChatBtn = document.getElementById('sb-new-chat');
+
+    chatRooms.forEach(room => {
+      room.addEventListener('click', function() {
+        chatRooms.forEach(r => r.classList.remove('active'));
+        this.classList.add('active');
+
+        // Badge 숫자 초기화 (실제 구현에서는 해당 채팅방의 메시지를 로드)
+        const badge = this.querySelector('.sb-chat-room-badge');
+        if (badge) {
+          badge.style.display = 'none';
+        }
+      });
+    });
+
+    if (newChatBtn) {
+      newChatBtn.addEventListener('click', function() {
+        // 새 대화 생성 로직 (실제 구현 필요)
+        chatRooms.forEach(r => r.classList.remove('active'));
+        // 첫 번째 채팅방을 활성화
+        if (chatRooms.length > 0) {
+          chatRooms[0].classList.add('active');
+        }
+      });
+    }
+  }
+
+  initChatRooms();
+
   function append(text, role) {
     const message = document.createElement('div');
     message.className = 'sb-msg sb-msg-' + role;

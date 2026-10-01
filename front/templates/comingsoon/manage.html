@@ -1,56 +1,14 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Coming Soon Management — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/comingsoon-management.css' %}">{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="sb-section-title mb-4">Coming Soon Management</h1>
-  <a class="btn btn-primary btn-sm" href="{% url 'comingsoon:editor_new' %}">+ 아이디어 추가</a>
+<div class="sb-ideas-management">
+<header class="sb-ops-header"><div><h1 class="sb-section-title mb-1">Coming Soon Management</h1><p class="sb-ops-subtitle">준비 중인 기능과 아이디어를 정리하고 문서를 관리합니다.</p></div><a class="btn btn-primary btn-sm" href="{% url 'comingsoon:editor_new' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> 아이디어 추가</a></header>
+<div class="sb-card sb-ideas-panel">
+<form class="sb-ideas-filter" method="get"><label class="visually-hidden" for="idea-status">상태</label><select id="idea-status" class="form-select form-select-sm" name="status"><option value="">전체 상태</option>{% for status in statuses %}<option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><label class="visually-hidden" for="idea-category">분야</label><select id="idea-category" class="form-select form-select-sm" name="category"><option value="">전체 분야</option>{% for category in categories %}<option value="{{ category }}" {% if filters.category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}</select><label class="visually-hidden" for="idea-query">아이디어 검색</label><input id="idea-query" class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="아이디어 검색"><button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search" aria-hidden="true"></i> 검색</button>{% if filters.q or filters.status or filters.category %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:manage' %}">초기화</a>{% endif %}</form>
+<div class="sb-ideas-list-heading"><h2>아이디어 목록 <span>{{ documents|length }}</span></h2><a href="{% url 'comingsoon:index' %}">기능 미리보기 <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
+<div class="table-responsive"><table class="table table-sm sb-task-table sb-ideas-table mb-0"><thead><tr><th>아이디어</th><th>상태</th><th>분야</th><th>관련 기술</th><th>수정일</th><th class="text-end">관리</th></tr></thead><tbody>{% for document in documents %}<tr><td><a class="sb-idea-title" href="{% url 'comingsoon:detail' document.slug %}">{{ document.title }}</a><p class="sb-idea-summary">{{ document.summary }}</p></td><td><span class="sb-idea-state">{{ document.status }}</span></td><td class="small text-secondary">{{ document.category }}</td><td><div class="sb-idea-tech">{% for tech in document.technologies %}<span>{{ tech }}</span>{% empty %}<span>—</span>{% endfor %}</div></td><td class="sb-idea-date">{{ document.updated_at }}</td><td><div class="sb-idea-actions"><a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:detail' document.slug %}" aria-label="{{ document.title }} 보기" title="보기"><i class="bi bi-eye" aria-hidden="true"></i></a><a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:editor' document.slug %}" aria-label="{{ document.title }} 수정" title="수정"><i class="bi bi-pencil" aria-hidden="true"></i></a><form method="post" action="{% url 'comingsoon:delete' document.slug %}" onsubmit="return confirm('삭제한 문서는 deleted 폴더로 이동합니다. 진행할까요?')">{% csrf_token %}<button class="btn btn-outline-danger btn-sm" type="submit" aria-label="{{ document.title }} 삭제" title="삭제"><i class="bi bi-trash3" aria-hidden="true"></i></button></form></div></td></tr>{% empty %}<tr><td colspan="6" class="sb-ideas-empty">{% if filters.q or filters.status or filters.category %}조건에 맞는 아이디어가 없습니다.{% else %}등록된 아이디어가 없습니다. 아이디어 추가 버튼으로 첫 문서를 만들어보세요.{% endif %}</td></tr>{% endfor %}</tbody></table></div>
 </div>
-
-<form class="sb-card mb-3" method="get">
-  <div class="row g-2">
-    <div class="col-md-2">
-      <select class="form-select form-select-sm" name="status">
-        <option value="">전체 상태</option>
-        {% for status in statuses %}<option value="{{ status }}" {% if filters.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="col-md-2">
-      <select class="form-select form-select-sm" name="category">
-        <option value="">전체 분야</option>
-        {% for category in categories %}<option value="{{ category }}" {% if filters.category == category %}selected{% endif %}>{{ category }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="col-md-6"><input class="form-control form-control-sm" name="q" value="{{ filters.q }}" placeholder="검색"></div>
-
-      <!-- 검색 버튼 -->
-    <div class="col-md-2">
-      <button type="submit" class="btn btn-primary btn-sm w-100">
-        검색
-      </button>
-    </div>
-  </div>
-</form>
-
-<div class="sb-card">
-  {% for document in documents %}
-    <div class="d-flex justify-content-between align-items-start border-bottom py-3">
-      <div>
-        <div class="fw-semibold">{{ document.title }} <span class="sb-chip ms-1">{{ document.status }}</span></div>
-        <div class="small text-secondary">{{ document.summary }}</div>
-        <div class="small text-secondary mt-1">관련 기술: {{ document.technologies|join:' / ' }}</div>
-      </div>
-      <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:detail' document.slug %}">보기</a>
-        <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:editor' document.slug %}">수정</a>
-        <form method="post" action="{% url 'comingsoon:delete' document.slug %}"
-              onsubmit="return confirm('삭제한 문서는 deleted 폴더로 이동합니다. 진행할까요?')">
-          {% csrf_token %}
-          <button class="btn btn-outline-danger btn-sm" type="submit">삭제</button>
-        </form>
-      </div>
-    </div>
-  {% empty %}
-    <p class="text-secondary small mb-0">등록된 아이디어가 없습니다.</p>
-  {% endfor %}
 </div>
 {% endblock %}

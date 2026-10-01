@@ -1,36 +1,13 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Agents — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/agents.css' %}">{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="sb-section-title mb-4">Agents</h1>
-  <span class="small text-secondary">실행 중 {{ running_count }} / {{ total_count }}</span>
-</div>
-
-<a class="sb-card sb-project-card mb-4" href="{% url 'management:agent_detail' supervisor.key %}">
-  <div class="d-flex justify-content-between align-items-center">
-    <div>
-      <div class="fw-semibold">{{ supervisor.name }}</div>
-      <div class="small text-secondary">{{ supervisor.short }}</div>
-    </div>
-    <span class="small"><span class="sb-dot sb-dot-{{ supervisor.status }}"></span>{{ supervisor.status_label }}</span>
-  </div>
-</a>
-
-<div class="sb-card-title mb-2">Worker Agents</div>
-<div class="row g-3">
-  {% for agent in workers %}
-    <div class="col-md-4">
-      <a class="sb-card sb-project-card" href="{% url 'management:agent_detail' agent.key %}">
-        <div class="fw-semibold">{{ agent.name }}</div>
-        <div class="small mb-2"><span class="sb-dot sb-dot-{{ agent.status }}"></span>{{ agent.status_label }}</div>
-        <div class="small text-secondary">{{ agent.short }}</div>
-        {% if agent.children %}
-          <div class="mt-2">
-            {% for child in agent.children %}<span class="sb-chip">{{ child|title }}</span>{% endfor %}
-          </div>
-        {% endif %}
-      </a>
-    </div>
-  {% endfor %}
+<div class="sb-agents-page">
+<header class="sb-ops-header"><div><h1 class="sb-section-title mb-1">Agents</h1><p class="sb-ops-subtitle">에이전트의 역할과 실행 상태를 확인하고 현재 작업을 살펴보세요.</p></div><span class="sb-agent-live"><span class="sb-dot sb-dot-running"></span> 실행 중 {{ running_count }} / {{ total_count }}</span></header>
+<section class="sb-agent-summary" aria-label="에이전트 요약"><div><i class="bi bi-cpu" aria-hidden="true"></i><span>전체 에이전트<strong>{{ total_count }}</strong></span></div><div><i class="bi bi-play-circle" aria-hidden="true"></i><span>실행 중<strong>{{ running_count }}</strong></span></div><div><i class="bi bi-diagram-3" aria-hidden="true"></i><span>Worker 그룹<strong>{{ workers|length }}</strong></span></div></section>
+{% if supervisor %}<a class="sb-agent-supervisor" href="{% url 'management:agent_detail' supervisor.key %}"><span class="sb-agent-icon"><i class="bi bi-diagram-3" aria-hidden="true"></i></span><div><h2>{{ supervisor.name }}</h2><p>{{ supervisor.short }}</p></div><span class="sb-agent-status"><span class="sb-dot sb-dot-{{ supervisor.status }}"></span>{{ supervisor.status_label }}</span><i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>{% endif %}
+<div class="sb-agent-section-heading"><h2>Worker Agents</h2><span>{{ workers|length }}개 그룹</span></div>
+<div class="sb-card sb-agent-table-wrap"><div class="table-responsive"><table class="table table-sm sb-task-table mb-0"><thead><tr><th>Agent</th><th>상태</th><th>역할</th><th>하위 Worker</th><th class="text-end"></th></tr></thead><tbody>{% for agent in workers %}<tr><td><a class="sb-agent-name-link" href="{% url 'management:agent_detail' agent.key %}">{{ agent.name }}</a></td><td><span class="badge sb-badge-{{ agent.status }}">{{ agent.status_label }}</span></td><td class="sb-agent-table-description">{{ agent.short }}</td><td><div class="sb-agent-tags">{% for child in agent.children %}<span>{{ child|title }}</span>{% empty %}<span>—</span>{% endfor %}</div></td><td class="text-end"><a href="{% url 'management:agent_detail' agent.key %}" aria-label="{{ agent.name }} 상세 보기"><i class="bi bi-chevron-right" aria-hidden="true"></i></a></td></tr>{% empty %}<tr><td colspan="5" class="text-center text-secondary py-4">등록된 Worker Agent가 없습니다.</td></tr>{% endfor %}</tbody></table></div></div>
 </div>
 {% endblock %}

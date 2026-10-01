@@ -1,84 +1,16 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{{ agent.name }} — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/agents.css' %}">{% endblock %}
 {% block content %}
-<div class="sb-breadcrumb">Agents &gt; {{ agent.name }}</div>
-<h1 class="sb-section-title">{{ agent.name }}</h1>
-
-<div class="row g-3">
-  <div class="col-lg-7">
-
-      <div class="sb-card-title mb-2">성능</div>
-  <div class="sb-card mb-3">
-      <div class="row g-2">
-        {% for metric in agent.metrics %}
-          <div class="col-4">
-            <div class="sb-metric">
-              <div class="sb-metric-value">{{ metric.value }}</div>
-              <div class="sb-metric-label">{{ metric.label }}</div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    </div>
-
-
-      <div class="sb-card-title mb-2">현재 작업</div>
-    <div class="sb-card mb-3">
-      <div class="small text-secondary mb-2">{{ agent.project }}</div>
-      <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="fw-semibold small">{{ agent.task }}</span>
-        <span class="small"><span class="sb-dot sb-dot-{{ agent.status }}"></span>{{ agent.status_label }}</span>
-      </div>
-      <ul class="list-unstyled mb-0">
-        {% for step in agent.steps %}
-          <li class="small py-1">
-            {% if step.state == 'done' %}<i class="bi bi-check2 text-success me-1"></i>
-            {% elif step.state == 'running' %}<span class="sb-dot sb-dot-running"></span>
-            {% else %}<span class="sb-dot sb-dot-todo"></span>{% endif %}
-            {{ step.name }}
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-
-    {% if children %}
-    <div class="sb-card-title mb-2">하위 Worker</div>  
-    <div class="sb-card mb-3">
-        <div class="row g-2">
-          {% for child in children %}
-            <div class="col-md-6">
-              <a class="sb-card sb-project-card" href="{% url 'management:agent_detail' child.key %}">
-                <div class="fw-semibold small">{{ child.name }}</div>
-                <div class="small"><span class="sb-dot sb-dot-{{ child.status }}"></span>{{ child.status_label }}</div>
-                <div class="small text-secondary">{{ child.short }}</div>
-              </a>
-            </div>
-          {% endfor %}
-        </div>
-      </div>
-    {% endif %}
-  </div>
-
-  <div class="col-lg-5">
-
-    
-      <div class="sb-card-title mb-2">역할</div>
-    <div class="sb-card mb-3">
-      <p class="small mb-0">{{ agent.role }}</p>
-    </div>
-
-    
-      <div class="sb-card-title mb-2">Agent Flow</div>
-    <div class="sb-card mb-3">
-      <div class="sb-ascii">{{ agent.flow }}</div>
-    </div>
-
-      <div class="sb-card-title mb-2">사용 기술</div>
-    <div class="sb-card mb-3">
-      {% for tech in agent.tech %}<span class="sb-chip">{{ tech }}</span>{% endfor %}
-    </div>
-
-    </div>
-  </div>
+<div class="sb-agents-page">
+<a class="sb-agent-back" href="{% url 'management:agents' %}"><i class="bi bi-arrow-left" aria-hidden="true"></i> 전체 Agents</a>
+<header class="sb-agent-detail-header"><span class="sb-agent-icon"><i class="bi bi-cpu" aria-hidden="true"></i></span><div><h1>{{ agent.name }}</h1><p>{{ agent.short }}</p></div><span class="sb-agent-status"><span class="sb-dot sb-dot-{{ agent.status }}"></span>{{ agent.status_label }}</span></header>
+<section class="sb-agent-performance" aria-label="에이전트 성능">{% for metric in agent.metrics %}<div class="sb-agent-metric"><span>{{ metric.label }}</span><strong>{{ metric.value }}</strong></div>{% empty %}<p class="text-secondary">성능 데이터가 없습니다.</p>{% endfor %}</section>
+<div class="sb-agent-detail-layout"><div class="sb-agent-detail-main">
+<section class="sb-agent-panel"><h2><i class="bi bi-list-check" aria-hidden="true"></i> 현재 작업</h2><div class="sb-agent-current"><span>{{ agent.project }}</span><h3>{{ agent.task }}</h3></div><ol class="sb-agent-steps">{% for step in agent.steps %}<li class="sb-agent-step-{{ step.state }}"><span class="sb-agent-step-icon">{% if step.state == 'done' %}<i class="bi bi-check-lg" aria-hidden="true"></i>{% elif step.state == 'running' %}<i class="bi bi-play-fill" aria-hidden="true"></i>{% else %}<i class="bi bi-circle" aria-hidden="true"></i>{% endif %}</span><span>{{ step.name }}</span><small>{% if step.state == 'done' %}완료{% elif step.state == 'running' %}진행 중{% else %}대기{% endif %}</small></li>{% empty %}<li>등록된 작업 단계가 없습니다.</li>{% endfor %}</ol></section>
+<section class="sb-agent-panel"><h2><i class="bi bi-diagram-3" aria-hidden="true"></i> Agent Flow</h2><pre class="sb-agent-flow">{{ agent.flow }}</pre></section>
+{% if children %}<section class="sb-agent-panel"><h2><i class="bi bi-people" aria-hidden="true"></i> 하위 Worker</h2><div class="sb-agent-children">{% for child in children %}<a href="{% url 'management:agent_detail' child.key %}"><div><h3>{{ child.name }}</h3><p>{{ child.short }}</p></div><span class="sb-agent-status"><span class="sb-dot sb-dot-{{ child.status }}"></span>{{ child.status_label }}</span><i class="bi bi-arrow-up-right" aria-hidden="true"></i></a>{% endfor %}</div></section>{% endif %}
+</div><aside class="sb-agent-detail-aside"><section class="sb-agent-panel"><h2><i class="bi bi-person-workspace" aria-hidden="true"></i> 역할</h2><p class="sb-agent-role">{{ agent.role }}</p></section><section class="sb-agent-panel"><h2><i class="bi bi-stack" aria-hidden="true"></i> 사용 기술</h2><div class="sb-agent-tags">{% for tech in agent.tech %}<span>{{ tech }}</span>{% empty %}<p class="text-secondary small">등록된 기술이 없습니다.</p>{% endfor %}</div></section></aside></div>
 </div>
 {% endblock %}

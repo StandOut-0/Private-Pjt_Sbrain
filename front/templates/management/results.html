@@ -1,36 +1,23 @@
 {% extends 'base.html' %}
 {% load static %}
 {% block title %}Results  — Second Brain{% endblock %}
+{% block extra_head %}<link rel="stylesheet" href="{% static 'css/results.css' %}">{% endblock %}
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="sb-section-title mb-4">Results </h1>
-  <button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#sb-upload-modal">
-    + 문서 업로드
-  </button>
+<div class="sb-results-page">
+<header class="sb-ops-header"><div><h1 class="sb-section-title mb-1">Results</h1><p class="sb-ops-subtitle">프로젝트별 결과물을 탐색하고 문서와 학습 데이터를 관리합니다.</p></div><div class="sb-ops-header-actions"><div class="nav sb-results-view-tabs" role="tablist" aria-label="Results 보기">
+<button class="nav-link {% if results_tab != 'knowledge' %}active{% endif %}" id="sb-results-files-tab" data-bs-toggle="tab" data-bs-target="#sb-results-files-panel" type="button" role="tab" aria-controls="sb-results-files-panel" aria-selected="{% if results_tab != 'knowledge' %}true{% else %}false{% endif %}">결과물</button>
+<button class="nav-link {% if results_tab == 'knowledge' %}active{% endif %}" id="sb-results-knowledge-tab" data-bs-toggle="tab" data-bs-target="#sb-results-knowledge-panel" type="button" role="tab" aria-controls="sb-results-knowledge-panel" aria-selected="{% if results_tab == 'knowledge' %}true{% else %}false{% endif %}">Knowledge / RAG</button>
+</div></div></header>
+
+<div class="tab-content">
+<div class="tab-pane {% if results_tab != 'knowledge' %}active{% endif %}" id="sb-results-files-panel" role="tabpanel" aria-labelledby="sb-results-files-tab" tabindex="0">
+<div class="sb-results-workspace">
+
+<section class="sb-results-files" aria-labelledby="sb-results-files-title"><div class="sb-results-section-heading"><h2 id="sb-results-files-title">{% if selected %}{{ selected.title }} 결과물{% else %}전체 프로젝트 결과물{% endif %}</h2></div><div class="sb-card"><nav class="sb-results-project-tabs" aria-label="결과물 프로젝트"><a class="{% if not selected %}active{% endif %}" {% if not selected %}aria-current="page"{% endif %} href="{% url 'management:results' %}?q={{ keyword|urlencode }}">전체 프로젝트</a>{% for project in projects %}<a class="{% if selected.id == project.id %}active{% endif %}" {% if selected.id == project.id %}aria-current="page"{% endif %} href="{% url 'management:results' %}?project={{ project.id }}&amp;q={{ keyword|urlencode }}">{{ project.title }}</a>{% endfor %}</nav><form class="sb-results-search" method="get">{% if selected %}<input type="hidden" name="project" value="{{ selected.id }}">{% endif %}<label class="visually-hidden" for="sb-result-search">결과물 검색</label><input id="sb-result-search" class="form-control form-control-sm" name="q" value="{{ keyword }}" placeholder="파일 이름 검색"><button class="btn btn-outline-secondary btn-sm" type="submit" aria-label="검색"><i class="bi bi-search" aria-hidden="true"></i></button>{% if keyword %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'management:results' %}{% if selected %}?project={{ selected.id }}{% endif %}">초기화</a>{% endif %}</form>{% include 'partials/artifact_browser.html' with tree=tree %}</div></section>
 </div>
-
-<form class="sb-card mb-3" method="get">
-  <div class="row g-2">
-    <div class="col-md-4">
-      <select class="form-select form-select-sm" name="project" onchange="this.form.submit()">
-        <option value="">전체 프로젝트</option>
-        {% for project in projects %}
-          <option value="{{ project.id }}" {% if selected.id == project.id %}selected{% endif %}>{{ project.title }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-8">
-      <input class="form-control form-control-sm" name="q" placeholder="결과물 검색">
-    </div>
-  </div>
-</form>
-
-<div class="sb-card mb-4">
-  <div class="sb-card-title mb-2">{% if selected %}{{ selected.title }} 결과물{% else %}전체 프로젝트 결과물{% endif %}</div>
-  {% include 'partials/artifact_browser.html' with tree=tree %}
 </div>
-
-<div class="sb-card-title mb-2">Knowledge / RAG 관리</div>
+<section class="tab-pane sb-results-knowledge {% if results_tab == 'knowledge' %}active{% endif %}" id="sb-results-knowledge-panel" role="tabpanel" aria-labelledby="sb-results-knowledge-tab" tabindex="0">
+<div class="sb-rag-overview"><div><div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-3"><div class="sb-card-title mb-0">Knowledge / RAG 관리</div><button class="btn btn-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#sb-upload-modal"><i class="bi bi-plus-lg" aria-hidden="true"></i> 문서 업로드</button></div>
 <div class="row g-3 mb-4">
   {% for stat in knowledge_stats %}
     <div class="col-6 col-md-3">
@@ -39,9 +26,18 @@
   {% endfor %}
 </div>
 
-<div class="sb-card mb-4">
-  <div class="sb-card-title mb-2">Vector DB / RAG</div>
-  <table class="table table-sm align-middle mb-0">
+</div><div><div class="sb-card-title mb-2">Search Evaluation</div>
+<div class="row g-2">
+  {% for metric in search_metrics %}
+    <div class="col-md-4">
+      <div class="sb-metric"><div class="sb-metric-value">{{ metric.value }}</div><div class="sb-metric-label">{{ metric.label }}</div></div>
+    </div>
+  {% endfor %}
+</div>
+
+</div></div><div class="sb-card mb-4">
+  <div class="sb-card-title mb-3">Vector DB / RAG <span class="small text-secondary">{{ vector_documents|length }}건</span></div><form class="sb-rag-filter" method="get"><input type="hidden" name="tab" value="knowledge">{% if selected %}<input type="hidden" name="project" value="{{ selected.id }}">{% endif %}{% if keyword %}<input type="hidden" name="q" value="{{ keyword }}">{% endif %}<label class="visually-hidden" for="rag-project">프로젝트</label><select id="rag-project" class="form-select form-select-sm" name="rag_project"><option value="">전체 프로젝트</option>{% for project in projects %}<option value="{{ project.title }}" {% if rag_filters.project == project.title %}selected{% endif %}>{{ project.title }}</option>{% endfor %}</select><label class="visually-hidden" for="rag-status">상태</label><select id="rag-status" class="form-select form-select-sm" name="rag_status"><option value="">전체 상태</option>{% for status in rag_statuses %}<option value="{{ status }}" {% if rag_filters.status == status %}selected{% endif %}>{{ status }}</option>{% endfor %}</select><label class="visually-hidden" for="rag-query">문서 검색</label><input id="rag-query" class="form-control form-control-sm" name="rag_q" value="{{ rag_filters.q }}" placeholder="문서 이름 검색"><button class="btn btn-primary btn-sm" type="submit">검색</button>{% if rag_filters.q or rag_filters.project or rag_filters.status %}<a class="btn btn-outline-secondary btn-sm" href="{% url 'management:results' %}?tab=knowledge{% if selected %}&amp;project={{ selected.id }}{% endif %}{% if keyword %}&amp;q={{ keyword|urlencode }}{% endif %}">초기화</a>{% endif %}</form>
+  <div class="table-responsive"><table class="table table-sm sb-task-table align-middle mb-0">
     <thead><tr class="small text-secondary"><th>Project</th><th>Document</th><th>Chunks</th><th>Status</th></tr></thead>
     <tbody>
       {% for document in vector_documents %}
@@ -50,23 +46,17 @@
           <td class="small">{{ document.document }}</td>
           <td class="small">{{ document.chunks }}</td>
           <td class="small">
-            <span class="sb-dot {% if document.status == 'Indexed' %}sb-dot-done{% else %}sb-dot-running{% endif %}"></span>{{ document.status }}
+            <span class="badge {% if document.status == 'Indexed' %}sb-badge-done{% else %}sb-badge-running{% endif %}">{{ document.status }}</span>
           </td>
         </tr>
-      {% endfor %}
+      {% empty %}<tr><td colspan="4" class="text-center text-secondary small py-4">조건에 맞는 문서가 없습니다.</td></tr>{% endfor %}
     </tbody>
-  </table>
+  </table></div>
 </div>
 
-<div class="sb-card-title mb-2">Search Evaluation</div>
-<div class="row g-3">
-  {% for metric in search_metrics %}
-    <div class="col-md-4">
-      <div class="sb-metric"><div class="sb-metric-value">{{ metric.value }}</div><div class="sb-metric-label">{{ metric.label }}</div></div>
-    </div>
-  {% endfor %}
+</section>
 </div>
-
+</div>
 <div class="modal fade" id="sb-upload-modal" tabindex="-1">
   <div class="modal-dialog modal-dialog-centered">
     <form class="modal-content" id="sb-upload-form">

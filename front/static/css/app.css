@@ -585,7 +585,8 @@ body:not(.sb-sidebar-collapsed) .sb-sidebar-toggle { left:auto; right:10px; tran
 }
 
 .sb-tree {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
+  height: var(--sb-tree-max-height, 320px);
   min-height: 0;
   border-right: 1px solid var(--sb-border);
   padding-right: 12px;

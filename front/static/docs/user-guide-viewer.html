@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>사용자 가이드 | Second Brain</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;background:#edf2f7;color:#1b262c}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:18px 24px;background:#fff;border-bottom:1px solid #dbe3ec}
+    h1{margin:0 0 6px;font-size:20px}p{margin:0;font-size:13px;color:#526173}nav{display:flex;gap:10px;flex-wrap:wrap}
+    a{display:inline-block;padding:9px 14px;border:1px solid #0f4c75;border-radius:8px;text-decoration:none;color:#0f4c75;font-size:13px}
+    .badge{font-size:11px;background:#e2effa;border-radius:5px;padding:4px 7px;vertical-align:middle}
+    main{padding:16px;max-width:1400px;margin:auto}object{display:block;width:100%;height:calc(100dvh - 150px);min-height:420px;border:1px solid #dbe3ec;border-radius:8px;background:#fff}
+    .fallback{padding:32px;line-height:1.7}.fallback a{margin-top:16px}
+  </style>
+</head>
+<body>
+  <header>
+    <div><h1>사용자 가이드 <span class="badge">샘플</span></h1><p>Second Brain의 기본 흐름을 안내하는 샘플입니다. 실제 화면을 담은 정식 가이드는 추후 제공됩니다.</p></div>
+    <nav aria-label="가이드 도구"><a href="user-guide.pdf" target="_blank" rel="noopener noreferrer">PDF 직접 열기</a><a href="user-guide.pdf" download>PDF 다운로드</a></nav>
+  </header>
+  <main>
+    <object data="user-guide.pdf#view=FitH" type="application/pdf" aria-label="Second Brain 샘플 사용자 가이드 PDF">
+      <div class="fallback"><p>이 브라우저에서는 PDF를 화면 안에 표시할 수 없습니다. PDF를 직접 열거나 다운로드해주세요.</p><a href="user-guide.pdf">PDF 열기</a></div>
+    </object>
+  </main>
+</body>
+</html>

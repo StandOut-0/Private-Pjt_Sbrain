@@ -21,11 +21,11 @@
         });
         const contentType = response.headers.get('Content-Type') || '';
         if (!response.ok || !contentType.toLowerCase().includes('application/pdf')) return;
-        link.href = link.dataset.guideUrl;
+        link.href = link.dataset.viewerUrl;
         link.hidden = false;
         pending.hidden = true;
-        badge.textContent = 'PDF';
-        status.textContent = 'PDF는 새 탭에서 열립니다.';
+        badge.textContent = '샘플 PDF';
+        status.textContent = '샘플 가이드를 새 탭의 PDF 뷰어에서 확인할 수 있습니다.';
       } catch (error) {
         // Missing files and network failures keep the preparation message visible.
       }

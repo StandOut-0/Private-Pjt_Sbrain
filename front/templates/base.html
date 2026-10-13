@@ -46,6 +46,7 @@
   </div>
 </div>
 {% include 'partials/settings_modal.html' %}
+{% include 'partials/user_guide_modal.html' %}
 <div class="toast-container position-fixed bottom-0 end-0 p-3" id="sb-toast-container"></div>
 {% endblock %}
 <div class="sb-loading" id="sb-loading" hidden>
@@ -56,7 +57,7 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{% static 'js/app.js' %}"></script>
-<script src="{% static 'js/user_guide.js' %}"></script>
+<script src="{% static 'js/user_guide.js' %}?v=sidebar-guide"></script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

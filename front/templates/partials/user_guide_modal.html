@@ -1,0 +1,24 @@
+{% load static %}
+<div class="modal fade" id="sb-user-guide-modal" tabindex="-1" aria-labelledby="sb-user-guide-modal-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sb-user-guide-modal-title">사용자 가이드</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <section class="border rounded-3 p-3" aria-labelledby="sb-user-guide-title">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <i class="bi bi-book fs-4 text-primary" aria-hidden="true"></i>
+            <h6 class="mb-0" id="sb-user-guide-title">사용자 가이드</h6>
+            <span class="badge text-bg-secondary ms-auto" id="sb-user-guide-badge">준비 중</span>
+          </div>
+          <p class="small text-secondary mb-3">실제 화면과 함께 프로젝트 생성부터 Agent 작업, 결과물 확인까지 안내합니다.</p>
+          <p class="small mb-3" id="sb-user-guide-status" role="status" aria-live="polite">사용자 가이드 PDF를 준비하고 있습니다. 등록 후 여기에서 열 수 있습니다.</p>
+          <button type="button" class="btn btn-outline-secondary btn-sm" id="sb-user-guide-pending" disabled>사용자 가이드 PDF 준비 중</button>
+          <a class="btn btn-outline-primary btn-sm" id="sb-user-guide-link" data-guide-url="{% static 'docs/user-guide.pdf' %}" data-viewer-url="{% static 'docs/user-guide-viewer.html' %}" target="_blank" rel="noopener noreferrer" hidden><i class="bi bi-file-earmark-pdf me-1" aria-hidden="true"></i> 사용자 가이드 보기 <i class="bi bi-box-arrow-up-right ms-1" aria-hidden="true"></i><span class="visually-hidden"> (새 탭)</span></a>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>

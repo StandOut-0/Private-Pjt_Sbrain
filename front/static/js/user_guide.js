@@ -1,6 +1,6 @@
 (function () {
   document.addEventListener('DOMContentLoaded', function () {
-    const modal = document.getElementById('sb-settings-modal');
+    const modal = document.getElementById('sb-user-guide-modal');
     const link = document.getElementById('sb-user-guide-link');
     const pending = document.getElementById('sb-user-guide-pending');
     const status = document.getElementById('sb-user-guide-status');

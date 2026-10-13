@@ -1654,6 +1654,7 @@ body.has-error .sb-topbar-actions .badge {
   .sb-editor-grid { grid-template-columns: 1fr; }
 }
 /* Project history and reflection evaluation share a two-column layout. */
+.sb-sidebar-help{margin-top:24px;padding-top:12px;margin-bottom:48px;border-top:1px solid var(--sb-border)}
 .sb-project-history-evaluation{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:24px;align-items:start}
 .sb-project-history-evaluation .sb-card-title{margin-top:0}
 .sb-project-history-evaluation .sb-history-card,.sb-project-history-evaluation .sb-reflection-card{height:calc(100% - 30px)}

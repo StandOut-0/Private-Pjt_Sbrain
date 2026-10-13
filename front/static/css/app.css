@@ -1415,6 +1415,7 @@ body.has-error .sb-topbar-actions .badge {
 }
 
 /* Chatbot */
+.sb-agent-control-bar{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 12px;margin:-10px 0 14px;border:1px solid #b02a37;border-radius:0;background:#dc3545;color:#fff;min-height:32px;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.12)}.sb-agent-control-bar .sb-error-content{display:flex;align-items:center;gap:8px;flex:1}.sb-agent-control-bar .sb-error-content i{font-size:14px}.sb-agent-running-label{color:#fff;font-weight:600}.sb-agent-running-label i{font-size:12px;margin-right:6px}.sb-agent-alert-actions{display:flex;align-items:center;gap:6px}.sb-agent-alert-close{padding:4px 8px;border:0;background:transparent;color:#fff;font-size:10px;cursor:pointer;border-radius:4px}.sb-agent-alert-close:hover{background:rgba(255,255,255,.18)}.sb-agent-control-bar.is-stopped{border-color:#198754;background:#198754}
 .sb-chat-fab {
   position: fixed;
   right: 28px;
@@ -1576,6 +1577,13 @@ body.has-error .sb-topbar-actions .badge {
   gap: 8px;
 }
 
+/* 3차 UI prototypes: execution controls, reflection score and quality criteria */
+.sb-agent-control-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin:-10px 0 14px;border:1px solid #fed7aa;border-radius:10px;background:#fff7ed;font-size:12px}.sb-agent-running-label{color:#c2410c;font-weight:700}.sb-agent-running-label i{font-size:8px;margin-right:6px}.sb-agent-control-bar.is-stopped{border-color:#bbf7d0;background:#f0fdf4}.sb-agent-control-bar.is-stopped .sb-agent-running-label{color:#15803d}.sb-reflection-card{padding:18px}.sb-score-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}.sb-score-grid>div{padding:12px;border:1px solid var(--sb-border);border-radius:10px;background:#f8fafc}.sb-score-grid span{display:block;color:var(--sb-muted);font-size:11px}.sb-score-grid strong{display:block;margin-top:4px;font-size:24px}.sb-score-reasons{margin-bottom:16px;font-size:12px}.sb-score-reasons ul{margin:8px 0 0;padding-left:18px;color:var(--sb-muted)}.sb-score-reasons li{margin:4px 0}.sb-score-reasons b{float:right;color:#dc3545}.sb-quality-panel h2 .badge{font-size:10px;vertical-align:middle}.sb-quality-list{display:flex;flex-direction:column;gap:8px}.sb-quality-list label{display:grid;grid-template-columns:18px 1fr 64px;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--sb-border);border-radius:8px;font-size:12px}.sb-quality-list input[type=checkbox]{accent-color:var(--sb-accent)}.sb-quality-list .form-control{font-size:12px;text-align:center;padding:4px 6px}
+
+/* Keep the Agent alert scoped to the content area and visible above the page heading. */
+.sb-content > .sb-agent-control-bar{position:relative;top:auto;left:auto;right:auto;width:100%;margin:0 0 16px;padding:7px 12px;border-radius:0;background:#dc3545;color:#fff;z-index:1}.sb-content > .sb-agent-control-bar .sb-agent-alert-actions{display:flex}.sb-content > .sb-agent-control-bar.is-stopped{background:#198754;border-color:#198754}
+.sb-content > .sb-agent-control-bar .sb-agent-running-label,.sb-content > .sb-agent-control-bar .sb-error-content,.sb-content > .sb-agent-control-bar .sb-error-content i,.sb-content > .sb-agent-control-bar .sb-error-action-sm,.sb-content > .sb-agent-control-bar .sb-agent-alert-close{color:#fff!important}
+
 /* Auth */
 .sb-auth {
   min-height: 100vh;
@@ -1645,3 +1653,10 @@ body.has-error .sb-topbar-actions .badge {
   .sb-sidebar { display: none; }
   .sb-editor-grid { grid-template-columns: 1fr; }
 }
+/* Project history and reflection evaluation share a two-column layout. */
+.sb-project-history-evaluation{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:24px;align-items:start}
+.sb-project-history-evaluation .sb-card-title{margin-top:0}
+.sb-project-history-evaluation .sb-history-card,.sb-project-history-evaluation .sb-reflection-card{height:calc(100% - 30px)}
+@media (max-width:900px){.sb-project-history-evaluation{display:block}.sb-project-history-evaluation .sb-history-card,.sb-project-history-evaluation .sb-reflection-card{height:auto}}
+.sb-reflection-restart-btn{display:block;width:100%;border-color:var(--sb-accent);background:var(--sb-accent-soft);color:var(--sb-deep);font-weight:700}
+.sb-reflection-restart-btn:hover,.sb-reflection-restart-btn:focus{border-color:var(--sb-deep);background:var(--sb-accent);color:#fff}

@@ -1,5 +1,12 @@
 # Second Brain
 
+## 사용자 가이드
+
+상단 설정(톱니바퀴) → 도움말 → 사용자 가이드에서 PDF를 열 수 있습니다.
+PDF가 없거나 확인할 수 없는 경우에는 `준비 중`으로 표시하며 링크를 제공하지 않습니다.
+향후 실제 화면을 담은 PDF를 `static/docs/user-guide.pdf`에 등록하면, 설정을 열 때 파일을 확인하여 새 탭으로 여는 버튼을 표시합니다.
+이번 작업에는 PDF 제작이 포함되지 않습니다.
+
 1. 각자의 email을 알려주세요 아래의 서식에 액세스 권한을 추가해드릴게요.
 https://docs.google.com/presentation/d/1PPc6K-sohMQHhVlUIuqCL0WABpazmrAc/edit?usp=sharing&ouid=114041644283327531753&rtpof=true&sd=true
 

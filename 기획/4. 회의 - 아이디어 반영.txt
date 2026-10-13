@@ -855,7 +855,7 @@ Error Header
 Chat Tab
 여기부터는 기존 Front 구조를 조금 건드리기 때문에 Agent에게 반드시 한 개씩 시켜야 함.
 
-🟠 3차 — 기능처럼 보이지만 실제 구현은 분리
+🟠 3차 — 기능처럼 보이지만 실제 구현은 분리되어 진행될 UI건들
 그 다음:
 강제 중단
 Reflection Score

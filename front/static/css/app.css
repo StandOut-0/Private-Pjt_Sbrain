@@ -364,15 +364,23 @@ body.sb-body {
 }
 
 .sb-sidebar {
+  display: flex;
+  flex-direction: column;
   position: sticky;
   width: var(--sb-sidebar-width);
   flex: 0 0 var(--sb-sidebar-width);
   background: var(--sb-surface);
   border-right: 1px solid var(--sb-border);
-  min-height: calc(100vh - var(--sb-topbar-height));
+  height: calc(100dvh - var(--sb-topbar-height));
+  min-height: 0;
   padding: 16px 10px;
   top: var(--sb-topbar-height);
   transition:width .25s ease, flex-basis .25s ease, padding .25s ease;
+}
+.sb-sidebar-menus {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 .sb-sidebar-toggle { position:absolute; bottom:18px; left:50%; transform:translateX(-50%); z-index:2; width:32px; height:32px; border:1px solid var(--sb-border); border-radius:9px; background:var(--sb-surface); color:var(--sb-muted); display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s ease; }.sb-sidebar-toggle:hover { color:var(--sb-accent); border-color:var(--sb-accent); }
 body:not(.sb-sidebar-collapsed) .sb-sidebar-toggle { left:auto; right:10px; transform:none; }
@@ -1654,7 +1662,23 @@ body.has-error .sb-topbar-actions .badge {
   .sb-editor-grid { grid-template-columns: 1fr; }
 }
 /* Project history and reflection evaluation share a two-column layout. */
-.sb-sidebar-help{margin-top:24px;padding-top:12px;margin-bottom:48px;border-top:1px solid var(--sb-border)}
+.sb-sidebar-help {
+  flex: 0 0 auto;
+  margin-top: 12px;
+  padding-top: 12px;
+  margin-bottom: 48px;
+  border-top: 1px solid var(--sb-border);
+}
+.sb-sidebar-help .sb-nav-item {
+  background: var(--sb-accent-soft);
+  color: var(--sb-accent);
+  font-weight: 600;
+  border: 1px solid var(--sb-border);
+}
+.sb-sidebar-help .sb-nav-item:hover,
+.sb-sidebar-help .sb-nav-item.active {
+  border-color: var(--sb-accent);
+}
 .sb-project-history-evaluation{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:24px;align-items:start}
 .sb-project-history-evaluation .sb-card-title{margin-top:0}
 .sb-project-history-evaluation .sb-history-card,.sb-project-history-evaluation .sb-reflection-card{height:calc(100% - 30px)}

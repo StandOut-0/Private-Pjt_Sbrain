@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}사용자 가이드 — Second Brain{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'css/comingsoon.css' %}">
+<link rel="stylesheet" href="{% static 'css/user-guide.css' %}?v=20261014-layout2">
+{% endblock %}
+{% block content %}
+<section class="sb-guide" aria-labelledby="user-guide-title">
+  <div class="sb-breadcrumb">사용자 가이드</div>
+  <h1 class="sb-section-title mb-4" id="user-guide-title">사용자 가이드</h1>
+  <header class="sb-future-hero sb-guide-hero">
+    <div class="sb-future-hero-copy">
+      <h2>Second Brain, 이렇게 시작하세요.</h2>
+      <p>아이디어를 프로젝트로 만들고, 에이전트와 함께 다음 단계로.<br>처음 사용하는 분들을 위해 기본 흐름을 한곳에 담았습니다.</p>
+    </div>
+  </header>
+  <section id="guide-document" aria-label="사용자 가이드 PDF">
+    <div class="sb-card sb-guide-document">
+    <header class="sb-guide-toolbar">
+      <div class="sb-guide-document-heading"><span class="sb-guide-document-icon" aria-hidden="true"><i class="bi bi-file-earmark-pdf"></i></span><div><p>기본 사용 흐름 · PDF 문서</p></div></div>
+      <nav class="sb-guide-actions" aria-label="가이드 도구">
+        <a class="sb-guide-button" href="{% static 'docs/user-guide.pdf' %}" target="_blank" rel="noopener noreferrer"><i class="bi bi-box-arrow-up-right" aria-hidden="true"></i> 새 탭에서 보기<span class="visually-hidden"> (PDF)</span></a>
+        <a class="sb-guide-button sb-guide-button-primary" href="{% static 'docs/user-guide.pdf' %}" download><i class="bi bi-download" aria-hidden="true"></i> PDF 다운로드</a>
+      </nav>
+    </header>
+    <div class="sb-guide-note"><i class="bi bi-info-circle" aria-hidden="true"></i><p>현재는 샘플 가이드입니다. 실제 화면을 담은 정식 가이드는 추후 제공됩니다.</p></div>
+    <div class="sb-guide-preview">
+    <object data="{% static 'docs/user-guide.pdf' %}#view=FitH" type="application/pdf" aria-label="Second Brain 샘플 사용자 가이드 PDF">
+    <div class="sb-guide-fallback">
+      <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+      <h3>가이드를 PDF로 확인하세요.</h3>
+      <p>이 브라우저에서는 PDF를 화면 안에 표시할 수 없습니다. 아래 링크로 가이드를 열어주세요.</p>
+      <a class="sb-guide-button sb-guide-button-primary" href="{% static 'docs/user-guide.pdf' %}">사용자 가이드 PDF 열기</a>
+    </div>
+    </object>
+    </div>
+    </div>
+  </section>
+</section>
+{% endblock %}

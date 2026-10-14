@@ -1,5 +1,6 @@
 <nav class="sb-sidebar" id="sb-sidebar">
   <button class="sb-sidebar-toggle" id="sb-sidebar-toggle" type="button" aria-label="사이드바 접기" aria-expanded="true" title="사이드바 접기"><i class="bi bi-layout-sidebar-inset"></i></button>
+  <div class="sb-sidebar-menus">
   {% if not sb_user.is_admin %}
   <a class="sb-nav-item {% if active_menu == 'dashboard' %}active{% endif %}" href="{% url 'dashboard:index' %}">
     <i class="bi bi-grid"></i> Dashboard
@@ -79,8 +80,9 @@
     <span class="sb-nav-item disabled"><i class="bi bi-lock"></i> Results</span>
     <span class="sb-nav-item disabled"><i class="bi bi-lock"></i> Coming Soon 관리</span>
   {% endif %}
+  </div>
   <div class="sb-sidebar-help">
-    <a class="sb-nav-item" href="#sb-user-guide-modal" data-bs-toggle="modal" role="button" aria-controls="sb-user-guide-modal">
+    <a class="sb-nav-item {% if active_menu == 'user_guide' %}active{% endif %}" href="{% url 'dashboard:user_guide' %}">
       <i class="bi bi-book" aria-hidden="true"></i> 사용자 가이드
     </a>
   </div>

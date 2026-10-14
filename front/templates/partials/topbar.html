@@ -59,9 +59,9 @@
         <li><a class="dropdown-item text-center small" href="#">모든 알림 보기</a></li>
       </ul>
     </div>
-    <button class="btn btn-sm sb-icon-btn d-lg-none" type="button" data-bs-toggle="modal" data-bs-target="#sb-user-guide-modal" title="사용자 가이드" aria-label="사용자 가이드">
+    <a class="btn btn-sm sb-icon-btn d-lg-none" href="{% url 'dashboard:user_guide' %}" title="사용자 가이드" aria-label="사용자 가이드">
       <i class="bi bi-book" aria-hidden="true"></i>
-    </button>
+    </a>
     <button class="btn btn-sm sb-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#sb-settings-modal" title="설정">
       <i class="bi bi-gear"></i>
     </button>

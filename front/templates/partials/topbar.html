@@ -1,5 +1,6 @@
 {% load static %}
 <header class="sb-topbar">
+  <button class="btn btn-sm sb-icon-btn sb-mobile-menu-toggle" type="button" data-bs-toggle="offcanvas" data-bs-target="#sb-sidebar" aria-controls="sb-sidebar" aria-label="메뉴 열기"><i class="bi bi-list" aria-hidden="true"></i></button>
   <a class="sb-brand" href="{% url 'dashboard:index' %}" aria-label="Second Brain">
     <img class="sb-logo sb-logo-light" src="{% static 'img/logo/logo_dark_lan.png' %}" alt="Second Brain">
     <img class="sb-logo sb-logo-dark" src="{% static 'img/logo/logo_light_lan.png' %}" alt="Second Brain">
@@ -11,8 +12,9 @@
     </div>
   </div>
   <div class="sb-topbar-actions">
+    <button class="btn btn-sm sb-icon-btn" type="button" data-screen-tour title="화면 둘러보기" aria-label="화면 둘러보기"><i class="bi bi-compass" aria-hidden="true"></i></button>
     <div class="dropdown">
-      <button class="btn btn-sm sb-icon-btn position-relative" type="button" data-bs-toggle="dropdown" title="알림">
+    <button class="btn btn-sm sb-icon-btn position-relative" type="button" data-bs-toggle="dropdown" title="알림" aria-label="알림">
         <i class="bi bi-bell"></i>
         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="sb-notification-badge">3</span>
       </button>
@@ -59,15 +61,15 @@
         <li><a class="dropdown-item text-center small" href="#">모든 알림 보기</a></li>
       </ul>
     </div>
-    <a class="btn btn-sm sb-icon-btn d-lg-none" href="{% url 'dashboard:user_guide' %}" title="사용자 가이드" aria-label="사용자 가이드">
+    <a class="btn btn-sm sb-icon-btn d-none" href="{% url 'dashboard:user_guide' %}" title="사용자 가이드" aria-label="사용자 가이드">
       <i class="bi bi-book" aria-hidden="true"></i>
     </a>
-    <button class="btn btn-sm sb-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#sb-settings-modal" title="설정">
+    <button class="btn btn-sm sb-icon-btn" type="button" data-bs-toggle="modal" data-bs-target="#sb-settings-modal" title="설정" aria-label="설정">
       <i class="bi bi-gear"></i>
     </button>
     <div class="dropdown">
-      <button class="btn btn-sm sb-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
-        <i class="bi bi-person-circle me-1"></i>{{ sb_user.name }}
+      <button class="btn btn-sm sb-user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-label="내 계정">
+        <i class="bi bi-person-circle me-1"></i><span class="sb-user-name">{{ sb_user.name }}</span>
         <span class="badge sb-badge-role ms-1">{{ sb_user.role_label }}</span>
       </button>
       <ul class="dropdown-menu dropdown-menu-end">

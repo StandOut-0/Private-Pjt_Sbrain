@@ -1,4 +1,5 @@
-<nav class="sb-sidebar" id="sb-sidebar">
+<nav class="sb-sidebar offcanvas-lg offcanvas-start" id="sb-sidebar" tabindex="-1" aria-labelledby="sb-menu-title">
+  <div class="sb-mobile-menu-header"><span id="sb-menu-title">메뉴</span><button class="btn-close" type="button" data-bs-dismiss="offcanvas" data-bs-target="#sb-sidebar" aria-label="메뉴 닫기"></button></div>
   <button class="sb-sidebar-toggle" id="sb-sidebar-toggle" type="button" aria-label="사이드바 접기" aria-expanded="true" title="사이드바 접기"><i class="bi bi-layout-sidebar-inset"></i></button>
   <div class="sb-sidebar-menus">
   {% if not sb_user.is_admin %}

@@ -1,0 +1,34 @@
+.sb-mobile-menu-toggle,.sb-mobile-menu-header { display:none; }
+@media (min-width:992px) {
+  .sb-sidebar.offcanvas-lg { background:var(--sb-surface) !important; }
+}
+@media (max-width:991.98px) {
+  :root { --sb-topbar-height:104px; }
+  .sb-topbar { display:flex; flex-wrap:wrap; align-content:center; justify-content:flex-start; gap:8px; padding:10px 16px; }
+  .sb-mobile-menu-toggle { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; font-size:20px; flex-shrink:0; }
+  .sb-topbar .sb-brand { flex:1; min-width:0; }
+  .sb-topbar .sb-logo { max-width:140px; height:auto; max-height:26px; }
+  .sb-topbar-actions { gap:6px; flex-shrink:0; }
+  .sb-topbar-search { order:3; flex:0 0 100%; max-width:none; }
+  .sb-topbar .sb-user-name,.sb-topbar .sb-badge-role { display:none; }
+  .sb-topbar .sb-user-btn > i { margin:0 !important; }
+  .sb-topbar .sb-user-btn::after { display:none; }
+  .sb-topbar .sb-icon-btn,.sb-topbar .sb-user-btn { min-width:32px; height:34px; padding:5px 7px; }
+  .sb-sidebar,.sb-sidebar-collapsed .sb-sidebar { position:fixed; top:0; bottom:0; width:min(300px,85vw); height:100dvh; padding:16px; background:var(--sb-surface); color:var(--sb-ink); }
+  .sb-mobile-menu-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:2px 8px 18px; font-size:16px; font-weight:700; }
+  .sb-sidebar-toggle { display:none; }
+  .sb-sidebar-help { margin-bottom:0; }
+  .sb-sidebar-collapsed .sb-nav-item { font-size:14px; justify-content:flex-start; padding:9px 12px; }
+  .sb-sidebar-collapsed .sb-nav-sub { font-size:13px; justify-content:flex-start; padding:6px 12px 6px 34px !important; }
+  .sb-sidebar-collapsed .sb-nav-item .ms-auto { display:block; }
+  .sb-sidebar-collapsed .sb-nav-label,.sb-sidebar-collapsed .sb-nav-item.disabled { display:block; }
+  .sb-sidebar-collapsed .sb-nav-group > .collapse.show { display:block !important; }
+  .sb-content { padding:20px 20px 32px; }
+  .sb-notification-dropdown { min-width:min(300px,calc(100vw - 32px)); max-width:calc(100vw - 32px); }
+}
+@media (max-width:575.98px) {
+  .sb-topbar { padding:10px 12px; gap:6px; }
+  .sb-topbar .sb-logo { max-width:105px; }
+  .sb-topbar-actions { gap:4px; }
+  .sb-content { padding:16px 12px 28px; }
+}

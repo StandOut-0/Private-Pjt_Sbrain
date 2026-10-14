@@ -1,0 +1,10 @@
+.sb-tour-shade { position:fixed; inset:0; z-index:1100; }
+.sb-tour-highlight { position:fixed; border:2px solid var(--sb-accent); border-radius:12px; box-shadow:0 0 0 4px rgba(187,225,250,.3),0 0 0 100vmax rgba(7,28,41,.6); pointer-events:none; z-index:1101; }
+.sb-tour-dialog { position:fixed; z-index:1102; width:min(360px,calc(100vw - 32px)); padding:22px; border:1px solid var(--sb-border); border-radius:12px; background:var(--sb-surface); color:var(--sb-ink); box-shadow:0 16px 48px rgba(7,28,41,.25); }
+.sb-tour-dialog h2 { margin:10px 0; font-size:18px; font-weight:700; }
+.sb-tour-dialog p { font-size:13px; line-height:1.8; color:var(--sb-muted); margin:0 0 20px; }
+.sb-tour-head,.sb-tour-actions { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.sb-tour-head { font-size:12px; color:var(--sb-muted); }
+.sb-tour-close { border:0; background:none; color:var(--sb-muted); padding:4px 0; font-size:12px; }
+.sb-tour-actions .btn { font-size:12px; border-radius:8px; }
+.sb-tour-dialog :focus-visible { outline:3px solid var(--sb-accent); outline-offset:3px; }

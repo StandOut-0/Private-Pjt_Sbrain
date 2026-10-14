@@ -1658,7 +1658,6 @@ body.has-error .sb-topbar-actions .badge {
 }
 
 @media (max-width: 991.98px) {
-  .sb-sidebar { display: none; }
   .sb-editor-grid { grid-template-columns: 1fr; }
 }
 /* Project history and reflection evaluation share a two-column layout. */

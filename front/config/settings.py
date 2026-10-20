@@ -1,17 +1,47 @@
 import os
+import secrets
 from pathlib import Path
+
+from django.core.exceptions import ImproperlyConfigured
 
 # root 설정
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Django 보안용 비밀키
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-g5kivm4s(k)76v=%x!pwgun5pam+abf%r1wp7cocm@4g%bf(6o',
-)
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ['*']
+
+def _get_secret_key():
+    configured_key = os.environ.get('DJANGO_SECRET_KEY', '').strip()
+    if configured_key:
+        return configured_key
+
+    if not DEBUG:
+        raise ImproperlyConfigured(
+            'DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is disabled.'
+        )
+
+    # 로컬 개발 전용 키는 최초 실행 시 생성하고 Git에 포함하지 않는다.
+    local_key_file = BASE_DIR / '.local-django-secret'
+    try:
+        return local_key_file.read_text(encoding='utf-8').strip()
+    except FileNotFoundError:
+        generated_key = secrets.token_urlsafe(64)
+        try:
+            with local_key_file.open('x', encoding='utf-8') as key_file:
+                key_file.write(generated_key)
+            return generated_key
+        except FileExistsError:
+            return local_key_file.read_text(encoding='utf-8').strip()
+
+
+SECRET_KEY = _get_secret_key()
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.environ.get(
+        'DJANGO_ALLOWED_HOSTS', '127.0.0.1,localhost,testserver'
+    ).split(',')
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -8,6 +8,8 @@
 .sb-overview-hero a { color:#fff; display:inline-flex; gap:24px; align-items:center; padding:10px 14px; border:1px solid #bbe1fa55; background:#bbe1fa12; border-radius:10px; font-size:13px; font-weight:600; text-decoration:none; }
 .sb-overview-hero a:hover { background:#bbe1fa25; border-color:#bbe1fa99; }
 .sb-hero-art { position:relative; flex:0 0 290px; height:220px; }
+.sb-overview-hero .sb-hero-copy { flex:0 1 480px; }
+.sb-overview-hero .sb-hero-art { margin-left:auto; }
 .sb-orbit { position:absolute; inset:15px 48px; border:1px solid #ffffff28; border-radius:50%; transform:rotate(-30deg); }
 .sb-orbit-two { inset:45px 12px; transform:rotate(30deg); }
 .sb-brain-core { position:absolute; inset:58px 92px; display:grid; place-items:center; border:1px solid #a9e3ff70; background:linear-gradient(135deg,#ffffff25,#ffffff08); border-radius:26px; box-shadow:0 0 65px #7dd3fc25; font-size:46px; color:#c0edff; transform:rotate(-8deg); }
@@ -41,9 +43,20 @@
 .sb-overview .sb-dashboard-subcard .py-1:last-child { border-bottom:0; }
 .sb-overview .sb-dashboard-subcard a span { overflow-wrap:anywhere; }
 .sb-overview-empty { padding:30px; border:1px dashed var(--sb-border); border-radius:16px; text-align:center; color:var(--sb-muted); font-size:14px; }
+.sb-dashboard-shortcuts { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:30px 0 8px; }
+.sb-dashboard-shortcuts > a { min-width:0; min-height:104px; display:grid; grid-template-columns:42px minmax(0,1fr) 16px; align-items:center; gap:13px; padding:18px; border:1px solid var(--sb-border); border-radius:15px; background:var(--sb-surface); color:var(--sb-ink); text-decoration:none; box-shadow:0 3px 12px #102d4205; transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease; }
+.sb-dashboard-shortcuts > a:hover { transform:translateY(-2px); border-color:var(--sb-accent); box-shadow:0 8px 22px #102d4212; }
+.sb-dashboard-shortcuts > a > span { width:42px; height:42px; display:grid; place-items:center; border-radius:12px; color:var(--sb-accent); background:var(--sb-accent-soft); }
+.sb-dashboard-shortcuts > a > span svg { width:20px; height:20px; stroke-width:1.8; }
+.sb-dashboard-shortcuts > a > div { min-width:0; display:grid; gap:5px; }
+.sb-dashboard-shortcuts strong { font-size:13px; line-height:1.4; }
+.sb-dashboard-shortcuts small { color:var(--sb-muted); font-size:10px; line-height:1.5; }
+.sb-dashboard-shortcuts > a > i { color:var(--sb-muted); font-size:12px; }
 .sb-overview a:focus-visible { outline:3px solid var(--sb-accent); outline-offset:4px; }
 @media (max-width:1100px) { .sb-overview-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }.sb-hero-art { flex-basis:240px; }.sb-brain-core { left:67px; right:67px; } }
-@media (max-width:767px) { .sb-overview-hero { padding:26px; }.sb-overview-hero h2 { font-size:25px; }.sb-hero-art { display:none; }.sb-overview-metrics { gap:10px; }.sb-overview-metrics a { padding:14px; gap:10px; }.sb-metric-icon { width:32px; height:32px; font-size:16px; }.sb-overview-metrics a > i { display:none; }.sb-overview .sb-card-title { flex-wrap:wrap; gap:10px; } }
+@media (max-width:1100px) { .sb-dashboard-shortcuts { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:767px) { .sb-overview-hero { padding:26px; }.sb-overview-hero h2 { font-size:25px; }.sb-hero-art { display:none; }.sb-overview-metrics { gap:10px; }.sb-overview-metrics a { padding:14px; gap:10px; }.sb-metric-icon { width:32px; height:32px; font-size:16px; }.sb-overview-metrics a > i { display:none; }.sb-overview .sb-card-title { flex-wrap:wrap; gap:10px; }.sb-dashboard-shortcuts { gap:10px; margin-top:24px; }.sb-dashboard-shortcuts > a { min-height:88px; gap:9px; padding:13px; grid-template-columns:36px minmax(0,1fr) 12px; }.sb-dashboard-shortcuts > a > span { width:36px; height:36px; } }
+@media (max-width:480px) { .sb-dashboard-shortcuts { grid-template-columns:1fr; } }
 @media (max-width:360px) { .sb-overview-metrics { grid-template-columns:1fr; } }
 @media (max-width:767px) { .sb-overview-hero::before { background-position:65% center; background-size:cover; opacity:.55; }.sb-overview-hero::after { background:linear-gradient(90deg,#071c29e8,#071c2999); } }
 @media (prefers-reduced-motion:reduce) { .sb-overview-hero::before { background-image:url('../img/gif_bg/bg-basic-still.jpg'); } }

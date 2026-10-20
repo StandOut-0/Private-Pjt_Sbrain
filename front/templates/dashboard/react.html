@@ -1,0 +1,10 @@
+﻿{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard — Second Brain{% endblock %}
+{% block extra_head %}{% for css in assets.css %}<link rel="stylesheet" href="{{ css }}">{% endfor %}<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">{% endblock %}
+{% block content %}
+<script id="sb-react-data" type="application/json">{{ sb_react_data|safe }}</script>
+<div id="root"></div>
+{% if not assets.js %}<div class="alert alert-warning" role="alert">React Dashboard 번들이 없습니다. `front/react`에서 `npm run build`를 실행해 주세요.</div>{% endif %}
+{% endblock %}
+{% block extra_scripts %}{% if assets.js %}<script type="module" src="{{ assets.js }}"></script>{% endif %}{% endblock %}

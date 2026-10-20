@@ -42,7 +42,6 @@ class SmokeTest(TestCase):
         for url in [
             reverse('dashboard:index'),
             reverse('projects:list'),
-            reverse('projects:create'),
             reverse('projects:detail', args=[1]),
             reverse('comingsoon:index'),
             reverse('comingsoon:detail', args=['daily-briefing']),
@@ -51,6 +50,13 @@ class SmokeTest(TestCase):
             self.assertEqual(response.status_code, 200, url)
             self.assertContains(response, 'id="root"')
             self.assertContains(response, 'id="sb-react-data"')
+
+    def test_project_create_route_redirects_to_popup_entry_page(self):
+        self.login()
+        self.assertRedirects(
+            self.client.get(reverse('projects:create')),
+            reverse('projects:list'),
+        )
 
     def test_admin_only_pages_blocked_for_user(self):
         self.login()

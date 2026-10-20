@@ -1,6 +1,38 @@
 
 
-데이터 저장 구조
+데이터 저장 구조 — 2026-10-20 회의 반영 확장 설계
+
+상태: Backend 연결용 설계이며 실제 Django 모델 / DB에 적용한 마이그레이션이 아니다.
+FAQ / 사용자 가이드 / Tour / 정책 안내 / Google 사전 안내 / 접속 링크 공유는 신규 DB 없이 유지한다.
+실제 OAuth·Face 인증, 초대 토큰, 법적 동의 이력 및 RAG 고도화는 별도 설계 후 추가한다.
+기존 MODEL_INFO.parameter_size → model_name 관계는 외래키가 아닌 속성끼리의 잘못된 연결이므로 제거했다.
+
+구현 단계
+A. 핵심 실행: USER 역할, 최근시간, CHAT_CONVERSATION / CHAT_MESSAGE / PROJECT_RUN, TASK·Execution·Artifact 연결.
+B. 운영 데이터: EXECUTION_EVENT / MODEL_USAGE / NOTIFICATION / INSTRUCTION / QUALITY_CRITERION 및 평가 snapshot.
+DBML 블록(아래 첫 Table USER부터 파일 끝까지)을 dbdiagram.io에 입력한다.
+앞부분 1~13 항목은 기존 테이블 개요이며 상세 필드의 최신 기준은 아래 DBML이다.
+
+설계 규칙
+- UTC datetime 저장, 표시는 사용자 시간대. 실제 상태값은 queued / running / cancel_requested / cancelled / succeeded / failed.
+- 모델 속성끼리는 FK를 만들지 않는다. role은 user / admin이며 demo는 임시 세션으로 유지한다.
+- FK만으로 동일 프로젝트 소속을 보장하지 못하므로 Run·Task·Conversation·Artifact 연결 시 서버에서 소유권과 project_id 일치를 검증한다.
+- 공통 지시사항은 scope=common, project_id=null. 프로젝트 지시는 scope=project, project_id 필수. 이 조합을 서비스에서 검증한다.
+- 공통 지시는 초기 관리자만 수정한다. 개인별 공통 지시 기능을 추가하면 별도 소유 범위 설계가 필요하다.
+- PROJECT_RUN.idempotency_key는 사용자 확인 후 요청 단위로 발급한다. 프로젝트+key 고유 제약으로 중복 실행을 막는다.
+- 재생성은 새 Run·Task·Execution을 만들고 Artifact 버전을 추가한다. 이전 파일·평가를 삭제하거나 덮어쓰지 않는다.
+- Artifact.logical_key는 같은 논리 파일의 안정적인 키이며 프로젝트+logical_key+version을 고유하게 관리한다.
+- Timeline / Activity Log는 EXECUTION_EVENT를 공통 사용한다. Run 단위 이벤트는 execution_id 없이 기록 가능하다.
+- MODEL_USAGE는 LLM 호출 시도별 사용량이다. usage_key는 provider 요청 ID 등으로 중복 기록을 방지한다.
+- provider가 Token 수를 제공하지 않으면 null이며 0으로 대체하지 않는다. Total은 계산값이므로 중복 저장하지 않는다.
+- QUALITY_CRITERION 활성 기준의 weight 합은 100을 검증한다. Drag & Drop 순서는 sort_order에 저장한다.
+- REFLECTION_REPORT의 criteria_snapshot / deductions는 평가 당시의 항목·가중치·감점 이유를 보존한다. 현행 기준 수정으로 과거 점수를 바꾸지 않는다.
+- NOTIFICATION은 수신 사용자당 행을 생성하며 읽음은 read_at으로 관리한다. 오류 Header 닫기는 별도 화면 상태다.
+- 이벤트의 result_artifact_id / notification 참조 대상은 수신 사용자에게 접근 가능한지 다시 검증한다.
+- 부모 삭제는 기본 RESTRICT로 시작한다. 파일 / 실행 / 평가 이력 삭제·보존 정책을 확정하기 전 자동 cascade 삭제를 도입하지 않는다.
+- 기존 데이터가 있으면 nullable 필드 추가 → backfill → 검증 → 제약 강화 순서로 마이그레이션한다.
+
+기존 테이블 개요
 1. USER
 user_id PK
 name
@@ -119,6 +151,8 @@ Table USER {
   name varchar
   email varchar
   created_at datetime
+  role varchar [not null, default: 'user']
+  updated_at datetime
 }
 
 Table PROJECT {
@@ -128,6 +162,7 @@ Table PROJECT {
   description text
   status varchar
   created_at datetime
+  updated_at datetime
 }
 
 Table TASK {
@@ -138,6 +173,10 @@ Table TASK {
   priority varchar
   status varchar
   created_at datetime
+  run_id int [ref: > PROJECT_RUN.run_id]
+  updated_at datetime
+  started_at datetime
+  finished_at datetime
 }
 
 Table AGENT {
@@ -177,6 +216,14 @@ Table AGENT_EXECUTION {
   status varchar
   started_at datetime
   finished_at datetime
+  attempt_number int [not null, default: 1]
+  is_required boolean [not null, default: true]
+  error_code varchar
+  error_message text
+  cancel_requested_at datetime
+  indexes {
+    (task_id, agent_id, attempt_number) [unique]
+  }
 }
 
 Table ARTIFACT {
@@ -191,6 +238,12 @@ Table ARTIFACT {
   file_url varchar
   version varchar
   created_at datetime
+  execution_id int [ref: > AGENT_EXECUTION.execution_id]
+  logical_key varchar [not null]
+  updated_at datetime
+  indexes {
+    (project_id, logical_key, version) [unique]
+  }
 }
 
 Table KNOWLEDGE_DOCUMENT {
@@ -236,6 +289,114 @@ Table REFLECTION_REPORT {
   evaluation text
   improvement text
   created_at datetime
+  run_id int [ref: > PROJECT_RUN.run_id]
+  execution_id int [ref: > AGENT_EXECUTION.execution_id]
+  target_score decimal(5,2)
+  actual_score decimal(5,2)
+  criteria_snapshot json
+  deductions json
 }
 
-Ref: "MODEL_INFO"."parameter_size" < "MODEL_INFO"."model_name"
+
+
+// A. Conversation / 실행 단위 (구현 전 설계)
+Table CHAT_CONVERSATION {
+  conversation_id int [pk]
+  project_id int [not null, ref: > PROJECT.project_id]
+  user_id int [not null, ref: > USER.user_id]
+  title varchar
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table CHAT_MESSAGE {
+  message_id int [pk]
+  conversation_id int [not null, ref: > CHAT_CONVERSATION.conversation_id]
+  role varchar [not null, note: 'user / assistant / system']
+  content text [not null]
+  created_at datetime [not null]
+}
+
+Table PROJECT_RUN {
+  run_id int [pk]
+  project_id int [not null, ref: > PROJECT.project_id]
+  requested_by int [not null, ref: > USER.user_id]
+  conversation_id int [ref: > CHAT_CONVERSATION.conversation_id]
+  source_message_id int [ref: > CHAT_MESSAGE.message_id]
+  previous_run_id int [ref: > PROJECT_RUN.run_id]
+  idempotency_key varchar [not null]
+  status varchar [not null, default: 'queued']
+  feedback text
+  instruction_snapshot json
+  created_at datetime [not null]
+  started_at datetime
+  finished_at datetime
+  cancel_requested_at datetime
+  indexes {
+    (project_id, idempotency_key) [unique]
+  }
+}
+
+// B. Timeline / Activity Log / Token / 알림 / 품질 기준
+Table EXECUTION_EVENT {
+  event_id int [pk]
+  run_id int [not null, ref: > PROJECT_RUN.run_id]
+  execution_id int [ref: > AGENT_EXECUTION.execution_id]
+  agent_id int [ref: > AGENT.agent_id]
+  result_artifact_id int [ref: > ARTIFACT.artifact_id]
+  event_type varchar [not null]
+  status varchar
+  severity varchar [note: 'info / warning / error']
+  message text [not null]
+  occurred_at datetime [not null]
+  indexes {
+    (run_id, occurred_at)
+  }
+}
+
+Table MODEL_USAGE {
+  usage_id int [pk]
+  execution_id int [not null, ref: > AGENT_EXECUTION.execution_id]
+  model_id int [not null, ref: > MODEL_INFO.model_id]
+  usage_key varchar [not null, unique]
+  input_tokens bigint [note: 'null: not measured; nonnegative when measured']
+  output_tokens bigint [note: 'null: not measured; nonnegative when measured']
+  created_at datetime [not null]
+}
+
+Table NOTIFICATION {
+  notification_id int [pk]
+  recipient_user_id int [not null, ref: > USER.user_id]
+  project_id int [ref: > PROJECT.project_id]
+  event_id int [ref: > EXECUTION_EVENT.event_id]
+  notification_type varchar [not null]
+  message text [not null]
+  read_at datetime
+  created_at datetime [not null]
+  indexes {
+    (recipient_user_id, created_at)
+  }
+}
+
+Table INSTRUCTION {
+  instruction_id int [pk]
+  project_id int [ref: > PROJECT.project_id]
+  updated_by int [not null, ref: > USER.user_id]
+  scope varchar [not null, note: 'common: project_id null; project: project_id required']
+  title varchar [not null]
+  content text [not null]
+  is_active boolean [not null, default: true]
+  created_at datetime [not null]
+  updated_at datetime [not null]
+}
+
+Table QUALITY_CRITERION {
+  criterion_id int [pk]
+  agent_id int [not null, ref: > AGENT.agent_id]
+  name varchar [not null]
+  description text
+  is_active boolean [not null, default: true]
+  weight decimal(5,2) [not null]
+  sort_order int [not null]
+  updated_at datetime [not null]
+}

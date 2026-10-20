@@ -1,0 +1,302 @@
+{
+  "sourceSha256": "adfb820b12ef9ad821b2e56d8805765b47b552462870addf5b638921409c382a",
+  "tableCount": 21,
+  "fieldCount": 173,
+  "foreignKeyCount": 40,
+  "compilerChecks": [
+    "dbml",
+    "dbmlv2"
+  ],
+  "graphvizWarnings": [],
+  "refs": [
+    {
+      "id": "R01",
+      "childTable": "PROJECT",
+      "childField": "user_id",
+      "parentTable": "USER",
+      "parentField": "user_id"
+    },
+    {
+      "id": "R02",
+      "childTable": "TASK",
+      "childField": "project_id",
+      "parentTable": "PROJECT",
+      "parentField": "project_id"
+    },
+    {
+      "id": "R03",
+      "childTable": "TASK",
+      "childField": "run_id",
+      "parentTable": "PROJECT_RUN",
+      "parentField": "run_id"
+    },
+    {
+      "id": "R04",
+      "childTable": "AGENT_MODEL",
+      "childField": "agent_id",
+      "parentTable": "AGENT",
+      "parentField": "agent_id"
+    },
+    {
+      "id": "R05",
+      "childTable": "AGENT_MODEL",
+      "childField": "model_id",
+      "parentTable": "MODEL_INFO",
+      "parentField": "model_id"
+    },
+    {
+      "id": "R06",
+      "childTable": "AGENT_EXECUTION",
+      "childField": "task_id",
+      "parentTable": "TASK",
+      "parentField": "task_id"
+    },
+    {
+      "id": "R07",
+      "childTable": "AGENT_EXECUTION",
+      "childField": "agent_id",
+      "parentTable": "AGENT",
+      "parentField": "agent_id"
+    },
+    {
+      "id": "R08",
+      "childTable": "AGENT_EXECUTION",
+      "childField": "model_id",
+      "parentTable": "MODEL_INFO",
+      "parentField": "model_id"
+    },
+    {
+      "id": "R09",
+      "childTable": "ARTIFACT",
+      "childField": "task_id",
+      "parentTable": "TASK",
+      "parentField": "task_id"
+    },
+    {
+      "id": "R10",
+      "childTable": "ARTIFACT",
+      "childField": "agent_id",
+      "parentTable": "AGENT",
+      "parentField": "agent_id"
+    },
+    {
+      "id": "R11",
+      "childTable": "ARTIFACT",
+      "childField": "project_id",
+      "parentTable": "PROJECT",
+      "parentField": "project_id"
+    },
+    {
+      "id": "R12",
+      "childTable": "ARTIFACT",
+      "childField": "execution_id",
+      "parentTable": "AGENT_EXECUTION",
+      "parentField": "execution_id"
+    },
+    {
+      "id": "R13",
+      "childTable": "KNOWLEDGE_DOCUMENT",
+      "childField": "user_id",
+      "parentTable": "USER",
+      "parentField": "user_id"
+    },
+    {
+      "id": "R14",
+      "childTable": "VECTOR_MEMORY",
+      "childField": "document_id",
+      "parentTable": "KNOWLEDGE_DOCUMENT",
+      "parentField": "document_id"
+    },
+    {
+      "id": "R15",
+      "childTable": "MEMORY",
+      "childField": "user_id",
+      "parentTable": "USER",
+      "parentField": "user_id"
+    },
+    {
+      "id": "R16",
+      "childTable": "PROMPT_HISTORY",
+      "childField": "agent_id",
+      "parentTable": "AGENT",
+      "parentField": "agent_id"
+    },
+    {
+      "id": "R17",
+      "childTable": "PROMPT_HISTORY",
+      "childField": "model_id",
+      "parentTable": "MODEL_INFO",
+      "parentField": "model_id"
+    },
+    {
+      "id": "R18",
+      "childTable": "REFLECTION_REPORT",
+      "childField": "project_id",
+      "parentTable": "PROJECT",
+      "parentField": "project_id"
+    },
+    {
+      "id": "R19",
+      "childTable": "REFLECTION_REPORT",
+      "childField": "run_id",
+      "parentTable": "PROJECT_RUN",
+      "parentField": "run_id"
+    },
+    {
+      "id": "R20",
+      "childTable": "REFLECTION_REPORT",
+      "childField": "execution_id",
+      "parentTable": "AGENT_EXECUTION",
+      "parentField": "execution_id"
+    },
+    {
+      "id": "R21",
+      "childTable": "CHAT_CONVERSATION",
+      "childField": "project_id",
+      "parentTable": "PROJECT",
+      "parentField": "project_id"
+    },
+    {
+      "id": "R22",
+      "childTable": "CHAT_CONVERSATION",
+      "childField": "user_id",
+      "parentTable": "USER",
+      "parentField": "user_id"
+    },
+    {
+      "id": "R23",
+      "childTable": "CHAT_MESSAGE",
+      "childField": "conversation_id",
+      "parentTable": "CHAT_CONVERSATION",
+      "parentField": "conversation_id"
+    },
+    {
+      "id": "R24",
+      "childTable": "PROJECT_RUN",
+      "childField": "project_id",
+      "parentTable": "PROJECT",
+      "parentField": "project_id"
+    },
+    {
+      "id": "R25",
+      "childTable": "PROJECT_RUN",
+      "childField": "requested_by",
+      "parentTable": "USER",
+      "parentField": "user_id"
+    },
+    {
+      "id": "R26",
+      "childTable": "PROJECT_RUN",
+      "childField": "conversation_id",
+      "parentTable": "CHAT_CONVERSATION",
+      "parentField": "conversation_id"
+    },
+    {
+      "id": "R27",
+      "childTable": "PROJECT_RUN",
+      "childField": "source_message_id",
+      "parentTable": "CHAT_MESSAGE",
+      "parentField": "message_id"
+    },
+    {
+      "id": "R28",
+      "childTable": "PROJECT_RUN",
+      "childField": "previous_run_id",
+      "parentTable": "PROJECT_RUN",
+      "parentField": "run_id"
+    },
+    {
+      "id": "R29",
+      "childTable": "EXECUTION_EVENT",
+      "childField": "run_id",
+      "parentTable": "PROJECT_RUN",
+      "parentField": "run_id"
+    },
+    {
+      "id": "R30",
+      "childTable": "EXECUTION_EVENT",
+      "childField": "execution_id",
+      "parentTable": "AGENT_EXECUTION",
+      "parentField": "execution_id"
+    },
+    {
+      "id": "R31",
+      "childTable": "EXECUTION_EVENT",
+      "childField": "agent_id",
+      "parentTable": "AGENT",
+      "parentField": "agent_id"
+    },
+    {
+      "id": "R32",
+      "childTable": "EXECUTION_EVENT",
+      "childField": "result_artifact_id",
+      "parentTable": "ARTIFACT",
+      "parentField": "artifact_id"
+    },
+    {
+      "id": "R33",
+      "childTable": "MODEL_USAGE",
+      "childField": "execution_id",
+      "parentTable": "AGENT_EXECUTION",
+      "parentField": "execution_id"
+    },
+    {
+      "id": "R34",
+      "childTable": "MODEL_USAGE",
+      "childField": "model_id",
+      "parentTable": "MODEL_INFO",
+      "parentField": "model_id"
+    },
+    {
+      "id": "R35",
+      "childTable": "NOTIFICATION",
+      "childField": "recipient_user_id",
+      "parentTable": "USER",
+      "parentField": "user_id"
+    },
+    {
+      "id": "R36",
+      "childTable": "NOTIFICATION",
+      "childField": "project_id",
+      "parentTable": "PROJECT",
+      "parentField": "project_id"
+    },
+    {
+      "id": "R37",
+      "childTable": "NOTIFICATION",
+      "childField": "event_id",
+      "parentTable": "EXECUTION_EVENT",
+      "parentField": "event_id"
+    },
+    {
+      "id": "R38",
+      "childTable": "INSTRUCTION",
+      "childField": "project_id",
+      "parentTable": "PROJECT",
+      "parentField": "project_id"
+    },
+    {
+      "id": "R39",
+      "childTable": "INSTRUCTION",
+      "childField": "updated_by",
+      "parentTable": "USER",
+      "parentField": "user_id"
+    },
+    {
+      "id": "R40",
+      "childTable": "QUALITY_CRITERION",
+      "childField": "agent_id",
+      "parentTable": "AGENT",
+      "parentField": "agent_id"
+    }
+  ],
+  "svgChecks": {
+    "visibleTableCount": 21,
+    "visibleFieldCount": 173,
+    "visibleForeignKeyCount": 40,
+    "fieldsTypesDefaultsKeysNullabilityAndIndexesMatchSource": true,
+    "allEdgeEndpointsMatchReferencedFieldRows": true,
+    "noOverlappingTables": true,
+    "sourceHashMatches": true
+  }
+}

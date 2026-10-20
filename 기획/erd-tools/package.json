@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "@dbml/core": "^10.3.1",
+    "@viz-js/viz": "^3.31.0",
+    "sharp": "^0.35.5"
+  }
+}

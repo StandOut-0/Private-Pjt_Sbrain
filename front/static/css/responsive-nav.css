@@ -4,16 +4,20 @@
 }
 @media (max-width:991.98px) {
   :root { --sb-topbar-height:104px; }
-  .sb-topbar { display:flex; flex-wrap:wrap; align-content:center; justify-content:flex-start; gap:8px; padding:10px 16px; }
+  .sb-topbar { display:flex; flex-wrap:wrap; align-content:center; justify-content:space-between; gap:8px; padding:10px 16px; }
+  .sb-topbar .sb-brand { order:1; }
+  .sb-topbar .sb-topbar-actions { order:2; margin-left:auto; }
+  .sb-topbar .sb-topbar-search { order:3; }
   .sb-mobile-menu-toggle { display:inline-flex; align-items:center; justify-content:center; width:34px; height:34px; font-size:20px; flex-shrink:0; }
   .sb-topbar .sb-brand { flex:1; min-width:0; }
   .sb-topbar .sb-logo { max-width:140px; height:auto; max-height:26px; }
   .sb-topbar-actions { gap:6px; flex-shrink:0; }
-  .sb-topbar-search { order:3; flex:0 0 100%; max-width:none; }
+  .sb-topbar-search { flex:0 0 100%; max-width:none; }
   .sb-topbar .sb-user-name,.sb-topbar .sb-badge-role { display:none; }
   .sb-topbar .sb-user-btn > i { margin:0 !important; }
   .sb-topbar .sb-user-btn::after { display:none; }
   .sb-topbar .sb-icon-btn,.sb-topbar .sb-user-btn { min-width:32px; height:34px; padding:5px 7px; }
+  .sb-topbar .sb-error-test-btn { position:static; flex:0 0 28px; width:28px; height:28px; }
   .sb-sidebar,.sb-sidebar-collapsed .sb-sidebar { position:fixed; top:0; bottom:0; width:min(300px,85vw); height:100dvh; padding:16px; background:var(--sb-surface); color:var(--sb-ink); }
   .sb-mobile-menu-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:2px 8px 18px; font-size:16px; font-weight:700; }
   .sb-sidebar-toggle { display:none; }
@@ -28,7 +32,10 @@
 }
 @media (max-width:575.98px) {
   .sb-topbar { padding:10px 12px; gap:6px; }
-  .sb-topbar .sb-logo { max-width:105px; }
-  .sb-topbar-actions { gap:4px; }
+  .sb-topbar .sb-logo { max-width:96px; }
+  .sb-topbar-actions { gap:3px; }
+  .sb-topbar .sb-icon-btn,.sb-topbar .sb-user-btn { min-width:28px; width:28px; height:32px; padding:4px; }
+  .sb-topbar .sb-error-test-btn { flex-basis:24px; width:24px; min-width:24px; height:24px; }
+  .sb-mobile-menu-toggle { width:30px !important; min-width:30px !important; }
   .sb-content { padding:16px 12px 28px; }
 }

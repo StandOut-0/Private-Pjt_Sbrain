@@ -459,6 +459,7 @@ document.addEventListener('DOMContentLoaded', function() {
   <div class="sb-card sb-history-card mb-4">
     <div class="sb-history-intro"><div><strong>최근 활동</strong><span>Agent가 남긴 프로젝트 실행 기록입니다.</span></div><i class="bi bi-activity"></i></div>
     <div class="sb-history-scroll">
+      {% if project.activities %}
       <div class="sb-timeline">
       {% for activity in project.activities %}
         <div class="sb-timeline-item sb-timeline-{{ activity.status }}">
@@ -478,6 +479,9 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       {% endfor %}
       </div>
+      {% else %}
+      <div class="sb-history-empty" role="status"><i class="bi bi-clock-history" aria-hidden="true"></i><span>아직 프로젝트 활동 기록이 없습니다.</span></div>
+      {% endif %}
     </div>
   </div>
     </div>

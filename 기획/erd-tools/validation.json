@@ -1,7 +1,7 @@
 {
-  "sourceSha256": "adfb820b12ef9ad821b2e56d8805765b47b552462870addf5b638921409c382a",
+  "sourceSha256": "2ff301627763621858a423adabe1b32beeba1d10af82276d98a3c9ef593169e2",
   "tableCount": 21,
-  "fieldCount": 173,
+  "fieldCount": 174,
   "foreignKeyCount": 40,
   "compilerChecks": [
     "dbml",
@@ -292,7 +292,7 @@
   ],
   "svgChecks": {
     "visibleTableCount": 21,
-    "visibleFieldCount": 173,
+    "visibleFieldCount": 174,
     "visibleForeignKeyCount": 40,
     "fieldsTypesDefaultsKeysNullabilityAndIndexesMatchSource": true,
     "allEdgeEndpointsMatchReferencedFieldRows": true,

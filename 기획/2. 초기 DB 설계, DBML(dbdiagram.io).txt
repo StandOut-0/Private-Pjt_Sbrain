@@ -15,8 +15,10 @@ DBML 블록(아래 첫 Table USER부터 파일 끝까지)을 dbdiagram.io에 입
 
 설계 규칙
 - UTC datetime 저장, 표시는 사용자 시간대. 실제 상태값은 queued / running / cancel_requested / cancelled / succeeded / failed.
-- 모델 속성끼리는 FK를 만들지 않는다. role은 user / admin이며 demo는 임시 세션으로 유지한다.
+- 모델 속성끼리는 FK를 만들지 않는다. role은 user / admin이며 demo는 USER.role에 저장하지 않는다. 저장이 필요한 체험 데이터는 Django session별 server-issued guest identity_key로 분리하고, 보존·만료는 별도 정책을 적용한다.
 - FK만으로 동일 프로젝트 소속을 보장하지 못하므로 Run·Task·Conversation·Artifact 연결 시 서버에서 소유권과 project_id 일치를 검증한다.
+- USER.identity_key는 서버가 만든 안정적인 계정 식별자다. Provider 토큰·비밀값은 저장하지 않으며, email은 선택 연락/표시값이지 소유권 키가 아니다. demo 역할은 로그인 세션에만 두고 영구 User 역할값으로 저장하지 않는다.
+- Conversation.user_id는 Project.user_id와 같아야 하고, Run.requested_by도 Project.user_id와 같아야 한다. Run의 Conversation·source Message, Task의 Project·Run, Artifact·Reflection의 Project·Run 간 소속 일치는 요청 서비스에서 함께 검증한다.
 - 공통 지시사항은 scope=common, project_id=null. 프로젝트 지시는 scope=project, project_id 필수. 이 조합을 서비스에서 검증한다.
 - 공통 지시는 초기 관리자만 수정한다. 개인별 공통 지시 기능을 추가하면 별도 소유 범위 설계가 필요하다.
 - PROJECT_RUN.idempotency_key는 사용자 확인 후 요청 단위로 발급한다. 프로젝트+key 고유 제약으로 중복 실행을 막는다.
@@ -147,47 +149,54 @@ created_at
 ---------------------------------
 
 Table USER {
-  user_id int [pk]
-  name varchar
-  email varchar
+  user_id bigint [pk, increment]
+  identity_key varchar [not null, unique, note: 'server-issued account subject or per-session guest subject; never a provider secret']
+  name varchar [not null]
+  email varchar [unique]
   created_at datetime
-  role varchar [not null, default: 'user']
+  role varchar [not null, default: 'user', note: 'user / admin; demo is session-only']
   updated_at datetime
 }
 
 Table PROJECT {
-  project_id int [pk]
-  user_id int [ref: > USER.user_id]
-  project_name varchar
+  project_id bigint [pk, increment]
+  user_id bigint [not null, ref: > USER.user_id]
+  project_name varchar [not null]
   description text
-  status varchar
-  created_at datetime
-  updated_at datetime
+  status varchar [not null, default: 'active']
+  created_at datetime [not null]
+  updated_at datetime [not null]
+  indexes {
+    (user_id, updated_at)
+  }
 }
 
 Table TASK {
-  task_id int [pk]
-  project_id int [ref: > PROJECT.project_id]
-  title varchar
+  task_id bigint [pk, increment]
+  project_id bigint [not null, ref: > PROJECT.project_id]
+  title varchar [not null]
   description text
-  priority varchar
-  status varchar
-  created_at datetime
-  run_id int [ref: > PROJECT_RUN.run_id]
+  priority varchar [not null, default: 'normal']
+  status varchar [not null, default: 'queued', note: 'queued / running / waiting_for_user / succeeded / failed / cancelled']
+  created_at datetime [not null]
+  run_id bigint [not null, ref: > PROJECT_RUN.run_id]
   updated_at datetime
   started_at datetime
   finished_at datetime
+  indexes {
+    (project_id, run_id)
+  }
 }
 
 Table AGENT {
-  agent_id int [pk]
+  agent_id bigint [pk, increment]
   agent_name varchar
   role varchar
   description text
 }
 
 Table MODEL_INFO {
-  model_id int [pk]
+  model_id bigint [pk, increment]
   model_name varchar
   provider varchar
   model_type varchar
@@ -198,22 +207,22 @@ Table MODEL_INFO {
 }
 
 Table AGENT_MODEL {
-  agent_model_id int [pk]
-  agent_id int [ref: > AGENT.agent_id]
-  model_id int [ref: > MODEL_INFO.model_id]
+  agent_model_id bigint [pk, increment]
+  agent_id bigint [ref: > AGENT.agent_id]
+  model_id bigint [ref: > MODEL_INFO.model_id]
   priority int
   is_active boolean
   created_at datetime
 }
 
 Table AGENT_EXECUTION {
-  execution_id int [pk]
-  task_id int [ref: > TASK.task_id]
-  agent_id int [ref: > AGENT.agent_id]
-  model_id int [ref: > MODEL_INFO.model_id]
+  execution_id bigint [pk, increment]
+  task_id bigint [not null, ref: > TASK.task_id]
+  agent_id bigint [not null, ref: > AGENT.agent_id]
+  model_id bigint [ref: > MODEL_INFO.model_id]
   input text
   output text
-  status varchar
+  status varchar [not null, default: 'queued', note: 'queued / running / cancel_requested / cancelled / succeeded / failed']
   started_at datetime
   finished_at datetime
   attempt_number int [not null, default: 1]
@@ -227,18 +236,18 @@ Table AGENT_EXECUTION {
 }
 
 Table ARTIFACT {
-  artifact_id int [pk]
-  task_id int [ref: > TASK.task_id]
-  agent_id int [ref: > AGENT.agent_id]
-  project_id int [ref: > PROJECT.project_id]
-  artifact_type varchar
-  title varchar
+  artifact_id bigint [pk, increment]
+  task_id bigint [not null, ref: > TASK.task_id]
+  agent_id bigint [not null, ref: > AGENT.agent_id]
+  project_id bigint [not null, ref: > PROJECT.project_id]
+  artifact_type varchar [not null]
+  title varchar [not null]
   description text
   file_path varchar
   file_url varchar
-  version varchar
-  created_at datetime
-  execution_id int [ref: > AGENT_EXECUTION.execution_id]
+  version varchar [not null]
+  created_at datetime [not null]
+  execution_id bigint [ref: > AGENT_EXECUTION.execution_id]
   logical_key varchar [not null]
   updated_at datetime
   indexes {
@@ -247,8 +256,8 @@ Table ARTIFACT {
 }
 
 Table KNOWLEDGE_DOCUMENT {
-  document_id int [pk]
-  user_id int [ref: > USER.user_id]
+  document_id bigint [pk, increment]
+  user_id bigint [ref: > USER.user_id]
   title varchar
   content text
   file_path varchar
@@ -256,15 +265,15 @@ Table KNOWLEDGE_DOCUMENT {
 }
 
 Table VECTOR_MEMORY {
-  vector_id int [pk]
-  document_id int [ref: > KNOWLEDGE_DOCUMENT.document_id]
+  vector_id bigint [pk, increment]
+  document_id bigint [ref: > KNOWLEDGE_DOCUMENT.document_id]
   embedding text
   metadata json
 }
 
 Table MEMORY {
-  memory_id int [pk]
-  user_id int [ref: > USER.user_id]
+  memory_id bigint [pk, increment]
+  user_id bigint [ref: > USER.user_id]
   type varchar
   content text
   importance_score float
@@ -272,9 +281,9 @@ Table MEMORY {
 }
 
 Table PROMPT_HISTORY {
-  prompt_id int [pk]
-  agent_id int [ref: > AGENT.agent_id]
-  model_id int [ref: > MODEL_INFO.model_id]
+  prompt_id bigint [pk, increment]
+  agent_id bigint [ref: > AGENT.agent_id]
+  model_id bigint [ref: > MODEL_INFO.model_id]
   input text
   prompt text
   response text
@@ -283,14 +292,14 @@ Table PROMPT_HISTORY {
 }
 
 Table REFLECTION_REPORT {
-  report_id int [pk]
-  project_id int [ref: > PROJECT.project_id]
+  report_id bigint [pk, increment]
+  project_id bigint [not null, ref: > PROJECT.project_id]
   summary text
   evaluation text
   improvement text
-  created_at datetime
-  run_id int [ref: > PROJECT_RUN.run_id]
-  execution_id int [ref: > AGENT_EXECUTION.execution_id]
+  created_at datetime [not null]
+  run_id bigint [not null, ref: > PROJECT_RUN.run_id]
+  execution_id bigint [ref: > AGENT_EXECUTION.execution_id]
   target_score decimal(5,2)
   actual_score decimal(5,2)
   criteria_snapshot json
@@ -301,31 +310,37 @@ Table REFLECTION_REPORT {
 
 // A. Conversation / 실행 단위 (구현 전 설계)
 Table CHAT_CONVERSATION {
-  conversation_id int [pk]
-  project_id int [not null, ref: > PROJECT.project_id]
-  user_id int [not null, ref: > USER.user_id]
-  title varchar
+  conversation_id bigint [pk, increment]
+  project_id bigint [not null, ref: > PROJECT.project_id]
+  user_id bigint [not null, ref: > USER.user_id]
+  title varchar [not null]
   created_at datetime [not null]
   updated_at datetime [not null]
+  indexes {
+    (project_id, updated_at)
+  }
 }
 
 Table CHAT_MESSAGE {
-  message_id int [pk]
-  conversation_id int [not null, ref: > CHAT_CONVERSATION.conversation_id]
+  message_id bigint [pk, increment]
+  conversation_id bigint [not null, ref: > CHAT_CONVERSATION.conversation_id]
   role varchar [not null, note: 'user / assistant / system']
   content text [not null]
   created_at datetime [not null]
+  indexes {
+    (conversation_id, created_at)
+  }
 }
 
 Table PROJECT_RUN {
-  run_id int [pk]
-  project_id int [not null, ref: > PROJECT.project_id]
-  requested_by int [not null, ref: > USER.user_id]
-  conversation_id int [ref: > CHAT_CONVERSATION.conversation_id]
-  source_message_id int [ref: > CHAT_MESSAGE.message_id]
-  previous_run_id int [ref: > PROJECT_RUN.run_id]
+  run_id bigint [pk, increment]
+  project_id bigint [not null, ref: > PROJECT.project_id]
+  requested_by bigint [not null, ref: > USER.user_id]
+  conversation_id bigint [not null, ref: > CHAT_CONVERSATION.conversation_id]
+  source_message_id bigint [not null, ref: > CHAT_MESSAGE.message_id]
+  previous_run_id bigint [ref: > PROJECT_RUN.run_id]
   idempotency_key varchar [not null]
-  status varchar [not null, default: 'queued']
+  status varchar [not null, default: 'queued', note: 'queued / running / cancel_requested / cancelled / succeeded / failed']
   feedback text
   instruction_snapshot json
   created_at datetime [not null]
@@ -334,16 +349,17 @@ Table PROJECT_RUN {
   cancel_requested_at datetime
   indexes {
     (project_id, idempotency_key) [unique]
+    (project_id, created_at)
   }
 }
 
 // B. Timeline / Activity Log / Token / 알림 / 품질 기준
 Table EXECUTION_EVENT {
-  event_id int [pk]
-  run_id int [not null, ref: > PROJECT_RUN.run_id]
-  execution_id int [ref: > AGENT_EXECUTION.execution_id]
-  agent_id int [ref: > AGENT.agent_id]
-  result_artifact_id int [ref: > ARTIFACT.artifact_id]
+  event_id bigint [pk, increment]
+  run_id bigint [not null, ref: > PROJECT_RUN.run_id]
+  execution_id bigint [ref: > AGENT_EXECUTION.execution_id]
+  agent_id bigint [ref: > AGENT.agent_id]
+  result_artifact_id bigint [ref: > ARTIFACT.artifact_id]
   event_type varchar [not null]
   status varchar
   severity varchar [note: 'info / warning / error']
@@ -355,9 +371,9 @@ Table EXECUTION_EVENT {
 }
 
 Table MODEL_USAGE {
-  usage_id int [pk]
-  execution_id int [not null, ref: > AGENT_EXECUTION.execution_id]
-  model_id int [not null, ref: > MODEL_INFO.model_id]
+  usage_id bigint [pk, increment]
+  execution_id bigint [not null, ref: > AGENT_EXECUTION.execution_id]
+  model_id bigint [not null, ref: > MODEL_INFO.model_id]
   usage_key varchar [not null, unique]
   input_tokens bigint [note: 'null: not measured; nonnegative when measured']
   output_tokens bigint [note: 'null: not measured; nonnegative when measured']
@@ -365,10 +381,10 @@ Table MODEL_USAGE {
 }
 
 Table NOTIFICATION {
-  notification_id int [pk]
-  recipient_user_id int [not null, ref: > USER.user_id]
-  project_id int [ref: > PROJECT.project_id]
-  event_id int [ref: > EXECUTION_EVENT.event_id]
+  notification_id bigint [pk, increment]
+  recipient_user_id bigint [not null, ref: > USER.user_id]
+  project_id bigint [ref: > PROJECT.project_id]
+  event_id bigint [ref: > EXECUTION_EVENT.event_id]
   notification_type varchar [not null]
   message text [not null]
   read_at datetime
@@ -379,9 +395,9 @@ Table NOTIFICATION {
 }
 
 Table INSTRUCTION {
-  instruction_id int [pk]
-  project_id int [ref: > PROJECT.project_id]
-  updated_by int [not null, ref: > USER.user_id]
+  instruction_id bigint [pk, increment]
+  project_id bigint [ref: > PROJECT.project_id]
+  updated_by bigint [not null, ref: > USER.user_id]
   scope varchar [not null, note: 'common: project_id null; project: project_id required']
   title varchar [not null]
   content text [not null]
@@ -391,8 +407,8 @@ Table INSTRUCTION {
 }
 
 Table QUALITY_CRITERION {
-  criterion_id int [pk]
-  agent_id int [not null, ref: > AGENT.agent_id]
+  criterion_id bigint [pk, increment]
+  agent_id bigint [not null, ref: > AGENT.agent_id]
   name varchar [not null]
   description text
   is_active boolean [not null, default: true]

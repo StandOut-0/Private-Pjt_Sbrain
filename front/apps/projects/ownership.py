@@ -22,3 +22,21 @@ def project_payload(project):
         'created_at': project.created_at.isoformat().replace('+00:00', 'Z'),
         'updated_at': project.updated_at.isoformat().replace('+00:00', 'Z'),
     }
+
+
+def project_card_payload(project):
+    status = {
+        Project.STATUS_ACTIVE: 'running',
+        Project.STATUS_COMPLETED: 'done',
+        Project.STATUS_ARCHIVED: 'ready',
+    }.get(project.status, 'ready')
+    return {
+        **project_payload(project),
+        'code': f'Project {project.pk:02d}',
+        'status': status,
+        'status_label': project.get_status_display(),
+        'progress': 0,
+        'stages': [],
+        'activities': [],
+        'tree': [],
+    }

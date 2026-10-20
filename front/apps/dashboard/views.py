@@ -1,11 +1,14 @@
 from apps import mockdata
-from apps.accounts.session import login_required
+from apps.accounts.session import get_user_account, login_required
+from apps.projects.models import Project
+from apps.projects.ownership import project_card_payload
 from apps.react_pages import render_react
 
 
 def _react_context(request):
+    account = get_user_account(request)
     return {
-        'projects': mockdata.get_projects(),
+        'projects': [project_card_payload(project) for project in Project.objects.filter(owner=account)],
     }
 
 

@@ -7,6 +7,9 @@ from django.templatetags.static import static
 
 from apps import mockdata
 from apps.accounts.session import get_user
+from apps.accounts.session import get_user_account
+from apps.projects.models import Project
+from apps.projects.ownership import project_card_payload
 
 PAGE_STYLES = {
     'dashboard': ['dashboard'], 'faq': ['faq'], 'guide': ['comingsoon', 'user-guide'], 'agents': ['agents'],
@@ -34,11 +37,12 @@ def render_react(request, page, data=None, *, shell=True, status=200, active_men
             assets['js'] = static('react/' + entry['file'])
         assets['css'] = [static('react/' + path) for path in entry.get('css', [])]
     user = get_user(request)
+    account = get_user_account(request)
     payload = {
         'page': page,
         'data': data or {},
         'user': user,
-        'navProjects': mockdata.get_projects(),
+        'navProjects': [project_card_payload(project) for project in Project.objects.filter(owner=account)],
         'csrf': '',
         'links': {
             'dashboard': '/', 'login': '/login/', 'demoLogin': '/login/demo/',

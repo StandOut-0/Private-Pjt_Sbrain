@@ -6,7 +6,8 @@ from pathlib import Path
 from apps import mockdata
 from apps.accounts.session import get_user_account, login_required
 from apps.projects.models import Project
-from apps.projects.ownership import project_payload
+from apps.projects.ownership import project_card_payload
+from apps.projects.services import ProjectInputError, create_project
 from apps.react_pages import render_react
 
 
@@ -28,26 +29,24 @@ def _chat_guides():
 
 @login_required
 def project_list(request):
-    all_projects = mockdata.get_projects()
+    account = get_user_account(request)
+    queryset = Project.objects.filter(owner=account)
     keyword = request.GET.get('project_q', '').strip()
     status = request.GET.get('project_status', '').strip()
-    valid_statuses = {project.get('status', '') for project in all_projects}
+    status_to_model = {'running': Project.STATUS_ACTIVE, 'done': Project.STATUS_COMPLETED, 'ready': Project.STATUS_ARCHIVED}
+    valid_statuses = set(status_to_model)
     if status not in valid_statuses:
         status = ''
-
-    projects = all_projects
     if keyword:
-        needle = keyword.casefold()
-        projects = [
-            project for project in projects
-            if needle in ' '.join((project.get('code', ''), project.get('title', ''), project.get('summary', ''))).casefold()
-        ]
+        queryset = queryset.filter(project_name__icontains=keyword) | queryset.filter(description__icontains=keyword)
     if status:
-        projects = [project for project in projects if project.get('status') == status]
+        queryset = queryset.filter(status=status_to_model[status])
+    all_projects = Project.objects.filter(owner=account)
+    projects = [project_card_payload(project) for project in queryset]
 
     context = {
         'projects': projects,
-        'total_projects': len(all_projects),
+        'total_projects': all_projects.count(),
         'project_statuses': sorted(valid_statuses),
         'filters': {'q': keyword, 'status': status},
         'active_menu': 'projects',
@@ -57,15 +56,16 @@ def project_list(request):
 @login_required
 def project_create(request):
     if request.method == 'POST':
-        title = request.POST.get('title', '').strip()
-        if not title:
-            return redirect('projects:list')
-        project = mockdata.create_project(
-            title,
-            request.POST.get('summary', ''),
-            request.POST.get('goal', ''),
-        )
-        return redirect('projects:detail', project_id=project['id'])
+        try:
+            project = create_project(
+                owner=get_user_account(request),
+                title=request.POST.get('title', ''),
+                summary=request.POST.get('summary', ''),
+                initial_message=request.POST.get('goal') or None,
+            )
+        except ProjectInputError:
+            return JsonResponse({'error': '프로젝트 이름과 설명, 목표 길이를 확인해주세요.'}, status=422)
+        return redirect('projects:detail', project_id=project.pk)
     # 생성 진입은 AppShell의 팝업에서 제공한다. 직접 주소를 열어도 빈 페이지는 보이지 않게 한다.
     return redirect('projects:list')
 
@@ -108,26 +108,11 @@ def project_detail(request, project_id=None):
 
     else:
         # 일반 사용자: 선택한 프로젝트 하나
-        stored_project = Project.objects.filter(pk=project_id).first()
-        if stored_project:
-            account = get_user_account(request)
-            if account is None or stored_project.owner_id != account.pk:
-                raise Http404('project not found')
-            project = {
-                **project_payload(stored_project),
-                'code': f'Project {stored_project.pk:02d}',
-                'status_label': stored_project.get_status_display(),
-                'progress': 0,
-                'stages': [],
-                'activities': [],
-                'tree': [],
-            }
-        else:
-            # 정적 예시 프로젝트는 사용자 데이터가 아닌 공용 Mock 데이터다.
-            project = mockdata.get_project(project_id)
-
-        if not project:
+        account = get_user_account(request)
+        stored_project = Project.objects.filter(pk=project_id, owner=account).first()
+        if stored_project is None:
             raise Http404('project not found')
+        project = project_card_payload(stored_project)
 
         context = {
             'project': project,

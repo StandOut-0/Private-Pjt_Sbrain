@@ -1,6 +1,6 @@
 # Project Execution API v1 — 계약 초안
 
-- 상태: Day 4 초안. 구현은 Day 5 이후.
+- 상태: Project 목록·생성·상세·수정과 초기 목표 저장은 Day 6 구현 완료. Conversation/Message 조회·추가, Run·Artifact 경로는 후속 구현 대상.
 - 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
 - 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
 
@@ -18,7 +18,7 @@
 
 ### 1. Project 목록
 
-`GET /api/v1/projects?query={text}&status={status}&limit=25&cursor={opaque}`
+`GET /api/v1/projects/?query={text}&status={status}&limit=25&cursor={opaque}`
 
 `200 OK`
 
@@ -42,7 +42,7 @@
 
 ### 2. Project 생성
 
-`POST /api/v1/projects`
+`POST /api/v1/projects/`
 
 ```json
 {
@@ -78,13 +78,15 @@
 
 `initial_message`가 없으면 응답의 `conversation`과 `initial_message`는 `null`이다. 소유자는 요청에서 받지 않고 현재 세션으로 설정한다.
 
-### 3. Project 상세
+### 3. Project 상세·수정
 
-`GET /api/v1/projects/{project_id}` → `200 OK`와 Project 객체. Project 소유자가 아니거나 없으면 `404 PROJECT_NOT_FOUND`.
+`GET /api/v1/projects/{project_id}/` → `200 OK`와 Project 객체. Project 소유자가 아니거나 없으면 `404 PROJECT_NOT_FOUND`.
+
+`PATCH /api/v1/projects/{project_id}/`는 `title`, `summary`, `status` 중 수정할 필드만 받는다. Project 소유권을 확인하고 기존 생성과 같은 길이·상태 검증을 적용한다. 성공 시 갱신한 Project 객체를 반환한다. 소유자가 아니거나 없으면 `404 PROJECT_NOT_FOUND`.
 
 ### 4. Conversation 생성
 
-`POST /api/v1/projects/{project_id}/conversations`
+`POST /api/v1/projects/{project_id}/conversations/`
 
 ```json
 {"title": "반려동물 쇼핑몰 기획"}
@@ -94,8 +96,8 @@
 
 ### 5. Message 조회·저장
 
-- `GET /api/v1/projects/{project_id}/conversations/{conversation_id}/messages?limit=50&cursor={opaque}`
-- `POST /api/v1/projects/{project_id}/conversations/{conversation_id}/messages`
+- `GET /api/v1/projects/{project_id}/conversations/{conversation_id}/messages/?limit=50&cursor={opaque}`
+- `POST /api/v1/projects/{project_id}/conversations/{conversation_id}/messages/`
 
 POST body:
 
@@ -109,7 +111,7 @@ POST body:
 
 ### 6. Run 생성과 멱등성
 
-`POST /api/v1/projects/{project_id}/runs`
+`POST /api/v1/projects/{project_id}/runs/`
 
 필수 헤더: `Idempotency-Key: <UUID>`
 
@@ -146,13 +148,13 @@ Run 상태값: `queued`, `running`, `cancel_requested`, `cancelled`, `succeeded`
 
 ### 7. Run 상태 조회
 
-`GET /api/v1/projects/{project_id}/runs/{run_id}` → `200 OK`와 Run 자원. Project 소유권을 매번 검사한다. 실패 시 오류 코드와 사용자 메시지를 반환하되 내부 경로, stack trace, Provider secret은 포함하지 않는다. 상태 갱신이 필요하면 클라이언트는 조회를 재호출하며, 푸시 연결은 MVP 범위에 없다.
+`GET /api/v1/projects/{project_id}/runs/{run_id}/` → `200 OK`와 Run 자원. Project 소유권을 매번 검사한다. 실패 시 오류 코드와 사용자 메시지를 반환하되 내부 경로, stack trace, Provider secret은 포함하지 않는다. 상태 갱신이 필요하면 클라이언트는 조회를 재호출하며, 푸시 연결은 MVP 범위에 없다.
 
 ### 8. Artifact 조회·다운로드
 
-- `GET /api/v1/projects/{project_id}/artifacts?logical_key={key}&limit=25&cursor={opaque}` — Project 산출물 목록, `200 OK`.
-- `GET /api/v1/projects/{project_id}/artifacts/{artifact_id}` — 메타데이터, `200 OK`.
-- `GET /api/v1/projects/{project_id}/artifacts/{artifact_id}/download` — 서버가 Project 소유권·파일 권한을 검사한 뒤 파일을 전송한다.
+- `GET /api/v1/projects/{project_id}/artifacts/?logical_key={key}&limit=25&cursor={opaque}` — Project 산출물 목록, `200 OK`.
+- `GET /api/v1/projects/{project_id}/artifacts/{artifact_id}/` — 메타데이터, `200 OK`.
+- `GET /api/v1/projects/{project_id}/artifacts/{artifact_id}/download/` — 서버가 Project 소유권·파일 권한을 검사한 뒤 파일을 전송한다.
 
 Artifact 응답은 `{ "id", "project_id", "task_id", "logical_key", "version", "title", "artifact_type", "created_at", "download_url" }`. 실제 `file_path`는 반환하지 않는다. 새 실행 결과는 같은 `logical_key`의 새 `version`으로 추가해 과거 성공 결과를 덮어쓰지 않는다.
 

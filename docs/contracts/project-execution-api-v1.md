@@ -1,0 +1,187 @@
+# Project Execution API v1 — 계약 초안
+
+- 상태: Day 4 초안. 구현은 Day 5 이후.
+- 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
+- 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
+
+## 공통 규칙
+
+- API prefix는 `/api/v1`이다. 기존 페이지 URL(`/projects/...`)은 Django 화면 호환 경로로 유지한다.
+- 인증은 Django 세션 쿠키로 수행한다. 상태 변경 `POST`는 same-origin 요청과 `X-CSRFToken` 헤더를 사용한다.
+- API 인증 실패는 HTML 로그인 redirect 대신 JSON `401`을 반환한다. 일반 페이지 redirect 동작은 바꾸지 않는다.
+- 요청·응답은 JSON이며 시간은 UTC ISO-8601(`Z`) 형식이다. 응답에 서버 경로, 파일 시스템 경로, 비밀값은 노출하지 않는다.
+- 클라이언트는 `user_id`, `requested_by`, role, 소유자 ID를 보내지 않는다. 서버 세션에서 사용자 ID를 결정한다.
+- 인증은 되었지만 리소스가 없거나 다른 사용자의 소유면 동일하게 `404`를 반환해 존재 여부를 숨긴다.
+- 생성·변경은 서버 권한 검증과 같은 DB 트랜잭션 경계에서 처리한다.
+
+## 자원과 규칙
+
+### 1. Project 목록
+
+`GET /api/v1/projects?query={text}&status={status}&limit=25&cursor={opaque}`
+
+`200 OK`
+
+```json
+{
+  "items": [
+    {
+      "id": 41,
+      "title": "반려동물 용품 쇼핑몰",
+      "summary": "반려동물 용품을 판매하는 온라인 스토어",
+      "status": "active",
+      "created_at": "2026-10-20T03:10:00Z",
+      "updated_at": "2026-10-20T03:10:00Z"
+    }
+  ],
+  "next_cursor": null
+}
+```
+
+목록은 로그인 사용자의 Project만 반환한다. 정렬은 `updated_at DESC, id DESC`. 기본 페이지 크기는 25, 최대 100이다. 잘못된 상태 필터는 `422 VALIDATION_ERROR`로 거부한다.
+
+### 2. Project 생성
+
+`POST /api/v1/projects`
+
+```json
+{
+  "title": "반려동물 용품 쇼핑몰",
+  "summary": "반려동물 용품을 판매하는 온라인 스토어",
+  "initial_message": "반려동물 보호자를 위한 쇼핑몰을 기획해줘."
+}
+```
+
+`title`은 trim 후 2–80자 필수, `summary`는 최대 500자, `initial_message`는 생략 가능하며 지정하면 trim 후 1–10,000자다. `initial_message`가 있으면 Project·기본 Conversation·사용자 Message를 한 트랜잭션에서 생성한다. `goal` UI 필드는 이 `initial_message`로 매핑한다. 여기서는 Agent 실행을 시작하지 않는다.
+
+`201 Created`
+
+```json
+{
+  "project": {
+    "id": 41,
+    "title": "반려동물 용품 쇼핑몰",
+    "summary": "반려동물 용품을 판매하는 온라인 스토어",
+    "status": "active",
+    "created_at": "2026-10-20T03:10:00Z",
+    "updated_at": "2026-10-20T03:10:00Z"
+  },
+  "conversation": {"id": 7, "title": "반려동물 용품 쇼핑몰"},
+  "initial_message": {
+    "id": 12,
+    "role": "user",
+    "content": "반려동물 보호자를 위한 쇼핑몰을 기획해줘.",
+    "created_at": "2026-10-20T03:10:00Z"
+  }
+}
+```
+
+`initial_message`가 없으면 응답의 `conversation`과 `initial_message`는 `null`이다. 소유자는 요청에서 받지 않고 현재 세션으로 설정한다.
+
+### 3. Project 상세
+
+`GET /api/v1/projects/{project_id}` → `200 OK`와 Project 객체. Project 소유자가 아니거나 없으면 `404 PROJECT_NOT_FOUND`.
+
+### 4. Conversation 생성
+
+`POST /api/v1/projects/{project_id}/conversations`
+
+```json
+{"title": "반려동물 쇼핑몰 기획"}
+```
+
+`title`은 선택값이며 생략하면 Project 제목을 사용한다. Project 소유권을 검증하고 `201 Created`와 `{ "id", "project_id", "title", "created_at", "updated_at" }`를 반환한다.
+
+### 5. Message 조회·저장
+
+- `GET /api/v1/projects/{project_id}/conversations/{conversation_id}/messages?limit=50&cursor={opaque}`
+- `POST /api/v1/projects/{project_id}/conversations/{conversation_id}/messages`
+
+POST body:
+
+```json
+{"content": "주요 고객을 1인 가구로 잡아줘."}
+```
+
+서버가 `role: "user"`를 부여한다. `content`는 trim 후 1–10,000자다. 응답은 `201 Created`와 `{ "id", "conversation_id", "role", "content", "created_at" }`. Assistant·Agent 메시지는 서버 실행 결과로만 생성한다.
+
+조회는 같은 Conversation의 메시지를 `created_at ASC, id ASC`로 페이지화한다. URL의 Project, Conversation, 세션 User 소유 관계가 모두 일치해야 한다.
+
+### 6. Run 생성과 멱등성
+
+`POST /api/v1/projects/{project_id}/runs`
+
+필수 헤더: `Idempotency-Key: <UUID>`
+
+```json
+{
+  "conversation_id": 7,
+  "source_message_id": 12,
+  "previous_run_id": null,
+  "feedback": null
+}
+```
+
+- 서버는 Project·Conversation·Message의 소유자와 소속이 모두 같은지 확인한다. `source_message_id`는 해당 Conversation의 `user` 메시지여야 한다.
+- `requested_by`, 상태, 실행 순서는 서버가 설정한다. 새 Run은 `queued`로 저장한 뒤 `202 Accepted`와 Run 자원, `Location: /api/v1/projects/{project_id}/runs/{run_id}`를 반환한다.
+- 동일 Project·같은 `Idempotency-Key`·같은 `source_message_id` 재요청은 새 Run을 만들지 않고 기존 Run을 `200 OK`로 반환한다. 첫 응답을 못 받은 클라이언트가 안전하게 재시도할 수 있다.
+- 키가 같은데 `source_message_id`가 다르면 `409 IDEMPOTENCY_KEY_REUSED`를 반환한다. DB의 `(project_id, idempotency_key)` unique 제약이 동시 요청을 최종 방어한다.
+- 이 POST는 Worker를 동기 실행하지 않는다. `queued`를 저장하고 별도 실행 경계에 넘긴다. 동시 실행 상한은 이 계약에서 임의로 추가하지 않으며 운영값 검토 때 결정한다.
+
+```json
+{
+  "id": 73,
+  "project_id": 41,
+  "conversation_id": 7,
+  "source_message_id": 12,
+  "status": "queued",
+  "progress": 0,
+  "created_at": "2026-10-20T03:11:00Z",
+  "started_at": null,
+  "finished_at": null
+}
+```
+
+Run 상태값: `queued`, `running`, `cancel_requested`, `cancelled`, `succeeded`, `failed`. 허용 상태 전이는 서버에서 검사한다. 취소 요청은 Day 16 별도 동작으로 추가한다.
+
+### 7. Run 상태 조회
+
+`GET /api/v1/projects/{project_id}/runs/{run_id}` → `200 OK`와 Run 자원. Project 소유권을 매번 검사한다. 실패 시 오류 코드와 사용자 메시지를 반환하되 내부 경로, stack trace, Provider secret은 포함하지 않는다. 상태 갱신이 필요하면 클라이언트는 조회를 재호출하며, 푸시 연결은 MVP 범위에 없다.
+
+### 8. Artifact 조회·다운로드
+
+- `GET /api/v1/projects/{project_id}/artifacts?logical_key={key}&limit=25&cursor={opaque}` — Project 산출물 목록, `200 OK`.
+- `GET /api/v1/projects/{project_id}/artifacts/{artifact_id}` — 메타데이터, `200 OK`.
+- `GET /api/v1/projects/{project_id}/artifacts/{artifact_id}/download` — 서버가 Project 소유권·파일 권한을 검사한 뒤 파일을 전송한다.
+
+Artifact 응답은 `{ "id", "project_id", "task_id", "logical_key", "version", "title", "artifact_type", "created_at", "download_url" }`. 실제 `file_path`는 반환하지 않는다. 새 실행 결과는 같은 `logical_key`의 새 `version`으로 추가해 과거 성공 결과를 덮어쓰지 않는다.
+
+## 공통 오류 형식
+
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "프로젝트 이름은 2자 이상 입력해 주세요.",
+    "details": {"title": "min_length"},
+    "request_id": "req_01J..."
+  }
+}
+```
+
+| HTTP | 코드 예 | 의미 |
+| --- | --- | --- |
+| 400 | `INVALID_JSON` | JSON 문법 오류 |
+| 401 | `AUTH_REQUIRED` | 세션 로그인 필요 |
+| 403 | `CSRF_FAILED` | CSRF token 누락·오류 |
+| 404 | `PROJECT_NOT_FOUND`, `RUN_NOT_FOUND`, `ARTIFACT_NOT_FOUND` | 없거나 요청자 소유가 아님 |
+| 409 | `IDEMPOTENCY_KEY_REUSED`, `RUN_STATE_CONFLICT` | 같은 요청 키의 본문 불일치 또는 현재 상태에서 불가 |
+| 422 | `VALIDATION_ERROR` | 필드 형식·길이·상태값 오류 |
+| 500 | `INTERNAL_ERROR` | 로그에는 request_id와 내부 원인을 남기고 응답은 안전한 문구만 반환 |
+
+## Day 5 이후 구현 확인 항목
+
+- Django JSON API 전용 인증 실패·CSRF 실패 응답을 HTML 페이지 응답과 분리한다.
+- 프로젝트·Conversation·Message·Run 저장을 같은 소유권 서비스와 트랜잭션 경계로 연결한다.
+- 동시 동일 idempotency 요청에서 DB unique 충돌을 잡고 기존 Run을 다시 읽는다.
+- 파일 다운로드 요청마다 DB 메타데이터와 실제 저장 경로를 서버에서 검증한다.

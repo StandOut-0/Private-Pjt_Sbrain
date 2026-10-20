@@ -7,6 +7,7 @@ Second Brain 서비스 기획안 — 회의 아이디어 반영판
 9장 사이트맵, 10장 설명 및 14장 구현 기준을 최신 기준으로 사용한다.
 기존 ASCII 와이어프레임은 초기 배치 참고도이며 최신 메뉴·상태 정의와 다르면 최신 설명을 적용한다.
 이번 문서 정리는 Django 모델, 실제 DB, Agent 실행 코드를 변경하지 않는다.
+2026-10-20 보완: 필수 화면 콘텐츠를 React로 이전하고 기존 Django URL·세션·권한·페이지별 초기 데이터 전달을 유지했다. 화면 구조·Bootstrap 기반 스타일·이미지 자산은 기존 디자인을 재사용한다. React 화면 전환과 Backend/DB·실제 Agent 연동은 별도 완료 조건으로 관리한다.
 
 
 
@@ -1762,8 +1763,8 @@ AI 결과의 오류 가능성과 민감정보 입력 주의도 함께 안내한�
 Python
 MySQL
 Django 또는 FastAPI
-HTML/CSS/JavaScript
-Bootstrap
+React / TypeScript
+HTML/CSS
 LLM
 Prompt Engineering
 LangGraph
@@ -1774,6 +1775,12 @@ Web Crawling
 Cloud
 
 선택: (프로젝트 완성도에 따라)
+React Router
+TanStack Query
+Zustand
+React Hook Form / Zod
+Tailwind CSS / shadcn/ui
+Bootstrap (기존 Django 페이지와 단계적 공존 기간)
 T5
 Qwen
 A2A
@@ -2162,3 +2169,115 @@ UI: 일반 / Demo / 관리자별 메뉴, 접기·펼치기, Popup 취소·확인
 중단: Worker 종료 확인, 진행 중 결과의 처리 방침, 중단 이후 추가 실행 방지 검증.
 재생성: 취소 시 변화 없음, 확인 시 새 실행 1회, 기존 결과 보존, 새 버전 조회 검증.
 문서·DB 설계·API 응답·화면 의미가 일치한 경우에만 실제 기능 완료로 기록한다.
+
+15. 전체 점검 결과 및 보완 기준 (2026-10-20)
+
+15-1. 전체 점검 요약
+현재 기획안은 문제 정의, 사용자 흐름, 화면 스토리보드, UI와 실제 Backend 기능의 구분, DB 확장 설계, 권한·상태·이력 관련 기준까지 구체적으로 정리되어 있다. 특히 14장의 작업별 미연동 상태와 DBML의 버전·소유권·멱등성 규칙은 Backend 구현의 기준으로 유지한다.
+반면 ① MVP의 완료 조건과 후속 기능의 경계가 여러 장에 흩어져 있고, ② 실행 단계별 선행조건·산출물·검증 책임이 일정으로 연결되지 않으며, ③ Agent 오류·재시도·비용·운영 전환의 공통 기준이 부족하다. 이를 보완하기 위해 15-2의 MVP 게이트와 16장의 20일 실행 계획을 추가한다.
+
+15-2. MVP 범위 및 완료 게이트
+MVP 목표는 “사용자가 프로젝트에서 요청을 보내면 Supervisor가 작업을 만들고 Planning이 PRD를 생성하며 Reflection이 기준에 따라 평가하고, 사용자가 버전이 보존된 결과를 확인하는 한 번의 종단 간 흐름”이다.
+필수 범위: USER / PROJECT 소유권 검사와 프로젝트 저장, Conversation / Message 저장, 실행 요청 중복 방지, Supervisor의 최소 작업 분해, Planning 결과 생성, Reflection 결과 및 평가 기준 snapshot 저장, Run / Task / Execution 이벤트와 Artifact 버전 연결, 진행·완료·실패 화면 표시, 실패한 실행의 기존 결과 보존.
+MVP 완료 판정은 한 개의 실제 사용자 시나리오가 새 프로젝트부터 최종 결과 확인까지 이어지고, 권한 없는 접근이 차단되며, 실패·재시도·중복 요청에서도 기존 Artifact가 손상되지 않는 것을 기준으로 한다. 화면 샘플이나 고정 Mock 점수만 표시되는 것은 완료로 세지 않는다.
+MVP 후속 범위: Creative / Engineering / Data / AI Worker 확대, 고급 RAG·Memory, MCP·A2A, 실제 Google OAuth 및 관리자 Face 인증, 메일 초대, 고급 Safety Filter, 범용 전역 검색, 자동 배포. MVP 일정이 남고 필수 게이트를 통과한 경우에만 선택한다.
+
+15-3. 완료 프로젝트(Sbrain-git)에서 반영한 실행 원칙
+① Agent와 Orchestrator의 책임을 구분한다. Agent는 결과 내용을 만들고, Orchestrator는 실행 순서, 입력·출력 계약, 상태, 재시도, 재개, 중단, 이력, 사용자 대기 지점을 관리한다.
+② 각 Agent 단계의 입출력 필드, 필수값, 버전, 실패 형식, 파일 참조 방식을 사전에 계약으로 고정한다. 외부 API·Worker 연결은 문서화된 API 계약과 계약 검증을 통과해야 활성화한다.
+③ 일시적 호출 실패 재시도, 사용자가 요청하는 재작성, 시스템이 품질 검사 후 수행하는 재수행을 서로 다른 동작으로 정의한다. 최대 횟수·대기 간격·최종 실패 상태·사용자 안내를 설정으로 관리하고, 무한 재실행을 허용하지 않는다.
+④ 최소 실행 경로를 먼저 연결한 뒤 Worker를 한 종류씩 추가한다. 각 단계가 독립 실행 가능하도록 Stub / 실제 연결을 명시하고, Stub 결과를 실제 기능 완료로 표시하지 않는다.
+⑤ 흐름 시험은 실제 외부 LLM 호출과 분리하고 기본은 가짜 호출처·고정 입력을 사용한다. 외부 호출 시험은 별도 실행으로 분리해 API 비용·사용량·로그를 확인한다.
+⑥ 외부 호출별 입력·출력 Token, 모델, 소요 시간, 재시도, 성공·실패 사유를 실행에 연결한다. 사용량을 알 수 없는 값은 0 대신 미계측(null)로 표시한다. 일별·실행별 호출 상한과 비용 중단 기준을 배포 전 정한다.
+⑦ 실행 로그·산출물·사용자 대화의 보존 기간, 완전 삭제 범위, 백업과 복구 절차를 정한다. 비밀키는 저장소·프론트엔드·일반 로그에 두지 않고 서버 환경 설정으로 주입한다. 파일과 검색은 프로젝트 소유권을 매 요청마다 확인한다.
+⑧ DB 변경은 nullable 확장 → 데이터 보정 → 검증 → 제약 강화 순서로 계획하고, 적용 전 백업·복구 경로를 마련한다. 기획 문서의 DBML은 설계안이며 운영 DB 적용 완료를 뜻하지 않는다.
+⑨ Git 이슈·작업 단위를 작게 나누고 기능별 완료 시 변경을 검토한다. main 직접 변경보다 기능 브랜치·리뷰·자동 검증을 기본으로 하되, 개인 프로젝트에서는 최소한 커밋 단위와 변경 기록을 유지한다.
+
+15-4. 선행 결정이 필요한 운영값
+다음 값은 구현 시작 전에 결정하고 환경별 설정으로 관리한다: 배포 환경·도메인·HTTPS, DB와 파일 저장소, 인증 공급자와 Demo 제한, 업로드 파일 형식·최대 크기·보존 기간, 동시 실행 수, 단계별 시간 제한·재시도 상한, LLM 모델·호출 상한·월 예산, 오류 알림 수신자와 로그 보존 기간.
+값이 정해지기 전에는 안전한 로컬 기본값과 Stub로 개발하되, 임시 값이 운영값으로 오인되지 않도록 설정표에 상태(미정 / 개발 / 운영)를 표시한다.
+
+16. 20일 MVP 실행 일정
+
+일정 기준: Day는 주말·공휴일을 제외한 실제 작업일 순번이다. 하루 단위 과업은 대략적인 계획이며, 선행 작업의 검수에서 실패하면 다음 단계로 넘어가기 전에 해당 결함을 먼저 수정한다. 전체 캘린더 기간은 휴일 배치에 따라 4주 이상이 될 수 있다. 아래 MVP가 20일 목표이며 기존의 ‘2달 이내’는 검수·휴일·예비기간을 포함한 전체 프로젝트 상한으로 유지한다.
+
+Day 1 — 범위 고정: 15-2의 MVP 시나리오와 후속 기능을 이슈로 나누고 데모 성공 조건을 합의한다. 산출물: MVP 체크리스트, 제외 범위 목록.
+Day 2 — 구조와 환경: Django / Frontend / Agent 실행 경계를 정리하고 로컬·개발 환경 변수 및 비밀값 관리 방식을 점검한다. 산출물: 구성도, 환경 설정표.
+Day 3 — 데이터 계약: 기존 DBML을 핵심 실행 경로 기준으로 확인하고 User·Project·Conversation·Message·Run 관계 및 소유권 규칙을 확정한다. 산출물: 승인 가능한 DBML 변경안, 데이터 흐름도.
+Day 4 — API 계약: 프로젝트 생성·대화·실행 요청·실행 상태·Artifact 조회 API의 요청/응답, 오류 형식, 상태값, idempotency 규칙을 고정한다. 산출물: API 계약 초안과 예시 JSON.
+Day 5 — DB·권한 기반: 승인된 스키마 변경을 개발 DB에 적용하고 로그인 사용자와 Project 소유권 검사를 연결한다. 검증 게이트: 다른 사용자의 Project 접근이 거부된다.
+Day 6 — Project 저장: 프로젝트 생성·조회·수정과 목록 화면을 실제 DB에 연결한다. 산출물: 저장되는 Project 흐름.
+Day 7 — 대화 저장: Conversation / Message 생성·조회·전송과 프로젝트별 대화 맥락을 연결한다. 검증 게이트: 새로고침 후 대화가 유지된다.
+Day 8 — Run 요청: 사용자 요청에서 PROJECT_RUN을 만들고 중복 클릭·동일 idempotency key를 방지한다. 산출물: queued 실행과 상태 조회.
+Day 9 — Supervisor 최소 경로: 사용자 요청을 구조화하고 필요한 Planning Task 하나를 생성하는 최소 분해를 연결한다. 산출물: 추적 가능한 Run → Task.
+Day 10 — Planning Agent: 입력 계약에 맞춰 PRD 결과를 생성하고 오류를 구조화한다. 외부 LLM은 개발 설정에서만 연결한다. 검증 게이트: 가짜 호출처로 PRD 결과를 재현할 수 있다.
+Day 11 — Artifact 버전: Planning 결과를 파일 또는 DB 산출물로 저장하고 logical key·version·소유권·다운로드 권한을 연결한다. 산출물: 결과 목록과 상세 조회.
+Day 12 — Reflection 기준: 활성 품질 기준과 가중치 합계 검증을 연결하고 평가 당시 기준 snapshot을 보존한다. 산출물: 평가 요청·응답 계약.
+Day 13 — Reflection Agent: 결과 평가, 근거·감점 항목·총점 저장 및 조회를 연결한다. Mock 점수는 개발 데이터임을 표시한다. 검증 게이트: 평가 결과가 실행과 Artifact 버전에 연결된다.
+Day 14 — 실행 이벤트: Run·Task·Execution 상태 전이와 공통 이벤트를 저장하고 Timeline / Activity Log가 같은 이벤트를 읽게 한다. 산출물: 서버 원본 상태 화면.
+Day 15 — 실패·재시도: timeout·일시 오류·영구 오류 경로, 횟수 제한, 사용자 메시지, 실패 지점 재개를 연결한다. 검증 게이트: 오류 시 이전 성공 결과가 보존된다.
+Day 16 — 중단·재생성: Worker 중단 확인 후 cancelled로 바꾸고, 재생성 시 신규 Run·Artifact 버전을 만든다. 검증 게이트: 취소는 데이터 변화가 없고 확인은 한 번만 실행된다.
+Day 17 — 관리자 관측·비용: 실행 필터, Agent별 상태, 사용량 및 오류 조회를 연결한다. Token 미계측 표현, 호출 상한, 비용 기록 필드를 확인한다.
+Day 18 — 보안·운영: 권한, 파일 업로드·다운로드, 비밀값 노출, 보존·삭제, 로그·백업·복구 및 환경별 설정을 점검한다. 산출물: 운영 점검표, 알려진 제한사항.
+Day 19 — 종단 간 검수: 새 사용자 시나리오를 생성부터 결과 확인·재작성까지 수행하고 일반 사용자·관리자 권한, 빈 데이터, 실패·중복 요청을 확인한다. 산출물: 실행 기록과 미해결 결함 목록.
+Day 20 — MVP 데모·인수: 필수 게이트 통과 여부를 기록하고 개발·운영 설정, 실행 방법, API/DB 변경, 알려진 제한, 후속 우선순위를 정리한다. 산출물: 시연 가능한 MVP, README·인수 체크리스트.
+
+16-1. 일정 조정 규칙
+하루 작업량이 계획을 초과하면 Day를 압축해 검증을 생략하지 않는다. 먼저 고급 RAG, 추가 Worker, 애니메이션·세부 UI, 실 OAuth·메일 초대, 고급 검색을 후속 목록으로 옮긴다.
+Day 5·8·13·16·19 검증 게이트 중 하나라도 실패하면 새 기능을 추가하기 전에 실패 원인과 관련 계약·데이터를 수정한다.
+잔여 2주는 회의·휴일·수정·데모 준비를 위한 예비 기간으로 둔다. 2개월 상한에 가까워지면 MVP 필수 시나리오만 남기고 확장 기능은 다음 버전으로 이관한다.
+각 Day 종료 시 완료 산출물, 실제 연결 여부(Stub / 개발 / 운영), 막힌 항목, 다음 Day의 선행조건을 이슈 또는 작업 기록에 남긴다.
+
+17. React Frontend 전환 계획 및 진행 상태 (2026-10-20)
+
+17-1. 기술 선택
+화면 계층은 React 19 + TypeScript + Vite를 사용한다. 서버 측 로그인·권한·기존 기능은 Django가 유지하고, 기존 URL을 보존하면서 화면 계층을 React로 전환한다. Django 템플릿 전체를 한 번에 제거하지 않고, 각 URL의 React 전환·권한·기능 검증 후 미사용 템플릿을 정리한다.
+라우팅은 React Router, 서버 데이터 요청·캐시는 TanStack Query, 화면 전용 전역 상태는 Zustand, 폼은 React Hook Form + Zod를 사용한다. 스타일은 Tailwind CSS 4를 기준으로 하며 shadcn/ui 패턴의 컴포넌트를 저장소에 복사해 제품 색상·접근성에 맞게 관리한다. Radix UI primitives, class-variance-authority, clsx, tailwind-merge, lucide-react는 공통 UI 구성에 사용한다.
+Mantine / Ant Design / Redux Toolkit / Jotai / TanStack Router는 현재 MVP에 함께 넣지 않는다. 중복 UI·상태 계층을 피하고 필요성이 확인되면 별도 비교 후 선택한다. Next.js는 Django가 이미 Backend와 세션 인증을 담당하므로 지금 범위에는 도입하지 않는다.
+
+17-2. Django 연동 원칙
+Django는 인증·세션·권한·도메인 API·파일 권한을 계속 책임진다. 현재 화면은 Django view가 만든 페이지별 초기 JSON payload를 `json_script`로 전달받고, 일부 동작만 기존 Django 경로에 요청한다. 향후 데이터 갱신은 명시적인 API 응답으로 연결하며 React는 DB나 비밀값에 직접 접근하지 않는다.
+정적 빌드는 `front/react`에서 생성하고 Django `static/react`가 배포 asset을 제공한다. Vite manifest에서 entry 및 CSS 파일을 읽어 얇은 HTML mount template에 연결한다. React Router는 공통 Provider와 향후 화면 전환에 쓰며, 기존 Django URL의 세션·권한·페이지별 데이터 전달을 유지하기 위해 현재 페이지 navigation은 서버 URL을 따른다. 새 URL을 추가할 때 Django 경로와 React 화면 매핑을 함께 갱신한다.
+개발 시 Vite 개발 서버는 127.0.0.1:5173에서 실행한다. Django 세션이 필요한 API는 CSRF 및 same-origin 또는 명시된 개발 proxy 정책을 따른다. 운영 배포에서는 빌드 산출물만 제공하고 개발 서버는 외부에 공개하지 않는다.
+기존 페이지 CSS와 이미지 자산은 시각적 연속성을 위해 재사용한다. 기존 Bootstrap 기반 페이지 동작은 React로 옮기되, 화면 둘러보기와 프로젝트 채팅처럼 남아 있는 스크립트는 React mount 이후 초기화하는 임시 연결로 한정한다. React와 기존 스크립트가 같은 동작을 중복 처리하지 않도록 이벤트 소유자를 정하고, 미사용 템플릿·CSS·JS는 참조 여부와 기능 동등성을 확인한 후 정리한다.
+
+17-3. 전체 화면 React 전환 기록
+전환 완료: Dashboard, 로그인·Demo·Face 인증, Projects 목록·생성·상세·Chat, 전체 프로젝트, 관리자 Tasks·Agents·Agent 상세·Results/Knowledge, FAQ·사용자 가이드, Coming Soon 목록·상세·관리·편집, 권한 안내 화면의 콘텐츠와 로그인 이후 공통 헤더·사이드바를 React에서 렌더링한다. 로그인 화면은 별도 React mount를 쓴다. 얇은 Django mount template은 CSRF 토큰·초기 JSON·정적 bundle만 제공한다.
+추가된 기반: React Router와 TanStack Query Provider, Tailwind CSS, shadcn/ui 패턴의 Button/Card, React 폼·Markdown preview·공통 navigation/modal, Vite manifest 기반 asset 연결. 화면 데이터는 안전한 `json_script` 초기 payload로 넘기며, 관리자 권한 및 로그인 검사는 기존 Django view decorator에서 유지한다.
+기능 경계: Django는 세션 인증, 권한, 데이터 조회, 필터 요청, Coming Soon 파일 저장·삭제, 프로젝트 Chat Stub 응답을 계속 처리한다. 화면 이동은 Django URL로 페이지별 권한 검사와 데이터 payload를 다시 받는다. 다크 테마와 모바일 메뉴는 React shell에서 처리하며, 화면 둘러보기는 기존 안내 스크립트를 연결한다.
+검증 현황 (2026-10-20): `npm run build`, `tsc --noEmit`, `manage.py check`, `manage.py test apps`(12건)가 통과했다. 로그인 사용자·관리자 세션으로 주요 경로 15개가 HTTP 200, React mount root와 빌드 bundle 참조를 반환하는 것을 Django Client로 확인했다. 원본 GIF·로고·로딩 이미지 파일 존재도 확인했다. 이는 브라우저 렌더링과 반응형 시각 비교를 완료했다는 뜻은 아니다. 기존 문서의 Dashboard 1개·테스트 11건 기록은 전체 페이지 전환 전의 과거 기록이므로 현 상태 설명으로 사용하지 않는다.
+화면 회귀 보완 (2026-10-20): React 전용 전역 링크 규칙이 원본 Bootstrap 링크 색을 덮던 문제를 제거했다. Dashboard의 원본 GIF 배경과 Brain 궤도 장식을 유지하고, 공통 CSS·페이지별 원본 CSS 및 기존 이미지 경로를 mount template에 연결했다. React가 생성한 화면 뒤에 공통 스크립트가 초기화되도록 mount 이벤트를 추가했으며 사이드바는 React가 단독 제어하고 채팅 스크립트는 화면 전환 후 초기화하도록 했다. 브라우저 캡처 도구가 실행 환경 경로 오류로 시작되지 않아 실제 화면 캡처 기반의 원본 대비 픽셀 검수는 남아 있다.
+화면 안내·접근 제한 보완 (2026-10-20): 화면 둘러보기 진행 상태는 브라우저 저장소 권한에 의존하지 않고 URL fragment로 다음 화면에 전달한다. 관리자 전용 화면 안내에는 Dashboard·프로젝트·Coming Soon으로 가는 실제 링크를 제공한다. Dashboard Hero 장식은 넓은 화면에서 오른쪽 끝에 배치한다.
+실제 동작의 한계: 프로젝트·Task·Agent 화면 데이터는 대부분 `apps/mockdata.py` 기반이고 실제 Agent 실행·Google/Face 인증·초대 메일 발송·알림은 시연/Stub이다. 프로젝트 생성은 저장소 연동 없이 기존처럼 목록으로 돌아간다. UI가 React로 전환된 사실은 Backend 기능 완료나 DB/API 실연동을 뜻하지 않는다.
+커밋 기능 점검에서 확인·수정: 이전 SmokeTest가 현재 존재하지 않는 `mcp-tool-extension` 문서를 참조하던 부분을 실제 `daily-briefing`으로 맞췄다. `sample.md`에 YAML front matter가 없어 사용자 목록에서 누락되던 문제를 수정했다. Coming Soon 제목 검증이 한글 slug를 거부하고 URL 불가 문자를 허용하던 문제 및 Django `<slug>` 변환기가 한글 URL을 거부하던 문제를 수정했다. 관리자 생성·수정·삭제 보관·검색/필터 및 잘못된 입력 오류 표시 테스트를 추가했다.
+
+17-4. React 작업 실행 방법
+초기 설치: `cd front/react` 후 `npm install`.
+개발 서버: `npm run dev` (Vite 127.0.0.1:5173). Django 개발 서버와 함께 사용한다.
+배포용 asset 생성: `npm run build`. 생성물은 `front/static/react/`이며 빌드 manifest를 포함한다. Django에서 새 asset을 제공하려면 React build 후 Django를 실행한다.
+현재 Node 20.17 환경을 위해 Vite 6.4.1 및 `@vitejs/plugin-react` 4.x를 고정 범위로 사용한다. Node 최소 요구 버전이 바뀌면 Vite 업그레이드 전에 개발 환경을 함께 조정한다.
+
+17-5. 단계적 이전 순서 및 완료 조건
+1) 완료: 공통 React Shell, 정적 bundle, JSON payload, 로그인 상태 및 메뉴 표시 연결.
+2) 완료: Dashboard와 Project 목록·생성·상세·Chat UI를 이전하고 Django URL·기존 Stub 응답을 연결.
+3) 완료: 관리자 Tasks·Agents·상세·Results/Knowledge UI 및 GET 검색 필터를 이전.
+4) 완료: 로그인·Demo·Face, FAQ·가이드·Coming Soon 관리 화면을 이전하고 CSRF/기존 파일 처리 연결.
+5) 진행: 로그인 세션 기반 주요 URL 15개와 React mount/bundle 응답, TypeScript, Django check 및 앱 테스트를 확인했다. 브라우저의 실제 클릭 흐름·좁은 화면 레이아웃·원본 대비 캡처 검수는 남아 있으므로 최종 기능 동등성 검증은 완료로 처리하지 않는다.
+6) 후속: 최종 검증 후 참조되지 않는 템플릿·CSS·JS만 검색으로 확인해 안전하게 정리한다. DB/API 실연동과 실제 Agent 기능은 별도 Backend 과업으로 계획한다.
+
+17-6. 일정 및 작업 분할 (10일 기준)
+| 일자 | 과업 | 완료 산출물 및 검수 조건 |
+|---|---|---|
+| Day 1 | React/Django 경계, URL·권한·화면 목록 확인 | URL-페이지-권한 매핑, 기존 기능 기준선 |
+| Day 2 | React 공통 진입점, Django mount/payload, 디자인 토큰 | manifest build, CSRF 및 JSON payload 동작 |
+| Day 3 | 공통 로그인 후 Shell, Navigation, 모바일 메뉴, 테마 | 사용자/관리자 메뉴 및 반응형 Shell |
+| Day 4 | Dashboard, 프로젝트 목록·전체·생성 화면 | 페이지별 화면과 Django 권한/데이터 연결 |
+| Day 5 | 프로젝트 상세·결과물·Chat Stub | 기존 URL과 응답 흐름 및 폼 동작 |
+| Day 6 | Tasks·Agents 목록/상세, Results·Knowledge | 관리자 접근 제한 및 GET 필터 동작 |
+| Day 7 | Login·Demo·Face·FAQ·가이드 | 로그인 흐름, PDF 링크, 직접 URL 확인 |
+| Day 8 | Coming Soon 목록·상세·편집·삭제 | Markdown 표시/미리보기와 저장 권한/오류 처리 |
+| Day 9 | 화면별 회귀 검수, 모바일·새로고침·CSRF·404 | 검수 기록, 회귀 결함 수정 |
+| Day 10 | 프로덕션 build, Django check/test, 문서·자산 정리 | 최종 검증 결과, 기획안 업데이트, 불필요 파일 확인 |
+
+일정 산정은 1인 개발 기준 순차 10 작업일의 계획값이며, 결함 수정과 Backend 실연동은 발견 범위에 따라 별도 일정을 추가한다. 각 Day 종료 시 산출물, Stub/개발/운영 연결 상태, 미해결 이슈 및 다음 작업 의존성을 기록한다.
+각 화면은 기존 화면과 기능 동등성, 비로그인 차단, 일반/관리자 역할별 접근, 로딩·오류·빈 상태, 직접 URL 진입, 브라우저 뒤로가기, 좁은 화면 레이아웃까지 확인한 뒤 전환 완료로 표시한다.

@@ -1,7 +1,8 @@
-document.addEventListener('DOMContentLoaded', function () {
+function initReactChat() {
   const panel = document.getElementById('sb-chat-panel');
   const form = document.getElementById('sb-chat-form');
-  if (!panel || !form) return;
+  if (!panel || !form || panel.dataset.initialized === 'true') return;
+  panel.dataset.initialized = 'true';
 
   const body = document.getElementById('sb-chat-body');
   const input = document.getElementById('sb-chat-input');
@@ -27,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Initialize chat tabs (for static tabs in HTML)
   function initChatTabs() {
+    // React owns tab state for the project detail shell. Keep the legacy handler
+    // for dynamically appended messages only, so it cannot mutate React's DOM.
+    if (document.querySelector('[data-react-chat-tabs]')) return;
     const allTabBtns = document.querySelectorAll('.sb-chat-tab-btn');
     const tabContent = document.getElementById('tab-content');
 
@@ -181,8 +185,15 @@ document.addEventListener('DOMContentLoaded', function () {
       body: new URLSearchParams({ message: text }),
     })
       .then((response) => response.json())
-      .then((data) => append(data.reply, 'ai'))
+      .then((data) => {
+        append(data.reply, 'ai');
+        if (data.action === 'open_project_create') {
+          window.dispatchEvent(new CustomEvent('sb:open-project-create', { detail: { title: data.title || '' } }));
+        }
+      })
       .catch(() => append('일시적인 오류가 발생했습니다. 다시 시도해주세요.', 'ai'))
       .finally(() => typing.remove());
   });
-});
+}
+document.addEventListener('DOMContentLoaded', initReactChat, { once: true });
+window.addEventListener('sb:react-mounted', initReactChat);

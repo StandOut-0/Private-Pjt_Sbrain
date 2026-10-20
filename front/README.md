@@ -76,6 +76,18 @@ python manage.py migrate
 python manage.py runserver
 ```
 
+### 환경 설정
+
+로컬 개발은 `DJANGO_DEBUG=1`을 기본으로 사용합니다. Django 첫 실행 때 개발용 `SECRET_KEY`를 `front/.local-django-secret`에 생성하며 이 파일은 Git에 포함되지 않습니다. 개발 서버는 `127.0.0.1` 또는 `localhost`로 접속하세요.
+
+운영 배포 전에는 서버 환경에 아래 값을 설정해야 합니다. `DJANGO_DEBUG=0`인데 `DJANGO_SECRET_KEY`가 없으면 Django가 시작되지 않습니다. `DJANGO_ALLOWED_HOSTS`에는 실제 서비스 호스트만 쉼표로 구분해 입력하세요. `.env` 파일을 자동으로 읽는 설정은 사용하지 않으므로 비밀값은 배포 환경의 환경변수/Secret 기능으로 주입합니다.
+
+| 변수 | 로컬 기본값 | 운영 설정 |
+| --- | --- | --- |
+| `DJANGO_DEBUG` | `1` | `0` 필수 |
+| `DJANGO_SECRET_KEY` | 저장소 밖에 생성 | 안전한 임의 값 필수 |
+| `DJANGO_ALLOWED_HOSTS` | `127.0.0.1,localhost,testserver` | 실제 호스트만 지정 |
+
 
 ## 3. 로그인
 브라우저에서 <http://127.0.0.1:8000/login/> 접속하세요.

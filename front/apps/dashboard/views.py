@@ -5,6 +5,11 @@ from apps.accounts.session import login_required
 
 
 @login_required
+def faq(request):
+    return render(request, 'dashboard/faq.html', {'active_menu': 'faq'})
+
+
+@login_required
 def user_guide(request):
     return render(request, 'dashboard/user_guide.html', {'active_menu': 'user_guide'})
 

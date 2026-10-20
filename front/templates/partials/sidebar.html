@@ -37,6 +37,9 @@
   </div>
   {% endif %}
 
+  {% if not sb_user.is_admin %}
+  <a class="sb-nav-item {% if active_menu == 'faq' %}active{% endif %}" href="{% url 'dashboard:faq' %}"><i class="bi bi-question-circle" aria-hidden="true"></i> FAQ · 이용 안내</a>
+  {% endif %}
   <div class="sb-nav-label">관리자</div>
   {% if sb_user.is_admin %}
     <a class="sb-nav-item {% if active_menu == 'tasks' %}active{% endif %}" href="{% url 'management:tasks' %}">

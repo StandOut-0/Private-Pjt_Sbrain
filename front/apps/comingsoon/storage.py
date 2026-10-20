@@ -41,11 +41,12 @@ def _deleted_root():
 
 
 def slugify(title):
-    slug = re.sub(r'[^0-9A-Za-z가-힣]+', '-', title).strip('-').lower()
-    if not re.fullmatch(r'[-a-zA-Z0-9_]+', slug):
+    title = str(title).strip()
+    if not re.fullmatch(r'[0-9A-Za-z가-힣_ -]+', title):
         raise ValueError(
             '제목에 한글 또는 URL에서 사용할 수 없는 문자가 포함되어 있습니다.'
         )
+    slug = re.sub(r'[ _]+', '-', title).strip('-').lower()
 
     return slug
 
@@ -105,13 +106,37 @@ def read_document(slug):
     return document
 
 
-def save_document(slug, meta, body):
+def validate_document(meta):
     document = normalize(meta)
+    errors = {}
+    title = str(document['title']).strip()
+    if not title:
+        errors['title'] = '제목을 입력해 주세요.'
+    else:
+        try:
+            slugify(title)
+        except ValueError as exc:
+            errors['title'] = str(exc)
+    if document['status'] not in STATUS_CHOICES:
+        errors['status'] = '목록에 있는 상태를 선택해 주세요.'
+    if document['category'] not in CATEGORY_CHOICES:
+        errors['category'] = '목록에 있는 분야를 선택해 주세요.'
+    if len(str(document['summary'])) > 300:
+        errors['summary'] = '요약은 300자 이하여야 합니다.'
+    return document, errors
+
+
+def save_document(slug, meta, body):
+    document, errors = validate_document(meta)
+    if errors:
+        raise ValueError(next(iter(errors.values())))
     today = date.today().isoformat()
     document['created_at'] = document['created_at'] or today
     document['updated_at'] = today
 
-    new_slug = slug or slugify(document['title'])    
+    new_slug = slug or slugify(document['title'])
+    if not re.fullmatch(r'[a-z0-9가-힣_-]+', new_slug):
+        raise ValueError('문서 주소 형식이 올바르지 않습니다.')
     path = _root() / f'{new_slug}.md'
     path.write_text(_dump(document, body), encoding='utf-8')
     return new_slug

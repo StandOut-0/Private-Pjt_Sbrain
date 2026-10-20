@@ -1,9 +1,8 @@
 ---
-# md 파일만 작성하면 commingsoon 문서가 생성되요. 다만 공백은 피해주세요. 대문자, 소문자, 숫자, -, _ 는 가능.
 title: SAMPLE - title
 summary: SAMPLE - summary
 status: 연구 예정
-category: SAMPLE
+category: ETC
 technologies:
 - SAMPLE-A
 - SAMPLE-B

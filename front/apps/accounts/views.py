@@ -1,4 +1,4 @@
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 
 from apps.accounts.session import (
     ROLE_ADMIN,
@@ -9,6 +9,7 @@ from apps.accounts.session import (
     sign_in,
     sign_out,
 )
+from apps.react_pages import render_react
 
 DEMO_CODE = 'SECONDBRAIN'
 
@@ -21,7 +22,7 @@ def login(request):
             return redirect('accounts:face_auth')
         sign_in(request, 'Sanghee', ROLE_USER, 'user@secondbrain.dev')
         return redirect('dashboard:index')
-    return render(request, 'accounts/login.html')
+    return render_react(request, 'login', shell=False)
 
 
 def demo_login(request):
@@ -31,7 +32,7 @@ def demo_login(request):
             sign_in(request, 'Demo User', ROLE_DEMO)
             return redirect('dashboard:index')
         error = '인증 코드가 올바르지 않습니다. 다시 입력해주세요.'
-    return render(request, 'accounts/demo_login.html', {'error': error, 'demo_code': DEMO_CODE})
+    return render_react(request, 'demo-login', {'error': error}, shell=False)
 
 
 def face_auth(request):
@@ -43,7 +44,7 @@ def face_auth(request):
                 return redirect('management:tasks')
             return redirect('dashboard:index')
         error = '얼굴 인증에 실패했습니다. 다시 시도해주세요.'
-    return render(request, 'accounts/face_auth.html', {'error': error})
+    return render_react(request, 'face-auth', {'error': error}, shell=False)
 
 
 @login_required

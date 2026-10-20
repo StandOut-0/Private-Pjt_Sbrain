@@ -1,0 +1,4 @@
+# Local previews, generated renderings, logs, and scratch files.
+# Files already tracked under tmp/ remain tracked until explicitly removed.
+/tmp/
+front/tmp/

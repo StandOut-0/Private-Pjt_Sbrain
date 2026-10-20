@@ -1,9 +1,10 @@
 import markdown
 from django.http import Http404
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect
 
 from apps.accounts.session import admin_required, login_required
 from apps.comingsoon import storage
+from apps.react_pages import render_react
 
 
 def _render_markdown(body):
@@ -16,7 +17,7 @@ def index(request):
         'documents': storage.list_documents(),
         'active_menu': 'comingsoon',
     }
-    return render(request, 'comingsoon/index.html', context)
+    return render_react(request, 'comingsoon-list', context, active_menu='comingsoon')
 
 
 @login_required
@@ -29,13 +30,13 @@ def detail(request, slug):
         'body_html': _render_markdown(document['body']),
         'active_menu': 'comingsoon',
     }
-    return render(request, 'comingsoon/detail.html', context)
+    return render_react(request, 'comingsoon-detail', context, active_menu='comingsoon')
 
 
 @login_required
 def blocked(request):
     """관리자 전용 메뉴에 접근한 일반 / 체험 사용자 안내 화면."""
-    return render(request, 'comingsoon/blocked.html', {'active_menu': 'comingsoon'})
+    return render_react(request, 'blocked', active_menu='comingsoon')
 
 
 @admin_required
@@ -50,7 +51,7 @@ def manage(request):
         'categories': storage.CATEGORY_CHOICES,
         'active_menu': 'comingsoon_manage',
     }
-    return render(request, 'comingsoon/manage.html', context)
+    return render_react(request, 'comingsoon-manage', context, active_menu='comingsoon_manage')
 
 
 @admin_required
@@ -69,7 +70,19 @@ def editor(request, slug=None):
             'related_agents': request.POST.get('related_agents', ''),
             'created_at': document.get('created_at', ''),
         }
-        new_slug = storage.save_document(slug, meta, request.POST.get('body', ''))
+        try:
+            new_slug = storage.save_document(slug, meta, request.POST.get('body', ''))
+        except ValueError as exc:
+            document.update(meta)
+            document['body'] = request.POST.get('body', '')
+            context = {
+                'document': document,
+                'statuses': storage.STATUS_CHOICES,
+                'categories': storage.CATEGORY_CHOICES,
+                'active_menu': 'comingsoon_manage',
+                'error': str(exc),
+            }
+            return render_react(request, 'comingsoon-editor', context, active_menu='comingsoon_manage', status=400)
         return redirect('comingsoon:editor', slug=new_slug)
 
     context = {
@@ -78,7 +91,7 @@ def editor(request, slug=None):
         'categories': storage.CATEGORY_CHOICES,
         'active_menu': 'comingsoon_manage',
     }
-    return render(request, 'comingsoon/editor.html', context)
+    return render_react(request, 'comingsoon-editor', context, active_menu='comingsoon_manage')
 
 
 @admin_required

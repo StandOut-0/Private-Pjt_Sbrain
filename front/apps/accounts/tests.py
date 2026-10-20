@@ -9,9 +9,33 @@ class SmokeTest(TestCase):
     def test_login_required_redirect(self):
         self.assertRedirects(self.client.get(reverse('dashboard:index')), reverse('accounts:login'))
 
+    def test_login_screens_are_react_rendered(self):
+        for url in [
+            reverse('accounts:login'),
+            reverse('accounts:demo_login'),
+            reverse('accounts:face_auth'),
+        ]:
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            self.assertContains(response, 'id="root"')
+            self.assertContains(response, 'id="sb-react-data"')
+            if url == reverse('accounts:login'):
+                self.assertContains(response, '/static/css/login.css')
+
     def test_demo_login(self):
         response = self.client.post(reverse('accounts:demo_login'), {'code': 'SECONDBRAIN'})
         self.assertRedirects(response, reverse('dashboard:index'))
+
+    def test_dashboard_uses_react_and_preserves_shared_controls(self):
+        self.client.post(reverse('accounts:demo_login'), {'code': 'SECONDBRAIN'})
+        response = self.client.get(reverse('dashboard:index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'id="root"')
+        self.assertContains(response, '/static/react/assets/index-')
+        self.assertContains(response, 'assets/index-')
+        self.assertContains(response, 'screen-tour.js')
+        self.assertContains(response, '/static/css/dashboard.css')
+        self.assertContains(response, reverse('dashboard:faq'))
 
     def test_user_pages(self):
         self.login()
@@ -21,9 +45,12 @@ class SmokeTest(TestCase):
             reverse('projects:create'),
             reverse('projects:detail', args=[1]),
             reverse('comingsoon:index'),
-            reverse('comingsoon:detail', args=['mcp-tool-extension']),
+            reverse('comingsoon:detail', args=['daily-briefing']),
         ]:
-            self.assertEqual(self.client.get(url).status_code, 200, url)
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            self.assertContains(response, 'id="root"')
+            self.assertContains(response, 'id="sb-react-data"')
 
     def test_admin_only_pages_blocked_for_user(self):
         self.login()
@@ -39,9 +66,12 @@ class SmokeTest(TestCase):
             reverse('management:results'),
             reverse('comingsoon:manage'),
             reverse('comingsoon:editor_new'),
-            reverse('comingsoon:editor', args=['mcp-tool-extension']),
+            reverse('comingsoon:editor', args=['daily-briefing']),
         ]:
-            self.assertEqual(self.client.get(url).status_code, 200, url)
+            response = self.client.get(url)
+            self.assertEqual(response.status_code, 200, url)
+            self.assertContains(response, 'id="root"')
+            self.assertContains(response, 'id="sb-react-data"')
 
     def test_chat_reply(self):
         self.login()

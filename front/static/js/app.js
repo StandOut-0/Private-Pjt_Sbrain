@@ -36,11 +36,13 @@
     toast.addEventListener('hidden.bs.toast', () => toast.remove());
   };
 
-  document.addEventListener('DOMContentLoaded', function () {
+  function initReactAwareApp() {
+    if (document.documentElement.dataset.sbAppInitialized === 'true') return;
+    document.documentElement.dataset.sbAppInitialized = 'true';
     const sidebar = document.getElementById('sb-sidebar');
     const sidebarToggle = document.getElementById('sb-sidebar-toggle');
     const sidebarCollapsed = localStorage.getItem('sb-sidebar-collapsed') === 'true';
-    if (sidebar && sidebarToggle) {
+    if (sidebar && sidebarToggle && !document.getElementById('root')) {
       const sidebarLinks = sidebar.querySelectorAll('a.sb-nav-item, a.sb-nav-sub');
       const updateSidebarTooltips = function (collapsed) {
         sidebarLinks.forEach(function (link) {
@@ -230,5 +232,7 @@
       // 테스트를 위해 5초 후 자동으로 오류 표시 (실제 사용 시 제거)
       // showErrorAlert('치명적인 오류가 발생했습니다. 시스템을 확인해주세요.');
     }, 5000);
-  });
+  }
+  document.addEventListener('DOMContentLoaded', initReactAwareApp, { once: true });
+  window.addEventListener('sb:react-mounted', initReactAwareApp, { once: true });
 })();

@@ -1,8 +1,7 @@
 from django.http import Http404
-from django.shortcuts import render
-
 from apps import mockdata
 from apps.accounts.session import admin_required
+from apps.react_pages import render_react
 
 
 @admin_required
@@ -24,10 +23,11 @@ def task_list(request):
         'projects': mockdata.get_projects(),
         'metrics': mockdata.TASK_METRICS,
         'trend': mockdata.TASK_TREND,
+        'executions': mockdata.get_agent_executions(),
         'filters': {'q': keyword, 'project': project, 'status': status},
         'active_menu': 'tasks',
     }
-    return render(request, 'management/tasks.html', context)
+    return render_react(request, 'tasks', context, active_menu='tasks')
 
 
 @admin_required
@@ -43,7 +43,7 @@ def agent_list(request):
         'total_count': len([agent for agent in agents if agent['group'] != 'engineering']),
         'active_menu': 'agents',
     }
-    return render(request, 'management/agents.html', context)
+    return render_react(request, 'agents', context, active_menu='agents')
 
 
 @admin_required
@@ -57,7 +57,7 @@ def agent_detail(request, key):
         'active_menu': 'agents',
         'active_agent': key,
     }
-    return render(request, 'management/agent_detail.html', context)
+    return render_react(request, 'agent-detail', context, active_menu='agents')
 
 
 @admin_required
@@ -98,5 +98,6 @@ def results(request):
         'vector_documents': vector_documents,
         'search_metrics': mockdata.SEARCH_METRICS,
         'active_menu': 'results',
+        'statuses': sorted({document['status'] for document in mockdata.VECTOR_DOCUMENTS}),
     }
-    return render(request, 'management/results.html', context)
+    return render_react(request, 'results', context, active_menu='results')

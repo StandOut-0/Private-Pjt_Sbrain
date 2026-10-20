@@ -5,6 +5,7 @@
 
 <form method="post">
   {% csrf_token %}
+  {% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="sb-section-title mb-4">Coming Soon Editor</h1>
     <div class="d-flex gap-2">

@@ -6,6 +6,7 @@ urlpatterns = [
     path('', include('apps.dashboard.urls')),
     path('', include('apps.accounts.urls')),
     path('projects/', include('apps.projects.urls')),
+    path('api/v1/', include(('apps.projects.api_urls', 'project_api'), namespace='project_api')),
     path('manage/', include('apps.management.urls')),
     path('coming-soon/', include('apps.comingsoon.urls')),
 ]

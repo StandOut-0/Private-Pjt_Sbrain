@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from apps.accounts.models import UserAccount
+
 
 class SmokeTest(TestCase):
     def login(self, admin=False):
@@ -25,6 +27,23 @@ class SmokeTest(TestCase):
     def test_demo_login(self):
         response = self.client.post(reverse('accounts:demo_login'), {'code': 'SECONDBRAIN'})
         self.assertRedirects(response, reverse('dashboard:index'))
+        session_user = self.client.session['sb_user']
+        account = UserAccount.objects.get(pk=session_user['user_id'])
+        self.assertEqual(session_user['role'], 'demo')
+        self.assertEqual(account.role, UserAccount.ROLE_USER)
+        self.assertIsNone(account.email)
+        self.assertTrue(account.identity_key.startswith('demo-guest:'))
+
+    def test_demo_sessions_receive_separate_persistent_owners(self):
+        first = self.client
+        first.post(reverse('accounts:demo_login'), {'code': 'SECONDBRAIN'})
+        first_identity = first.session['sb_user']['user_id']
+
+        second = self.client_class()
+        second.post(reverse('accounts:demo_login'), {'code': 'SECONDBRAIN'})
+        second_identity = second.session['sb_user']['user_id']
+
+        self.assertNotEqual(first_identity, second_identity)
 
     def test_dashboard_uses_react_and_preserves_shared_controls(self):
         self.client.post(reverse('accounts:demo_login'), {'code': 'SECONDBRAIN'})
@@ -61,6 +80,20 @@ class SmokeTest(TestCase):
     def test_admin_only_pages_blocked_for_user(self):
         self.login()
         self.assertRedirects(self.client.get(reverse('management:tasks')), reverse('comingsoon:blocked'))
+
+    def test_admin_access_uses_persisted_role_not_session_flag(self):
+        self.login()
+        session = self.client.session
+        session_user = session['sb_user']
+        session_user['role'] = 'admin'
+        session_user['is_admin'] = True
+        session['sb_user'] = session_user
+        session.save()
+
+        self.assertRedirects(
+            self.client.get(reverse('management:tasks')),
+            reverse('comingsoon:blocked'),
+        )
 
     def test_admin_pages(self):
         self.login(admin=True)

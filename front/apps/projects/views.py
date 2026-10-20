@@ -4,7 +4,9 @@ import re
 from pathlib import Path
 
 from apps import mockdata
-from apps.accounts.session import login_required
+from apps.accounts.session import get_user_account, login_required
+from apps.projects.models import Project
+from apps.projects.ownership import project_payload
 from apps.react_pages import render_react
 
 
@@ -106,7 +108,23 @@ def project_detail(request, project_id=None):
 
     else:
         # 일반 사용자: 선택한 프로젝트 하나
-        project = mockdata.get_project(project_id)
+        stored_project = Project.objects.filter(pk=project_id).first()
+        if stored_project:
+            account = get_user_account(request)
+            if account is None or stored_project.owner_id != account.pk:
+                raise Http404('project not found')
+            project = {
+                **project_payload(stored_project),
+                'code': f'Project {stored_project.pk:02d}',
+                'status_label': stored_project.get_status_display(),
+                'progress': 0,
+                'stages': [],
+                'activities': [],
+                'tree': [],
+            }
+        else:
+            # 정적 예시 프로젝트는 사용자 데이터가 아닌 공용 Mock 데이터다.
+            project = mockdata.get_project(project_id)
 
         if not project:
             raise Http404('project not found')

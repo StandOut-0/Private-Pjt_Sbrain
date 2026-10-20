@@ -1,0 +1,38 @@
+{% load static %}
+<div class="modal fade" id="sb-invite-modal" tabindex="-1" aria-labelledby="sb-invite-title" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="sb-invite-title"><i class="bi bi-person-plus me-2" aria-hidden="true"></i>사용자 초대</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-secondary">함께 사용할 분에게 서비스 접속 링크와 사용자 가이드를 전달하세요.</p>
+        <div class="alert alert-info small">현재는 접속 안내를 공유하는 기능입니다. 계정 생성이나 접근 권한 부여는 별도로 진행해야 합니다.</div>
+        <label class="form-label" for="sb-invite-email">초대 대상 이메일 <span class="small text-secondary">(선택)</span></label>
+        <input class="form-control mb-3" id="sb-invite-email" type="email" placeholder="name@example.com" autocomplete="off" aria-describedby="sb-invite-email-help">
+        <p class="small text-secondary" id="sb-invite-email-help">이메일 주소는 저장하지 않으며, 이메일 앱에서 받는 사람으로 사용합니다.</p>
+        <label class="form-label" for="sb-invite-link">초대 링크 <span class="small text-secondary">(서비스 로그인)</span></label>
+        <div class="input-group mb-3">
+          <input class="form-control" id="sb-invite-link" data-path="{% url 'accounts:login' %}" readonly>
+          <button class="btn btn-outline-secondary" type="button" data-invite-copy="sb-invite-link">링크 복사</button>
+        </div>
+        <label class="form-label" for="sb-invite-guide">사용자 가이드 PDF</label>
+        <div class="input-group mb-2">
+          <input class="form-control" id="sb-invite-guide" data-path="{% static 'docs/user-guide.pdf' %}" readonly>
+          <a class="btn btn-outline-secondary" href="{% static 'docs/user-guide.pdf' %}" target="_blank" rel="noopener noreferrer">열기<span class="visually-hidden"> (새 탭)</span></a>
+        </div>
+        <p class="small text-secondary">현재 가이드는 샘플 PDF입니다.</p>
+        <p class="small text-secondary" id="sb-invite-local-note" hidden>현재 접속 주소는 로컬 개발용입니다. 다른 기기에 전달하려면 배포된 서비스에서 링크를 복사해주세요.</p>
+        <label class="form-label" for="sb-invite-preview">공유할 안내문</label>
+        <textarea class="form-control small" id="sb-invite-preview" rows="6" readonly></textarea>
+        <p class="small text-secondary mt-2 mb-0" id="sb-invite-status" role="status" aria-live="polite"></p>
+      </div>
+      <div class="modal-footer flex-wrap">
+        <button class="btn btn-outline-secondary" type="button" data-invite-copy="sb-invite-preview">안내문 복사</button>
+        <button class="btn btn-outline-secondary" type="button" id="sb-invite-email-send">이메일로 보내기</button>
+        <button class="btn btn-primary" type="button" id="sb-invite-share">공유하기</button>
+      </div>
+    </div>
+  </div>
+</div>

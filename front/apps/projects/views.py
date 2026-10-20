@@ -1,24 +1,71 @@
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
+import re
+from pathlib import Path
 
 from apps import mockdata
 from apps.accounts.session import login_required
+from apps.react_pages import render_react
+
+
+CHAT_GUIDE_FILES = {
+    'guide': 'project-implementation.txt',
+    'logo': 'logo-design.txt',
+    'onepage': 'onepage-site.txt',
+    'survey': 'survey-page.txt',
+}
+
+
+def _chat_guides():
+    guide_root = Path(__file__).resolve().parents[2] / 'content' / 'project_guides'
+    return {
+        key: (guide_root / filename).read_text(encoding='utf-8')
+        for key, filename in CHAT_GUIDE_FILES.items()
+    }
 
 
 @login_required
 def project_list(request):
+    all_projects = mockdata.get_projects()
+    keyword = request.GET.get('project_q', '').strip()
+    status = request.GET.get('project_status', '').strip()
+    valid_statuses = {project.get('status', '') for project in all_projects}
+    if status not in valid_statuses:
+        status = ''
+
+    projects = all_projects
+    if keyword:
+        needle = keyword.casefold()
+        projects = [
+            project for project in projects
+            if needle in ' '.join((project.get('code', ''), project.get('title', ''), project.get('summary', ''))).casefold()
+        ]
+    if status:
+        projects = [project for project in projects if project.get('status') == status]
+
     context = {
-        'projects': mockdata.get_projects(),
+        'projects': projects,
+        'total_projects': len(all_projects),
+        'project_statuses': sorted(valid_statuses),
+        'filters': {'q': keyword, 'status': status},
         'active_menu': 'projects',
     }
-    return render(request, 'projects/list.html', context)
+    return render_react(request, 'project-list', context, active_menu='projects')
 
 @login_required
 def project_create(request):
     if request.method == 'POST':
-        # Backend 연동 전까지는 생성 결과를 목록 화면으로만 반영한다.
-        return redirect('projects:list')
-    return render(request, 'projects/create.html', {'active_menu': 'projects'})
+        title = request.POST.get('title', '').strip()
+        if not title:
+            return redirect('projects:list')
+        project = mockdata.create_project(
+            title,
+            request.POST.get('summary', ''),
+            request.POST.get('goal', ''),
+        )
+        return redirect('projects:detail', project_id=project['id'])
+    # 생성 진입은 AppShell의 팝업에서 제공한다. 직접 주소를 열어도 빈 페이지는 보이지 않게 한다.
+    return redirect('projects:list')
 
 
 @login_required
@@ -54,7 +101,7 @@ def project_detail(request, project_id=None):
             'is_all_services': True,
         }
 
-        return render(request, 'projects/detail.html', context)
+        return render_react(request, 'project-all', context, active_menu='projects')
 
 
     else:
@@ -67,17 +114,25 @@ def project_detail(request, project_id=None):
         context = {
             'project': project,
             'chat_guide': mockdata.CHAT_GUIDE,
+            'chat_guides': _chat_guides(),
             'active_menu': 'projects',
             'active_project_id': project['id'],
         }
 
-    return render(request, 'projects/detail.html', context)
+    return render_react(request, 'project-detail', context, active_menu='projects')
 
 
 @login_required
 def chat_reply(request, project_id):
     """Chatbot 임시 응답. Supervisor Agent 연동 전까지 되묻는 흐름만 재현한다."""
     message = request.POST.get('message', '').strip()
+    if any(phrase in message for phrase in ('새 프로젝트', '프로젝트 생성', '프로젝트 만들어', '프로젝트 만들기')):
+        match = re.search(r'(?:프로젝트(?:\s*이름)?\s*[:：]\s*)(.+)', message)
+        return JsonResponse({
+            'reply': '새 프로젝트 입력창을 열었습니다. 이름과 설명을 입력한 뒤 생성할 수 있어요.',
+            'action': 'open_project_create',
+            'title': match.group(1).strip() if match else '',
+        })
     if not message:
         reply = '무엇을 도와드릴까요?'
     elif '기획' in message or '만들' in message:

@@ -4,6 +4,8 @@ Backend API / MySQL 연동 시 이 모듈의 함수만 교체하면 되도록
 화면 코드에서는 항상 아래 접근 함수를 통해 데이터를 가져온다.
 """
 
+from datetime import date
+
 PROJECTS = [
     {
         'id': 1,
@@ -386,9 +388,68 @@ CHAT_GUIDE = [
     '5. 참고 서비스 / 디자인:',
 ]
 
+NOTIFICATIONS = [
+    {
+        'id': 'project-planning-complete',
+        'title': '프로젝트 작업 완료',
+        'message': 'PRD-001 프로젝트의 Planning Agent가 완료되었습니다.',
+        'time': '방금 전',
+        'type': 'success',
+        'read': False,
+        'url': '/projects/1/',
+    },
+    {
+        'id': 'data-agent-error',
+        'title': 'Agent 실행 오류',
+        'message': 'Data Agent에서 오류가 발생했습니다. · PRD-002',
+        'time': '3분 전',
+        'type': 'error',
+        'read': False,
+        'url': '/projects/2/',
+    },
+    {
+        'id': 'artifact-created',
+        'title': '결과물 생성 완료',
+        'message': '새로운 문서가 생성되었습니다. · PRD-001',
+        'time': '1시간 전',
+        'type': 'artifact',
+        'read': True,
+        'url': '/projects/1/',
+    },
+]
+
 
 def get_projects():
     return PROJECTS
+
+
+def create_project(title, summary='', goal=''):
+    project_id = max((project['id'] for project in PROJECTS), default=0) + 1
+    project = {
+        'id': project_id,
+        'code': f'Project {project_id:02d}',
+        'title': title.strip(),
+        'summary': summary.strip() or goal.strip() or '새 프로젝트',
+        'goal': goal.strip(),
+        'status': 'ready',
+        'status_label': '준비 중',
+        'progress': 0,
+        'updated_at': date.today().isoformat(),
+        'stages': [
+            {'name': 'Planning', 'state': 'todo', 'progress': 0},
+            {'name': 'Data', 'state': 'todo', 'progress': 0},
+            {'name': 'Design', 'state': 'todo', 'progress': 0},
+            {'name': 'Development', 'state': 'todo', 'progress': 0},
+        ],
+        'activities': [],
+        'tree': [],
+    }
+    PROJECTS.insert(0, project)
+    return project
+
+
+def get_notifications():
+    return [dict(notification) for notification in NOTIFICATIONS]
 
 
 def get_project(project_id):

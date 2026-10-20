@@ -2,8 +2,12 @@
 {% block title %}접근 제한 — Second Brain{% endblock %}
 {% block content %}
 <div class="sb-card text-center py-5">
-  <h1 class="h5">관리자 전용 기능입니다.</h1>
-  <p class="text-secondary small mb-3">체험 / 일반 사용자는 Dashboard, Projects, Coming Soon을 이용할 수 있습니다.</p>
-  <a class="btn btn-primary btn-sm" href="{% url 'dashboard:index' %}">Dashboard로 돌아가기</a>
+  <h1 class="h5">이 메뉴는 관리자 전용입니다.</h1>
+  <p class="text-secondary small mb-3">이용할 수 있는 화면으로 이동하세요.</p>
+  <div class="d-flex justify-content-center gap-2 flex-wrap">
+    <a class="btn btn-primary btn-sm" href="{% url 'dashboard:index' %}">Dashboard</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'projects:list' %}">프로젝트 보기</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{% url 'comingsoon:index' %}">Coming Soon</a>
+  </div>
 </div>
 {% endblock %}

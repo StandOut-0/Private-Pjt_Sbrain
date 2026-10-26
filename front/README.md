@@ -18,7 +18,7 @@ https://docs.google.com/presentation/d/1PPc6K-sohMQHhVlUIuqCL0WABpazmrAc/edit?us
 2. http://127.0.0.1:8000/login에 접속해 체험 로그인(SECONDBRAIN)하세요.
 3. python manage.py createsuperuser 명령해 관리자 계정을 만들고, http://127.0.0.1:8000/django-admin/에 접속해 관리자 로그인 하세요. 
 
- 현재 화면과 흐름만 구현되었고, 데이터는 `apps/mockdata.py` 의 임시 데이터를 사용합니다.<br>
+기존 화면 일부(특히 Agent 상세, RAG 샘플)는 `apps/mockdata.py`의 개발용 예시 데이터를 사용합니다. 프로젝트 실행 경로는 Django DB 기반으로 연결되어 있습니다.<br>
 Coming Soon 문서는 실제 파일(`content/coming_soon/*.md`)로 저장·수정·삭제되요. 구현 전중후 좋은 아이디어가 있으실 경우 sample.md 문서 복제해서 작성후 push한 뒤 구성원과 공유해주세요.
 #### PSH(standout) - 26.08.25 ----- end
 ---
@@ -137,3 +137,72 @@ templates/, static/   화면 및 공통 스타일
 | Agents | `/manage/agents/`, `/manage/agents/<key>/` |
 | Results | `/manage/results/` |
 | Coming Soon | `/coming-soon/`, `/coming-soon/manage/` |
+
+## 7. 프로젝트 실행 MVP (Day 8–20)
+
+### 로컬 실행
+
+프로젝트 루트에서 별도 PowerShell 터미널 두 개를 사용합니다.
+
+```powershell
+cd front
+python manage.py migrate
+python manage.py runserver 127.0.0.1:8000
+```
+
+두 번째 터미널에서 Worker를 실행합니다. 이 프로세스가 queued Run을 가져가 Planning을 처리합니다.
+
+```powershell
+cd front
+python manage.py process_runs
+```
+
+React 소스를 변경한 뒤에는 정적 bundle을 다시 생성합니다.
+
+```powershell
+cd front/react
+npm ci
+npm run build
+```
+
+### MVP 시연 순서
+
+1. `/login/`에서 체험 로그인을 하고 Projects에서 프로젝트를 생성합니다.
+2. 프로젝트 상세의 Chatbot에서 사용자 요청을 보내 Run을 등록합니다. 같은 메시지의 중복 실행 요청은 idempotency key로 방지됩니다.
+3. Worker가 실행 중인 상태에서 프로젝트 상세를 새로고침합니다. 최근 활동과 Run 상태를 확인합니다.
+4. 완료 후 JSON Artifact를 다운로드하고 `결과 평가하기`를 눌러 개발용 Reflection 점수·근거·보완 제안을 확인합니다.
+5. 실행이 진행 중이면 중단을 확인하고, 이전 실행이 끝났으면 재생성 모달에서 개선 의견을 남길 수 있습니다. 이전 결과 버전은 유지됩니다.
+6. 관리자 계정의 `/manage/tasks/`에서 Task·Execution 상태와 미계측 token 정보를 확인합니다.
+
+### 실행 API
+
+| 목적 | API |
+| --- | --- |
+| Project/Conversation/Message | `/api/v1/projects/`, `/api/v1/projects/{id}/conversations/` |
+| Run 제출/조회/재시도/취소/재생성 | `/api/v1/projects/{id}/runs/` 및 Run 하위 `retry/`, `cancel/`, `regenerate/` |
+| Project Timeline 이벤트 | `/api/v1/projects/{id}/events/` |
+| Artifact 목록/상세/다운로드 | `/api/v1/projects/{id}/artifacts/` 및 Artifact 하위 `download/` |
+| Reflection 기준/Artifact 평가 | `/api/v1/quality-criteria/`, `/api/v1/projects/{id}/artifacts/{artifact_id}/reflection/` |
+
+세션 인증과 소유자 검증은 Django가 처리합니다. 변경 요청은 CSRF 토큰이 필요하며 Run 생성·재시도·재생성은 `Idempotency-Key` UUID를 요구합니다.
+
+### 데이터 및 설정
+
+- Django 앱: `projects`의 Project/Conversation/Message, `execution`의 Run/Task/AgentExecution/Event, `artifacts`의 버전 결과물, `reflection`의 평가 기준·평가 기록.
+- 각 앱의 migration이 `front/apps/*/migrations/`에 있습니다. 개발 기본 DB는 `front/db.sqlite3`이며 `manage.py migrate`로 구성합니다.
+- Planning은 `PLANNING_PROVIDER=fake`가 기본값이며 외부 provider adapter는 없습니다. Reflection 또한 규칙 기반 mock이며 결과에 mock 라벨을 표시합니다.
+- `AgentExecution`의 token 수와 USD 추정 비용은 nullable입니다. fake provider는 계측하지 않으므로 0이 아닌 `미계측`으로 표시합니다.
+
+### 인수 체크리스트
+
+- [x] 사용자 소유 Project 생성·대화 저장·Run idempotency
+- [x] 별도 Worker의 fake Planning 성공/실패 및 구조화된 오류
+- [x] Artifact 버전 저장, 소유자 다운로드와 교차 사용자 차단
+- [x] 평가 기준 가중치 합 100 검증, 평가 당시 snapshot과 mock 결과 저장
+- [x] Timeline 이벤트, 재시도 최대 3회, 취소/재생성 및 이전 결과 보존
+- [x] 관리자 DB 실행 조회와 미계측 사용량 표현
+- [x] Django 전체 테스트, system check, migration drift, React production build
+- [ ] 브라우저 수동 시각 검수 및 운영 환경의 실제 사용자 인수
+- [ ] 운영 DB/Worker supervisor/Provider adapter/backup·restore·retention 구성
+
+미완료 인수 항목과 production 차단 사유는 [`../docs/operations/security-checklist.md`](../docs/operations/security-checklist.md) 및 [`../docs/execution/day-20.md`](../docs/execution/day-20.md)에 정리되어 있습니다.

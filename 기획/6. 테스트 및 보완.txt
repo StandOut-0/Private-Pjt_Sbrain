@@ -23,6 +23,7 @@
 | 8 | 낮음 | 전체 TypeScript 검사에서 `AppShell.tsx`의 사용하지 않는 `FormEvent` import가 오류였다. | 미사용 import를 제거했다. | `tsc --noEmit` 재실행 통과 |
 | 9 | 보통 | 로그인 페이지의 `Google로 로그인` 버튼이 OAuth 인증처럼 보이지만 실제로는 임시 계정 세션이었다. | Google OAuth 미연동 상태를 표시하고 버튼을 비활성화했다. 기본 체험 로그인과 코드 `SECONDBRAIN`을 분명히 표시했으며 관리자 로그인도 Face 시뮬레이션임을 안내한다. | accounts 11개 테스트 통과, TypeScript 검사 및 React production build 통과 |
 | 10 | 보통 | 대시보드와 알림 페이지에 PRD-001/002의 완료·오류 알림이 고정 샘플로 표시되어 실제 작업 여부를 오인하게 했다. | 고정 샘플을 제거하고 로그인 계정이 소유한 프로젝트의 완료·실패·취소 `ExecutionEvent`만 최근 알림과 상단 메뉴에 표시한다. 실제 기록이 없으면 빈 상태를 보여주며, 존재하지 않는 읽음 저장 기능을 암시하지 않도록 읽지 않음 표시는 제거했다. | 알림 페이지 회귀 테스트: 무기록 빈 목록, 실제 소유 프로젝트 이벤트 표시, 타 계정 이벤트 제외 |
+| 11 | 높음 | Face 인증 화면이 실제 카메라 입력·얼굴 대조 없이 성공/실패 버튼으로 동작해 실제 인증처럼 보였다. 관리자 계정의 사진 등록 경로도 없었다. | 관리자 전용 페이지에서 본인 사진 등록·교체·삭제를 구현하고 이미지 형식·5MB 크기를 서버에서 검증한다. 사진은 계정에 연결해 DB에 저장하고 관리자 본인 화면에서만 표시한다. Face 화면의 미연결·시뮬레이션 상태도 분명히 안내한다. | accounts 회귀 테스트: 관리자 접근, 업로드·교체·삭제, 일반 사용자 차단, 잘못된 파일 거절 |
 
 3. 테스트 및 검사 결과
 
@@ -88,6 +89,9 @@
 - `front/apps/dashboard/tests.py`: 알림 빈 상태, 프로젝트 소유권 필터링 회귀 테스트 추가
 - `front/apps/mockdata.py`, `front/react/src/components/AppShell.tsx`, `front/react/src/pages/AllPages.tsx`, `front/react/src/api.ts`: 고정 알림 제거 및 실제 이벤트 기반 UI 반영
 - `기획/6. 테스트 및 보완.txt`: 고정 데모 알림 발견과 수정 내역 기록
+- `front/apps/accounts/models.py`, `front/apps/accounts/migrations/0002_adminfacephoto.py`, `front/apps/management/views.py`: 관리자 사진 비공개 등록·교체·삭제 저장
+- `front/apps/management/urls.py`, `front/react/src/components/AppShell.tsx`, `front/react/src/pages/AllPages.tsx`, `front/react/src/styles.css`: 관리자 사진 페이지·메뉴 및 Face 시뮬레이션 안내 추가
+- 실제 얼굴 대조, 라이브니스 감지, Google OAuth 및 운영 관리자 로그인은 아직 구현하지 않았다. 관리자 체험 로그인은 인증 우회 시연이므로 운영 인증 수단으로 사용하면 안 된다.
 
 7. Git 처리
 

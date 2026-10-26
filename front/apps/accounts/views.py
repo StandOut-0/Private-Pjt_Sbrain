@@ -4,11 +4,11 @@ from apps.accounts.session import (
     ROLE_ADMIN,
     ROLE_DEMO,
     ROLE_USER,
-    get_user,
     login_required,
     sign_in,
     sign_out,
 )
+from apps.accounts.models import UserAccount
 from apps.react_pages import render_react
 
 DEMO_CODE = 'SECONDBRAIN'
@@ -39,8 +39,8 @@ def face_auth(request):
     error = None
     if request.method == 'POST':
         if request.POST.get('result') == 'success':
-            user = get_user(request)
-            if user and user['is_admin']:
+            account = get_user_account(request)
+            if account and account.role == UserAccount.ROLE_ADMIN:
                 return redirect('management:tasks')
             return redirect('dashboard:index')
         error = '얼굴 인증에 실패했습니다. 다시 시도해주세요.'

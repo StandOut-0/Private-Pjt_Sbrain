@@ -1,11 +1,33 @@
+import base64
+
 from django.http import Http404
+from django.shortcuts import redirect
 from apps import mockdata
-from apps.accounts.session import admin_required
+from apps.accounts.session import admin_required, get_user_account
 from apps.react_pages import render_react
 from apps.execution.models import Task
 from apps.projects.models import Project
+from apps.accounts.models import AdminFacePhoto
 from datetime import timedelta
 from django.utils import timezone
+
+MAX_FACE_PHOTO_BYTES = 5 * 1024 * 1024
+FACE_IMAGE_SIGNATURES = (
+    ('image/jpeg', lambda data: data.startswith(b'\xff\xd8\xff')),
+    ('image/png', lambda data: data.startswith(b'\x89PNG\r\n\x1a\n')),
+    ('image/webp', lambda data: len(data) >= 12 and data[:4] == b'RIFF' and data[8:12] == b'WEBP'),
+)
+
+
+def _face_photo_payload(account):
+    photo = AdminFacePhoto.objects.filter(account=account).first()
+    if not photo:
+        return None
+    encoded = base64.b64encode(bytes(photo.image_data)).decode('ascii')
+    return {
+        'data_url': f'data:{photo.content_type};base64,{encoded}',
+        'updated_at': timezone.localtime(photo.updated_at).strftime('%Y-%m-%d %H:%M'),
+    }
 
 
 @admin_required
@@ -145,3 +167,41 @@ def results(request):
         'statuses': sorted({document['status'] for document in mockdata.VECTOR_DOCUMENTS}),
     }
     return render_react(request, 'results', context, active_menu='results')
+
+
+@admin_required
+def face_photo(request):
+    account = get_user_account(request)
+    error = ''
+    saved = request.GET.get('saved') == '1'
+    if request.method == 'POST':
+        if request.POST.get('action') == 'delete':
+            AdminFacePhoto.objects.filter(account=account).delete()
+            return redirect(f'{request.path}?removed=1')
+        upload = request.FILES.get('photo')
+        if not upload:
+            error = '등록할 사진을 선택해주세요.'
+        elif upload.size > MAX_FACE_PHOTO_BYTES:
+            error = '사진은 5MB 이하로 등록해주세요.'
+        else:
+            image_data = upload.read(MAX_FACE_PHOTO_BYTES + 1)
+            image_type = next((mime for mime, check in FACE_IMAGE_SIGNATURES if check(image_data)), None)
+            if len(image_data) > MAX_FACE_PHOTO_BYTES:
+                error = '사진은 5MB 이하로 등록해주세요.'
+            elif image_type is None:
+                error = 'JPEG, PNG, WEBP 이미지 파일만 등록할 수 있습니다.'
+            else:
+                AdminFacePhoto.objects.update_or_create(
+                    account=account,
+                    defaults={'image_data': image_data, 'content_type': image_type},
+                )
+                return redirect(f'{request.path}?saved=1')
+
+    context = {
+        'face_photo': _face_photo_payload(account),
+        'error': error,
+        'saved': saved,
+        'removed': request.GET.get('removed') == '1',
+        'active_menu': 'face_photo',
+    }
+    return render_react(request, 'face-photo', context, status=400 if error else 200, active_menu='face_photo')

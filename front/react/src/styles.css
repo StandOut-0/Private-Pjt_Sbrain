@@ -99,6 +99,19 @@ body { margin: 0; min-width: 320px; min-height: 100vh; }
 .react-invite-actions button { min-height:36px; padding:7px 12px; border:1px solid var(--sb-border); border-radius:8px; color:var(--sb-ink); background:var(--sb-surface); font-size:11px; cursor:pointer; }
 .react-invite-actions button.primary { border-color:var(--sb-accent); color:#fff; background:var(--sb-accent); }
 .react-toast:not(:empty) { position:fixed; right:20px; bottom:20px; z-index:1200; padding:12px 16px; border-radius:9px; color:#fff; background:var(--sb-deep); box-shadow:0 8px 25px #071c2930; font-size:11px; }
+.sb-admin-face-page { max-width:1000px; }
+.sb-admin-face-warning { display:flex; gap:12px; padding:15px 17px; margin-bottom:18px; border:1px solid #ecd8a6; border-radius:11px; color:#6d531c; background:#fff9e9; font-size:12px; }
+.sb-admin-face-warning>i { flex:none; font-size:18px; }
+.sb-admin-face-warning p { margin:5px 0 0; line-height:1.6; }
+.sb-admin-face-card { max-width:680px; }
+.sb-admin-face-card h2 { display:flex; align-items:center; gap:9px; margin:0 0 15px; font-size:16px; }
+.sb-admin-face-current { display:flex; align-items:center; gap:14px; padding:12px; margin-bottom:14px; border:1px solid var(--sb-border); border-radius:10px; }
+.sb-admin-face-current img { width:92px; height:92px; object-fit:cover; border-radius:10px; }
+.sb-admin-face-current p { margin:0; color:var(--sb-muted); font-size:11px; }
+.sb-admin-face-form { display:grid; gap:9px; margin:10px 0 16px; }
+.sb-admin-face-form label { font-size:12px; font-weight:650; }
+.sb-admin-face-form small { color:var(--sb-muted); font-size:10px; }
+.sb-admin-face-form button { justify-self:start; }
 /* Keep the previous Django page geometry while React supplies the content. */
 .sb-content:has(.sb-overview) { padding:24px 28px 48px; }
 .sb-content:has(.sb-agents-page),.sb-content:has(.sb-results-page),.sb-content:has(.sb-ideas-management),.sb-content:has(.sb-feature-detail),.sb-content:has(.sb-future),.sb-content:has(.sb-faq),.sb-content:has(.sb-guide) { padding:24px 28px 48px; }

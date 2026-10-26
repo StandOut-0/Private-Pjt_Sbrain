@@ -1,7 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.core.files.uploadedfile import SimpleUploadedFile
 
-from apps.accounts.models import UserAccount
+from apps.accounts.models import AdminFacePhoto, UserAccount
 from apps.projects.models import Project
 from apps.projects.models import Conversation, Message
 
@@ -107,6 +108,7 @@ class SmokeTest(TestCase):
             reverse('management:agent_detail', args=['supervisor']),
             reverse('management:agent_detail', args=['engineering']),
             reverse('management:results'),
+            reverse('management:face_photo'),
             reverse('comingsoon:manage'),
             reverse('comingsoon:editor_new'),
             reverse('comingsoon:editor', args=['daily-briefing']),
@@ -115,6 +117,42 @@ class SmokeTest(TestCase):
             self.assertEqual(response.status_code, 200, url)
             self.assertContains(response, 'id="root"')
             self.assertContains(response, 'id="sb-react-data"')
+
+    def test_admin_face_photo_is_private_and_can_be_enrolled_replaced_and_removed(self):
+        self.login(admin=True)
+        url = reverse('management:face_photo')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNone(response.context['sb_react_data']['data']['face_photo'])
+
+        image = SimpleUploadedFile('admin.png', b'\x89PNG\r\n\x1a\nsmall-test-image', content_type='image/png')
+        response = self.client.post(url, {'photo': image})
+        self.assertRedirects(response, f'{url}?saved=1')
+        account = UserAccount.objects.get(pk=self.client.session['sb_user']['user_id'])
+        self.assertEqual(account.face_photo.content_type, 'image/png')
+        self.assertEqual(bytes(account.face_photo.image_data), b'\x89PNG\r\n\x1a\nsmall-test-image')
+        response = self.client.get(url)
+        self.assertTrue(response.context['sb_react_data']['data']['face_photo']['data_url'].startswith('data:image/png;base64,'))
+
+        replacement = SimpleUploadedFile('admin.webp', b'RIFFabcdWEBPtest', content_type='image/webp')
+        self.client.post(url, {'photo': replacement})
+        account.face_photo.refresh_from_db()
+        self.assertEqual(account.face_photo.content_type, 'image/webp')
+
+        self.client.post(url, {'action': 'delete'})
+        self.assertFalse(AdminFacePhoto.objects.filter(account=account).exists())
+
+    def test_admin_face_photo_rejects_users_and_invalid_images(self):
+        url = reverse('management:face_photo')
+        self.login()
+        self.assertRedirects(self.client.get(url), reverse('comingsoon:blocked'))
+
+        self.client.post(reverse('accounts:logout'))
+        self.login(admin=True)
+        invalid = SimpleUploadedFile('not-image.txt', b'not an image', content_type='text/plain')
+        response = self.client.post(url, {'photo': invalid})
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, 'JPEG, PNG, WEBP', status_code=400)
 
     def test_chat_reply(self):
         self.login()

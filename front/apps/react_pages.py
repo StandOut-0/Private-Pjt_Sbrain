@@ -53,6 +53,7 @@ def render_react(request, page, data=None, *, shell=True, status=200, active_men
             'agents': '/manage/agents/', 'results': '/manage/results/',
             'comingSoon': '/coming-soon/', 'comingSoonManage': '/coming-soon/manage/',
             'faq': '/faq/', 'guide': '/user-guide/', 'notifications': '/notifications/',
+            'adminFacePhoto': '/manage/security/face-photo/',
         },
         'notifications': get_user_notifications(account),
         'csrfToken': request.META.get('CSRF_COOKIE', ''),

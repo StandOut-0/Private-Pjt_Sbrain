@@ -8,8 +8,53 @@ import { Dashboard } from './Dashboard';
 
 function LoginPage({ payload }: { payload: AppPayload }) {
   if (payload.page === 'demo-login') return <main className="sb-auth"><div className="sb-auth-card"><h1 className="h5 sb-auth-title mb-3">DEMO LOGIN</h1><p className="text-secondary mb-4">체험용 인증 코드를 입력해주세요.</p>{payload.data.error && <div className="alert alert-danger py-2 small" role="alert">{payload.data.error}</div>}<form method="post" action={payload.links.demoLogin}><input type="hidden" name="csrfmiddlewaretoken" value={csrfToken()}/><input className="form-control text-center mb-3" name="code" placeholder="인증 코드 입력" autoFocus required/><Button type="submit" className="w-100">체험 시작하기</Button></form><p className="text-secondary small mt-3 mb-1">※ 체험 계정은 일부 기능이 제한될 수 있습니다.</p><Link to={payload.links.login} className="small">← 로그인으로 돌아가기</Link></div></main>;
-  if (payload.page === 'face-auth') return <main className="sb-auth sb-auth-gif"><div className="sb-auth-card" style={{width:520}}><h1 className="h5 sb-auth-title mb-2">관리자 인증</h1><p className="text-secondary mb-4">현재는 얼굴 대조가 연결되지 않은 체험용 화면입니다.</p>{payload.data.error && <div className="alert alert-danger py-2 small" role="alert">{payload.data.error}</div>}<div className="sb-camera mb-3"><div className="text-center"><i className="bi bi-camera-video fs-1 d-block mb-2"/>카메라 미연결<br/><span className="small">얼굴 비교 미구현</span></div></div><p className="text-secondary small">아래 버튼은 실제 얼굴을 확인하지 않고 관리자 체험 세션을 통과시킵니다.</p><form method="post" action={payload.links.faceAuth} className="d-grid gap-2"><input type="hidden" name="csrfmiddlewaretoken" value={csrfToken()}/><button className="btn btn-primary" name="result" value="success" type="submit">체험 인증 계속</button><button className="btn btn-outline-secondary btn-sm" name="result" value="fail" type="submit">인증 실패 시나리오</button></form></div></main>;
+  if (payload.page === 'face-auth') return <FaceAuth payload={payload}/>;
   return <LoginEntry payload={payload}/>;
+}
+
+function FaceAuth({payload}:{payload:AppPayload}) {
+  const videoRef=useRef<HTMLVideoElement>(null);
+  const streamRef=useRef<MediaStream|null>(null);
+  const mountedRef=useRef(true);
+  const [cameraState,setCameraState]=useState('카메라를 시작하면 실시간 미리보기가 표시됩니다.');
+  const [cameraReady,setCameraReady]=useState(false);
+  const [cameraBusy,setCameraBusy]=useState(false);
+  const [captured,setCaptured]=useState('');
+  useEffect(()=>()=>{mountedRef.current=false;streamRef.current?.getTracks().forEach(track=>track.stop())},[]);
+  function stopCamera(){
+    streamRef.current?.getTracks().forEach(track=>track.stop());streamRef.current=null;
+    if(videoRef.current)videoRef.current.srcObject=null;
+    setCameraReady(false);setCameraState('카메라를 종료했습니다. 필요하면 다시 연결할 수 있습니다.');
+  }
+  async function startCamera(){
+    if(cameraBusy)return;
+    setCameraBusy(true);setCameraReady(false);setCameraState('카메라에 연결하고 있습니다…');setCaptured('');
+    try {
+      if(!navigator.mediaDevices?.getUserMedia) throw new Error('이 브라우저에서는 카메라를 사용할 수 없습니다. localhost 또는 HTTPS에서 열어주세요.');
+      streamRef.current?.getTracks().forEach(track=>track.stop());
+      const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+      if(!mountedRef.current){stream.getTracks().forEach(track=>track.stop());return}
+      streamRef.current=stream;
+      stream.getVideoTracks().forEach(track=>track.addEventListener('ended',()=>{setCameraReady(false);setCameraState('카메라 연결이 끊겼습니다. 다시 연결해주세요.')} ,{once:true}));
+      if(videoRef.current){videoRef.current.srcObject=stream;await videoRef.current.play()}
+      setCameraReady(true);setCameraState('카메라가 연결되었습니다. 화면을 확인한 뒤 촬영할 수 있습니다.');
+    } catch(error) {
+      streamRef.current?.getTracks().forEach(track=>track.stop());streamRef.current=null;
+      setCameraReady(false);
+      const name=error instanceof DOMException?error.name:'';
+      const message=name==='NotAllowedError'||name==='SecurityError'?'카메라 권한이 차단되었습니다. 주소창의 사이트 설정에서 카메라를 허용해주세요.':name==='NotFoundError'?'사용 가능한 카메라를 찾지 못했습니다. 카메라가 연결되어 있는지 확인해주세요.':name==='NotReadableError'?'카메라가 다른 앱에서 사용 중일 수 있습니다. 다른 앱을 닫고 다시 시도해주세요.':name==='OverconstrainedError'?'요청한 카메라 설정을 사용할 수 없습니다. 다른 카메라를 확인해주세요.':error instanceof Error?error.message:'카메라 연결에 실패했습니다. 브라우저 권한과 카메라 연결을 확인해주세요.';
+      setCameraState(message);
+    } finally {setCameraBusy(false)}
+  }
+  function captureFrame(){
+    const video=videoRef.current;if(!video||!video.videoWidth){setCameraState('카메라 화면이 준비 중입니다. 잠시 후 다시 촬영해주세요.');return}
+    const canvas=document.createElement('canvas');canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    canvas.getContext('2d')?.drawImage(video,0,0,canvas.width,canvas.height);
+    setCaptured(canvas.toDataURL('image/jpeg',0.88));
+    streamRef.current?.getTracks().forEach(track=>track.stop());streamRef.current=null;
+    setCameraReady(false);setCameraState('촬영했습니다. 카메라를 종료했습니다. 이 사진은 미리보기용이며 등록 사진과 대조하지 않습니다.');
+  }
+  return <main className="sb-auth sb-auth-gif sb-auth-face"><div className="sb-auth-card" style={{width:520}}><h1 className="h5 sb-auth-title mb-2">관리자 인증</h1><p className="text-secondary mb-4">카메라 미리보기를 사용할 수 있습니다. 얼굴 대조는 아직 연결되지 않았습니다.</p>{payload.data.error&&<div className="alert alert-danger py-2 small" role="alert">{payload.data.error}</div>}<div className="sb-camera sb-camera-live mb-3">{captured?<img className="sb-camera-image" src={captured} alt="촬영한 카메라 미리보기"/>:<video ref={videoRef} className="sb-camera-video" muted playsInline aria-label="카메라 실시간 미리보기"/>}{!cameraReady&&<div className="sb-camera-placeholder"><i className="bi bi-camera-video fs-1 d-block mb-2"/>{cameraState}</div>}</div><div className="d-flex justify-content-center flex-wrap gap-2 mb-3"><button className="btn btn-outline-primary btn-sm" type="button" disabled={cameraBusy} onClick={()=>void startCamera()}><i className="bi bi-camera-video me-1"/>{cameraBusy?'연결 중…':cameraReady?'카메라 다시 연결':'카메라 시작'}</button>{cameraReady&&<><button className="btn btn-outline-secondary btn-sm" type="button" onClick={captureFrame}><i className="bi bi-camera me-1"/>촬영</button><button className="btn btn-outline-secondary btn-sm" type="button" onClick={stopCamera}><i className="bi bi-camera-video-off me-1"/>카메라 끄기</button></>}</div><p className="text-secondary small" role="status">{cameraState}</p><p className="text-secondary small">아래는 체험 인증입니다. 촬영 사진이나 등록된 사진으로 본인 여부를 확인하지 않습니다.</p><form method="post" action={payload.links.faceAuth} className="d-grid gap-2"><input type="hidden" name="csrfmiddlewaretoken" value={csrfToken()}/><button className="btn btn-primary" name="result" value="success" type="submit">체험 인증 계속</button><button className="btn btn-outline-secondary btn-sm" name="result" value="fail" type="submit">인증 실패 시나리오</button></form></div></main>;
 }
 
 function LoginEntry({payload}:{payload:AppPayload}) {

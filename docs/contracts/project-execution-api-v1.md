@@ -1,6 +1,6 @@
 # Project Execution API v1 — 계약 초안
 
-- 상태: Day 6~18의 API·실행·Artifact·Reflection·관측·보안 경로 구현 완료. Day 19 종단 간 API 및 프로젝트 상세 표시 검증을 통과했다.
+- 상태: Day 6~19의 API·실행·Artifact·Reflection·관측·보안 경로 구현 및 종단 간 검증 완료. Day 20 MVP 인수 문서를 정리했다.
 - 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
 - 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
 

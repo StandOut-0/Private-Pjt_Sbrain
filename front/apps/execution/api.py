@@ -4,6 +4,7 @@ import uuid
 from django.db import IntegrityError, transaction
 from django.http import Http404, JsonResponse
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.session import get_user_account
@@ -222,6 +223,97 @@ def retry_run(request, project_id, run_id):
                      message=f'실패 지점에서 재시도 {new_run.retry_count}/3회를 대기열에 등록했습니다.',
                      from_status=failed_run.status, to_status=new_run.status,
                      metadata={'previous_run_id': failed_run.pk, 'retry_count': new_run.retry_count})
+    response = JsonResponse(_run_payload(new_run), status=202)
+    response['Location'] = reverse('project_api:run_detail', args=[project.pk, new_run.pk])
+    return response
+
+
+@require_POST
+def cancel_run(request, project_id, run_id):
+    account = get_user_account(request)
+    if account is None:
+        return _error(401, 'AUTH_REQUIRED', '로그인이 필요합니다.')
+    project = Project.objects.filter(pk=project_id, owner=account).first()
+    if project is None:
+        return _error(404, 'PROJECT_NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+    with transaction.atomic():
+        run = ProjectRun.objects.select_for_update().filter(pk=run_id, project=project).first()
+        if run is None:
+            return _error(404, 'RUN_NOT_FOUND', '실행을 찾을 수 없습니다.')
+        if run.status == ProjectRun.STATUS_CANCELLED:
+            return JsonResponse(_run_payload(run), status=200)
+        if run.status == ProjectRun.STATUS_QUEUED:
+            previous = run.status
+            run.status = ProjectRun.STATUS_CANCELLED
+            run.finished_at = timezone.now()
+            run.save(update_fields=['status', 'finished_at'])
+            task = getattr(run, 'planning_task', None)
+            if task:
+                task.status = Task.STATUS_CANCELLED
+                task.finished_at = run.finished_at
+                task.save(update_fields=['status', 'finished_at', 'updated_at'])
+            record_event(project=project, run=run, task=task, event_type='run.cancelled',
+                         message='대기 중인 실행을 취소했습니다.', from_status=previous, to_status=run.status)
+            return JsonResponse(_run_payload(run), status=200)
+        if run.status == ProjectRun.STATUS_RUNNING:
+            run.status = ProjectRun.STATUS_CANCEL_REQUESTED
+            run.cancel_requested_at = timezone.now()
+            run.save(update_fields=['status', 'cancel_requested_at'])
+            record_event(project=project, run=run, event_type='run.cancel_requested',
+                         message='Agent 응답 후 실행을 중단하도록 요청했습니다.',
+                         from_status=ProjectRun.STATUS_RUNNING, to_status=run.status)
+            return JsonResponse(_run_payload(run), status=202)
+        return _error(409, 'RUN_NOT_CANCELLABLE', '현재 상태의 실행은 취소할 수 없습니다.')
+
+
+@require_POST
+def regenerate_run(request, project_id, run_id):
+    account = get_user_account(request)
+    if account is None:
+        return _error(401, 'AUTH_REQUIRED', '로그인이 필요합니다.')
+    project = Project.objects.filter(pk=project_id, owner=account).first()
+    if project is None:
+        return _error(404, 'PROJECT_NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+    previous = ProjectRun.objects.filter(pk=run_id, project=project).first()
+    if previous is None:
+        return _error(404, 'RUN_NOT_FOUND', '이전 실행을 찾을 수 없습니다.')
+    if previous.status in (ProjectRun.STATUS_QUEUED, ProjectRun.STATUS_RUNNING, ProjectRun.STATUS_CANCEL_REQUESTED):
+        return _error(409, 'RUN_STILL_ACTIVE', '진행 중인 실행은 재생성할 수 없습니다.')
+    key = request.headers.get('Idempotency-Key', '').strip()
+    try:
+        key = str(uuid.UUID(key))
+    except (ValueError, AttributeError):
+        return _error(422, 'VALIDATION_ERROR', 'Idempotency-Key에 UUID가 필요합니다.')
+    body, error = _parse_json(request)
+    if error:
+        return error
+    try:
+        source_id = int(body.get('source_message_id'))
+    except (TypeError, ValueError):
+        return _error(422, 'VALIDATION_ERROR', 'source_message_id가 필요합니다.')
+    source = Message.objects.filter(pk=source_id, conversation__project=project,
+                                    conversation__owner=account, role=Message.ROLE_USER).first()
+    if source is None:
+        return _error(404, 'MESSAGE_NOT_FOUND', '사용자 요청 메시지를 찾을 수 없습니다.')
+    feedback = body.get('feedback', '')
+    if not isinstance(feedback, str) or len(feedback) > 10000:
+        return _error(422, 'VALIDATION_ERROR', 'feedback는 10,000자 이하 문자열이어야 합니다.')
+    existing = ProjectRun.objects.filter(project=project, idempotency_key=key).first()
+    if existing:
+        if existing.previous_run_id == previous.pk and existing.source_message_id == source.pk:
+            return JsonResponse(_run_payload(existing), status=200)
+        return _error(409, 'IDEMPOTENCY_KEY_REUSED', '같은 요청 키가 다른 실행에 이미 사용됐습니다.')
+    with transaction.atomic():
+        new_run = ProjectRun.objects.create(
+            project=project, requested_by=account, conversation=source.conversation,
+            source_message=source, previous_run=previous, idempotency_key=key,
+            feedback=feedback.strip(), status=ProjectRun.STATUS_QUEUED,
+        )
+        new_task = ensure_planning_task(new_run)
+        record_event(project=project, run=new_run, task=new_task, event_type='run.regenerated',
+                     message='이전 결과를 보존하고 새 실행 버전을 대기열에 등록했습니다.',
+                     from_status=previous.status, to_status=new_run.status,
+                     metadata={'previous_run_id': previous.pk})
     response = JsonResponse(_run_payload(new_run), status=202)
     response['Location'] = reverse('project_api:run_detail', args=[project.pk, new_run.pk])
     return response

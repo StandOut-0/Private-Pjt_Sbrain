@@ -148,6 +148,22 @@ def process_run(run_id, provider=None):
         execution.save(update_fields=['status', 'error_code', 'error_message', 'output', 'is_retryable', 'finished_at'])
         run = ProjectRun.objects.select_for_update().get(pk=run_id)
         task = Task.objects.select_for_update().get(pk=execution.task_id)
+        if run.status == ProjectRun.STATUS_CANCEL_REQUESTED:
+            execution.status = AgentExecution.STATUS_CANCELLED
+            execution.output = ''
+            execution.error_code = ''
+            execution.error_message = ''
+            execution.save(update_fields=['status', 'output', 'error_code', 'error_message'])
+            run.status = ProjectRun.STATUS_CANCELLED
+            run.finished_at = finished_at
+            run.save(update_fields=['status', 'finished_at'])
+            task.status = Task.STATUS_CANCELLED
+            task.finished_at = finished_at
+            task.save(update_fields=['status', 'finished_at', 'updated_at'])
+            record_event(project=run.project, run=run, task=task, execution=execution,
+                         event_type='run.cancelled', message='Agent 응답 경계에서 실행을 취소했습니다.',
+                         from_status=ProjectRun.STATUS_CANCEL_REQUESTED, to_status=run.status)
+            return run
         is_success = execution.status == AgentExecution.STATUS_SUCCEEDED
         if is_success:
             from apps.execution.artifacts import persist_prd_artifact

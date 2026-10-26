@@ -32,6 +32,7 @@ def project_card_payload(project):
     }.get(project.status, 'ready')
     from apps.execution.events import event_payload
     activities = [event_payload(event) for event in project.execution_events.all()[:30]]
+    latest_run = project.runs.select_related('source_message').first()
     return {
         **project_payload(project),
         'code': f'Project {project.pk:02d}',
@@ -40,6 +41,9 @@ def project_card_payload(project):
         'progress': 0,
         'stages': [],
         'activities': activities,
+        'latest_run_id': latest_run.pk if latest_run else None,
+        'latest_run_status': latest_run.status if latest_run else None,
+        'latest_run_source_message_id': latest_run.source_message_id if latest_run else None,
         'tree': [],
     }
 

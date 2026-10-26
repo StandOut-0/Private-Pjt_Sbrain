@@ -23,6 +23,15 @@ class InvalidProvider:
         return {'title': 'incomplete'}
 
 
+class CancelDuringProvider:
+    def __init__(self, run_id):
+        self.run_id = run_id
+
+    def generate(self, request):
+        ProjectRun.objects.filter(pk=self.run_id).update(status=ProjectRun.STATUS_CANCEL_REQUESTED)
+        return FakePlanningProvider().generate(request)
+
+
 class PlanningExecutionTests(TestCase):
     def setUp(self):
         self.owner = UserAccount.objects.create(identity_key='local:planning@example.test', name='Planning User')
@@ -178,3 +187,36 @@ class PlanningExecutionTests(TestCase):
         )
         self.assertEqual(blocked.status_code, 409)
         self.assertEqual(blocked.json()['error']['code'], 'RETRY_LIMIT_REACHED')
+
+    def test_cancel_requested_during_provider_discards_result(self):
+        run = process_run(self.run.pk, CancelDuringProvider(self.run.pk))
+        run.refresh_from_db()
+        execution = AgentExecution.objects.get(task__run=run)
+        self.assertEqual(run.status, ProjectRun.STATUS_CANCELLED)
+        self.assertEqual(run.planning_task.status, Task.STATUS_CANCELLED)
+        self.assertEqual(execution.status, AgentExecution.STATUS_CANCELLED)
+        self.assertEqual(execution.output, '')
+        self.assertFalse(Artifact.objects.filter(project=self.project).exists())
+
+    def test_queued_run_can_be_cancelled_by_owner(self):
+        response = self._logged_client().post(f'/api/v1/projects/{self.project.pk}/runs/{self.run.pk}/cancel/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], ProjectRun.STATUS_CANCELLED)
+        self.run.refresh_from_db()
+        self.assertEqual(self.run.status, ProjectRun.STATUS_CANCELLED)
+
+    def test_regeneration_keeps_previous_artifact_and_creates_new_version(self):
+        original = process_run(self.run.pk, FakePlanningProvider())
+        new_message = Message.objects.create(conversation=self.conversation, role=Message.ROLE_USER,
+                                             content='Build an inventory tracker with history.')
+        response = self._logged_client().post(
+            f'/api/v1/projects/{self.project.pk}/runs/{original.pk}/regenerate/',
+            data=json.dumps({'source_message_id': new_message.pk, 'feedback': 'Add a history screen.'}),
+            content_type='application/json', HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        self.assertEqual(response.status_code, 202)
+        regenerated = process_run(response.json()['id'], FakePlanningProvider())
+        artifacts = list(Artifact.objects.filter(project=self.project).order_by('version'))
+        self.assertEqual([item.version for item in artifacts], ['1', '2'])
+        self.assertEqual(regenerated.previous_run_id, original.pk)
+        self.assertEqual(original.status, ProjectRun.STATUS_SUCCEEDED)

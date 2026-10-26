@@ -11,7 +11,7 @@ from apps.accounts.session import get_user_account
 from apps.reflection.models import QualityCriterion
 from apps.artifacts.models import Artifact
 from apps.projects.models import Project
-from apps.reflection.evaluator import evaluate_artifact
+from apps.reflection.evaluator import ReflectionError, evaluate_artifact
 
 CRITERION_KEY_RE = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
 
@@ -83,7 +83,7 @@ def _report_payload(report):
             'criteria_snapshot': report.criteria_snapshot, 'score_details': report.score_details,
             'total_score': report.total_score, 'summary': report.summary,
             'improvements': report.improvements, 'is_mock': report.is_mock,
-            'evaluation_label': '개발용 mock 평가' if report.is_mock else '실제 평가',
+            'evaluation_label': '개발용 mock 평가' if report.is_mock else '로컬 Ollama 모델 평가',
             'created_at': report.created_at.isoformat().replace('+00:00', 'Z')}
 
 
@@ -107,4 +107,8 @@ def artifact_reflection(request, project_id, artifact_id):
         report, created = evaluate_artifact(artifact)
     except ValueError:
         return _error(409, 'CRITERIA_NOT_READY', '활성 평가 기준의 가중치를 확인해주세요.')
+    except ReflectionError as exc:
+        return JsonResponse({'error': {'code': exc.code, 'message': exc.message,
+                                       'details': {'retryable': exc.retryable},
+                                       'request_id': f'req_{uuid.uuid4().hex[:16]}'}}, status=503 if exc.retryable else 422)
     return JsonResponse(_report_payload(report), status=201 if created else 200)

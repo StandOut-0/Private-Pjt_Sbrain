@@ -1,10 +1,14 @@
 import json
+import os
+import unittest
+from unittest.mock import patch
 
 from django.contrib import admin
 from django.test import Client, TestCase
 
 from apps.accounts.models import UserAccount
 from apps.reflection.models import QualityCriterion
+from apps.reflection.evaluator import ReflectionError
 from apps.execution.models import ProjectRun
 from apps.execution.planning import FakePlanningProvider, process_run
 from apps.projects.models import Conversation, Message, Project
@@ -69,7 +73,8 @@ class QualityCriterionTests(TestCase):
         self.assertFalse(model_admin.has_delete_permission(request))
         self.assertIn('weight', model_admin.get_readonly_fields(request))
 
-    def test_artifact_evaluation_persists_criteria_snapshot_and_is_repeatable(self):
+    @patch('apps.reflection.evaluator._get_provider')
+    def test_artifact_evaluation_persists_model_result_and_is_repeatable(self, get_provider):
         project = Project.objects.create(owner=self.user, project_name='Reflection project')
         conversation = Conversation.objects.create(project=project, owner=self.user)
         message = Message.objects.create(conversation=conversation, role='user', content='Build a task tracker')
@@ -77,13 +82,78 @@ class QualityCriterionTests(TestCase):
                                         source_message=message, idempotency_key='reflection-test')
         run = process_run(run.pk, FakePlanningProvider())
         artifact = run.planning_task.artifacts.get()
+        provider = type('Provider', (), {
+            'provider_name': 'ollama', 'model_name': 'gemma4:latest', 'last_usage': {},
+            'evaluate': lambda self, content, criteria: {
+                'summary': '요구사항과 완료 기준을 확인했습니다.',
+                'criteria': [{'key': item['key'], 'score': 80, 'evidence': f"{item['label']} 항목 검토", 'deductions': []}
+                             for item in criteria],
+                'improvements': ['대상 사용자를 구체적으로 정하세요.'],
+            },
+        })()
+        get_provider.return_value = provider
         response = self.user_client.post(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
         self.assertEqual(response.status_code, 201)
-        self.assertTrue(response.json()['is_mock'])
+        self.assertFalse(response.json()['is_mock'])
         self.assertEqual(response.json()['run_id'], run.pk)
         self.assertEqual(sum(item['weight'] for item in response.json()['criteria_snapshot']), 100)
-        self.assertIn('mock', response.json()['evaluation_label'])
+        self.assertIn('Ollama', response.json()['evaluation_label'])
+        self.assertEqual(response.json()['total_score'], 80)
+        self.assertEqual(response.json()['score_details'][0]['evidence'], f"{response.json()['score_details'][0]['label']} 항목 검토")
         again = self.user_client.post(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
         self.assertEqual(again.status_code, 200)
         fetched = self.user_client.get(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
         self.assertEqual(fetched.json()['id'], response.json()['id'])
+
+    @patch('apps.reflection.evaluator._get_provider')
+    def test_invalid_model_criteria_are_rejected_and_not_saved(self, get_provider):
+        project = Project.objects.create(owner=self.user, project_name='Bad reflection project')
+        conversation = Conversation.objects.create(project=project, owner=self.user)
+        message = Message.objects.create(conversation=conversation, role='user', content='Build a task tracker')
+        run = ProjectRun.objects.create(project=project, requested_by=self.user, conversation=conversation,
+                                        source_message=message, idempotency_key='reflection-invalid-test')
+        run = process_run(run.pk, FakePlanningProvider())
+        artifact = run.planning_task.artifacts.get()
+        provider = type('Provider', (), {
+            'model_name': 'gemma4:latest', 'last_usage': {},
+            'evaluate': lambda self, content, criteria: {
+                'summary': '잘못된 결과', 'criteria': [{'key': [], 'score': 101, 'evidence': 'x', 'deductions': []}],
+                'improvements': [],
+            },
+        })()
+        get_provider.return_value = provider
+        response = self.user_client.post(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
+        self.assertEqual(response.status_code, 422)
+        self.assertEqual(response.json()['error']['code'], 'INVALID_PROVIDER_OUTPUT')
+        from apps.reflection.models import ReflectionReport
+        self.assertFalse(ReflectionReport.objects.filter(artifact=artifact).exists())
+
+    @patch('apps.reflection.evaluator._get_provider', side_effect=ReflectionError('OLLAMA_UNAVAILABLE', 'Ollama가 실행 중인지 확인한 뒤 다시 시도해주세요.', retryable=True))
+    def test_provider_failure_returns_retryable_error_without_mock_score(self, _get_provider):
+        project = Project.objects.create(owner=self.user, project_name='Unavailable reflection project')
+        conversation = Conversation.objects.create(project=project, owner=self.user)
+        message = Message.objects.create(conversation=conversation, role='user', content='Build a task tracker')
+        run = ProjectRun.objects.create(project=project, requested_by=self.user, conversation=conversation,
+                                        source_message=message, idempotency_key='reflection-unavailable-test')
+        run = process_run(run.pk, FakePlanningProvider())
+        artifact = run.planning_task.artifacts.get()
+        response = self.user_client.post(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
+        self.assertEqual(response.status_code, 503)
+        self.assertTrue(response.json()['error']['details']['retryable'])
+
+    @unittest.skipUnless(os.environ.get('RUN_LOCAL_LLM_TEST') == '1', 'set RUN_LOCAL_LLM_TEST=1 to call local Ollama')
+    def test_live_local_ollama_reflection_creates_non_mock_report(self):
+        from apps.reflection.evaluator import evaluate_artifact
+        project = Project.objects.create(owner=self.user, project_name='Live reflection project')
+        conversation = Conversation.objects.create(project=project, owner=self.user)
+        message = Message.objects.create(conversation=conversation, role='user', content='온라인 반려동물 사료 쇼핑몰을 기획하고 싶다. 고객이 사료를 비교하고 주문할 수 있어야 한다.')
+        run = ProjectRun.objects.create(project=project, requested_by=self.user, conversation=conversation,
+                                        source_message=message, idempotency_key='reflection-live-test')
+        run = process_run(run.pk, FakePlanningProvider())
+        artifact = run.planning_task.artifacts.get()
+        report, created = evaluate_artifact(artifact)
+        self.assertTrue(created)
+        self.assertFalse(report.is_mock)
+        self.assertEqual(len(report.score_details), 4)
+        self.assertGreaterEqual(report.total_score, 0)
+        self.assertLessEqual(report.total_score, 100)

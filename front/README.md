@@ -192,7 +192,7 @@ npm run build
 1. `/login/`에서 체험 로그인을 하고 Projects에서 프로젝트를 생성합니다.
 2. 프로젝트 상세의 Chatbot에서 사용자 요청을 보내 Run을 등록합니다. 같은 메시지의 중복 실행 요청은 idempotency key로 방지됩니다.
 3. Worker가 실행 중인 상태에서 프로젝트 상세를 새로고침합니다. 최근 활동과 Run 상태를 확인합니다.
-4. 완료 후 JSON Artifact를 다운로드하고 `결과 평가하기`를 눌러 개발용 Reflection 점수·근거·보완 제안을 확인합니다.
+4. 완료 후 JSON Artifact를 다운로드하고 `결과 평가하기`를 눌러 로컬 Ollama가 산출한 Reflection 점수·근거·보완 제안을 확인합니다. Ollama가 중단되었거나 모델 응답이 올바르지 않으면 평가 실패를 표시하며 가짜 점수로 대체하지 않습니다.
 5. 실행이 진행 중이면 중단을 확인하고, 이전 실행이 끝났으면 재생성 모달에서 개선 의견을 남길 수 있습니다. 이전 결과 버전은 유지됩니다.
 6. 관리자 계정의 `/manage/tasks/`에서 Task·Execution 상태와 미계측 token 정보를 확인합니다.
 
@@ -212,7 +212,7 @@ npm run build
 
 - Django 앱: `projects`의 Project/Conversation/Message, `execution`의 Run/Task/AgentExecution/Event, `artifacts`의 버전 결과물, `reflection`의 평가 기준·평가 기록.
 - 각 앱의 migration이 `front/apps/*/migrations/`에 있습니다. 개발 기본 DB는 `front/db.sqlite3`이며 `manage.py migrate`로 구성합니다.
-- Planning은 로컬 Ollama `gemma4:latest`가 기본값이며 `PLANNING_PROVIDER=fake`로 반복 가능한 결정형 결과를 선택할 수 있습니다. 실행 기록에 모델명과 로컬 토큰 수를 저장하며 inference 비용은 0으로 기록합니다. Reflection은 여전히 규칙 기반 mock이며 결과에 mock 라벨을 표시합니다.
+- Planning과 Reflection은 기본으로 로컬 Ollama `gemma4:latest`를 사용합니다. 평가 모델은 `REFLECTION_MODEL`로 별도 지정할 수 있으며 기본값은 `OLLAMA_MODEL`을 따릅니다. Reflection 입력에는 평가 기준 snapshot과 PRD가 포함되고, 기준별 key·점수·증거의 구조를 검사한 뒤 snapshot 가중치로 총점을 계산합니다. 결과에는 모델이 쓴 근거와 개선 제안을 표시합니다. API 오류, 잘못된 모델 출력, 서비스 중지 때에는 평가를 저장하거나 임의 점수를 채우지 않습니다. Ollama token 사용량은 해당 Task의 최신 AgentExecution 계측값에 합산하며 로컬 추론 비용은 0입니다.
 - `AgentExecution`의 token 수와 USD 추정 비용은 nullable입니다. fake provider는 계측하지 않으므로 0이 아닌 `미계측`으로 표시합니다.
 
 ### 인수 체크리스트
@@ -220,12 +220,13 @@ npm run build
 - [x] 사용자 소유 Project 생성·대화 저장·Run idempotency
 - [x] 별도 Worker의 fake Planning 성공/실패 및 구조화된 오류
 - [x] Artifact 버전 저장, 소유자 다운로드와 교차 사용자 차단
-- [x] 평가 기준 가중치 합 100 검증, 평가 당시 snapshot과 mock 결과 저장
+- [x] 평가 기준 가중치 합 100 검증, 평가 당시 snapshot과 로컬 모델 평가 결과 저장
 - [x] Timeline 이벤트, 재시도 최대 3회, 취소/재생성 및 이전 결과 보존
 - [x] 관리자 DB 실행 조회와 미계측 사용량 표현
 - [x] Django 전체 테스트, system check, migration drift, React production build
 - [x] 실제 로컬 Ollama `gemma4:latest` 연동 테스트 (`RUN_LOCAL_LLM_TEST=1`, 이 PC에서 71초)
+- [x] 실제 로컬 Ollama Reflection 종단 평가 및 비 mock 보고서 생성 (`RUN_LOCAL_LLM_TEST=1`)
 - [ ] 브라우저 수동 시각 검수 및 운영 환경의 실제 사용자 인수
 - [ ] 운영 DB/Worker supervisor/Provider adapter/backup·restore·retention 구성
 
-미완료 인수 항목과 production 차단 사유는 [`../docs/operations/security-checklist.md`](../docs/operations/security-checklist.md) 및 [`../docs/execution/day-20.md`](../docs/execution/day-20.md)에 정리되어 있습니다.
+미완료 브라우저 인수 항목과 production 차단 사유는 [`../docs/operations/security-checklist.md`](../docs/operations/security-checklist.md) 및 [`../docs/execution/day-20.md`](../docs/execution/day-20.md)에 정리되어 있습니다.

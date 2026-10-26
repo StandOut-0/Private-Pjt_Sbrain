@@ -44,7 +44,15 @@
 Day 20의 표는 당시 인수 점검 결과이며, 15-2의 필수 MVP 게이트 전부를 승인했다는 의미는 아니다. 후속 전체 점검 결과:
 
 - 현재 Planning 기본 모델은 Fake에서 로컬 Ollama `gemma4:latest`로 변경했다. API key나 hosted inference 사용은 없으며 실제 Worker → PRD → Artifact 통합 테스트가 통과했다. Ollama·모델 설치와 실행은 로컬 Worker 컴퓨터에 필요하다.
-- 전체 Django 회귀 테스트는 61개 발견, 60개 통과, opt-in Ollama live test 1개 생략이다. 해당 live test도 별도 실행해 통과했다. 상세 수치와 명령은 `기획/6. 테스트 및 보완.txt`에 기록한다.
-- Reflection은 계속 규칙 기반 Mock 평가다. 기획안 15-2가 요구하는 “Mock 점수만으로 완료 처리하지 않음” 조건을 아직 충족하지 못했으므로 MVP 최종 수용은 **보류**다.
+- 이전 전체 Django 회귀 테스트는 61개 발견, 60개 통과, opt-in Ollama live test 1개 생략이었다. 이후 Reflection live test도 추가됐다. 최신 테스트 결과는 아래 보완 기록을 기준으로 한다.
+- 당시에는 Reflection이 규칙 기반 Mock 평가였으며 MVP 게이트가 미충족 상태였다. 2026-10-26 후속 보완으로 local Ollama Reflection provider와 화면 연결을 추가했으며 최신 검증은 `기획/6. 테스트 및 보완.txt`의 추가 기록을 기준으로 한다.
 - 브라우저 시각/실제 사용자 수용 테스트는 여전히 미실시다. React 빌드와 Django 응답 기반 자동 검증을 브라우저 기능 동등성 검증으로 간주하지 않는다.
 - Production readiness는 SQLite 동시성, durable worker/supervisor, 백업·복구/보존 자동화 미구성으로 계속 차단 상태다.
+
+### Reflection 보완 결과
+
+- Reflection은 local Ollama `gemma4:latest` 모델을 사용하며 JSON Schema 출력 형식에 현재 활성 기준 key를 enum으로 제한한다. 각 기준 점수와 근거를 검증하고 가중 총점을 산출한다.
+- 실제 모델 출력이 처음에 기준 key 불일치로 거절된 것을 확인해 schema enum 제약을 추가했다. 이후 live Django test에서 비 mock Reflection 보고서 생성이 통과했다(약 160초).
+- Reflection 요청 실패/모델 출력 오류에는 보고서를 저장하지 않으며, mock 점수로 자동 대체하지 않는다. 프로젝트 상세의 정적 예시 점수와 재귀 컴포넌트 렌더링을 제거하고 실제 평가·재평가 UI를 연결했다.
+- 브라우저 도구 초기화가 로컬 경로 오류로 실패해 시각/모바일 브라우저 인수는 여전히 미완료다. React production build 통과는 브라우저 인수로 간주하지 않는다.
+- Reflection 변경 뒤 Django 전체 테스트 결과: 64개 발견, 62개 통과, Planning/Reflection live Ollama test 2개 기본 생략. 둘 다 `RUN_LOCAL_LLM_TEST=1`로 별도 실행해 통과했다.

@@ -44,7 +44,22 @@
 - Ollama 서비스 중지, 모델 미설치, timeout은 구조화된 실패로 표시된다. Hosted provider 연결은 적용하지 않았다.
 - 위 제한은 Day 18·20 보고서와 `docs/operations/security-checklist.md`의 운영 차단 항목과 일치하며 이번 변경에서 운영 완료로 표시하지 않았다.
 
-5. 관련 코드 변경
+5. 기획안과의 대조 결과
+
+| 기획 기준 | 현재 증거 | 판정 / 남은 점 |
+| --- | --- | --- |
+| 15-2: Project 소유권, 대화·실행 저장, 중복 방지, Task/Execution 추적, Artifact 버전·권한 | Day 5–11 보고서, Project 실행 API 테스트, 프로젝트 생성부터 Artifact·소유권까지의 종단 테스트 | 코드·자동 검증 기준 통과 |
+| 15-2, Day 12–13: 평가 기준 snapshot과 결과 평가 | 기준 가중치 검증·snapshot 저장·조회는 연결. 현재 `apps/reflection/evaluator.py` 점수와 근거는 고정 규칙 Mock | **미충족**. 15-2에서 Mock 점수만으로 MVP 완료를 인정하지 않으므로 실제 평가 provider 연결·검증 필요 |
+| Day 14–16: Event, 실패·재시도, 취소·재생성 및 이전 결과 보존 | API 및 회귀 테스트에서 이벤트, retry 상한, 버전 보존, 취소·재생성 확인 | 기본 흐름 통과. 실행 중 취소는 모델 호출을 강제 중단하지 않고 응답 경계에서 반영 |
+| Day 17: 관리자 실행 관측·token/cost | DB 조회·token 필드 및 미계측 표시. Ollama token 사용량 기록, API inference cost 0 | 개발 로컬 흐름 통과. 사용자/일일 호출 quota와 운영 예산 중단은 미설정 |
+| Day 18 및 15-4: 운영 설정·보안·복구 | 체크리스트와 환경 설정 경계는 작성. 실제 운영 DB, durable queue/supervisor, backup/restore/retention은 없음 | **운영 배포 미승인**. 선행 운영값 결정 및 인프라 검증 필요 |
+| Day 19–20, 17-5: 종단 사용자 수용·React 기능 동등성 | API·Django Client 종단 테스트, Django check 및 React build 통과. 브라우저 실제 클릭/시각/좁은 화면 검수 미실시 | 자동 테스트 통과와 브라우저 인수는 별도. **최종 사용자 인수 미완료** |
+| 16장의 Day 1–20 실행 기록 | `docs/execution/day-01.md`부터 `day-20.md`까지 파일 존재. 색인에서 1–6일 누락되어 있었음 | 색인 수정. 내용 근거는 각 날짜 보고서와 테스트 결과를 참조 |
+| 17장의 React 10일 계획 | 기술 의존성·전환 현황은 17-3/17-5에 요약. 10개 작업별 독립 일일 보고서는 없음 | 실제 시각 QA 미완료. 다음 검수 때 URL별 브라우저 결과를 기록할 것 |
+
+**종합 판정:** 기획안의 개발 MVP 대부분은 코드와 자동 테스트로 연결됐지만, 15-2의 Mock 미인정 규칙상 Reflection이 실평가가 아니며 브라우저 사용자 인수도 남아 있다. 따라서 Day 20 보고서는 “작업 인수/알려진 제한 정리”로 읽어야 하며 **필수 MVP 게이트가 모두 통과한 최종 수용 상태는 아니다.** Day20 보고서에 이 상태를 사후 기록했다.
+
+6. 관련 코드·문서 변경
 
 - `front/apps/execution/api.py`: 취소 요청 멱등성과 AgentExecution 상태 연결
 - `front/apps/execution/artifacts.py`, `front/apps/execution/planning.py`: Artifact 생성 안전성 및 실패 종료 처리
@@ -52,8 +67,11 @@
 - `front/apps/execution/tests.py`, `front/apps/reflection/tests.py`: 회귀 테스트 추가
 - `front/README.md`: Ollama 실행·전환·검증 방법 추가
 - `기획/5. 무료 LLM 모델 서치.txt`: 무료 hosted API 및 local model 조사
+- `기획/1. 기획안.txt`: 2026-10-20 React 전환 상태와 후속 Backend 통합 상태의 시간 기준 명시
+- `docs/execution/README.md`: Day 1–6 보고서 색인 추가
+- `docs/execution/day-20.md`: 사후 모델/검증 현황 및 미충족 MVP 게이트 추가
 
-6. Git 처리
+7. Git 처리
 
 - 기능 수정/테스트와 이 보고서를 별도 커밋으로 나눈다.
 - 원격 push는 하지 않는다.

@@ -4,6 +4,12 @@
 
 | Day | 결과 |
 | --- | --- |
+| 1 | [MVP 범위·기준선](day-01.md) |
+| 2 | [구조·환경 경계](day-02.md) |
+| 3 | [데이터 모델·권한 계약](day-03.md) |
+| 4 | [프로젝트 API 계약](day-04.md) |
+| 5 | [DB·소유권 기반](day-05.md) |
+| 6 | [Project DB 저장](day-06.md) |
 | 7 | [Conversation/Message 저장](day-07.md) |
 | 8 | [Run 요청과 멱등성](day-08.md) |
 | 9 | [Supervisor Task](day-09.md) |

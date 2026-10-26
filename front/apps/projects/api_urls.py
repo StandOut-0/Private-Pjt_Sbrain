@@ -2,6 +2,7 @@ from django.urls import path
 
 from apps.execution import api as execution_api
 from apps.artifacts import api as artifact_api
+from apps.reflection import api as reflection_api
 from apps.projects import api_views
 
 app_name = 'project_api'
@@ -16,4 +17,5 @@ urlpatterns = [
     path('projects/<int:project_id>/artifacts/', artifact_api.artifact_collection, name='artifact_collection'),
     path('projects/<int:project_id>/artifacts/<int:artifact_id>/', artifact_api.artifact_detail, name='artifact_detail'),
     path('projects/<int:project_id>/artifacts/<int:artifact_id>/download/', artifact_api.artifact_download, name='artifact_download'),
+    path('projects/<int:project_id>/artifacts/<int:artifact_id>/reflection/', reflection_api.artifact_reflection, name='artifact_reflection'),
 ]

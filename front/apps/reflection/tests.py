@@ -4,6 +4,9 @@ from django.test import Client, TestCase
 
 from apps.accounts.models import UserAccount
 from apps.reflection.models import QualityCriterion
+from apps.execution.models import ProjectRun
+from apps.execution.planning import FakePlanningProvider, process_run
+from apps.projects.models import Conversation, Message, Project
 
 
 class QualityCriterionTests(TestCase):
@@ -43,3 +46,22 @@ class QualityCriterionTests(TestCase):
         self.assertEqual(rejected.status_code, 422)
         self.assertEqual(rejected.json()['error']['code'], 'WEIGHT_SUM_INVALID')
         self.assertEqual(sum(QualityCriterion.objects.filter(is_active=True).values_list('weight', flat=True)), 100)
+
+    def test_artifact_evaluation_persists_criteria_snapshot_and_is_repeatable(self):
+        project = Project.objects.create(owner=self.user, project_name='Reflection project')
+        conversation = Conversation.objects.create(project=project, owner=self.user)
+        message = Message.objects.create(conversation=conversation, role='user', content='Build a task tracker')
+        run = ProjectRun.objects.create(project=project, requested_by=self.user, conversation=conversation,
+                                        source_message=message, idempotency_key='reflection-test')
+        run = process_run(run.pk, FakePlanningProvider())
+        artifact = run.planning_task.artifacts.get()
+        response = self.user_client.post(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
+        self.assertEqual(response.status_code, 201)
+        self.assertTrue(response.json()['is_mock'])
+        self.assertEqual(response.json()['run_id'], run.pk)
+        self.assertEqual(sum(item['weight'] for item in response.json()['criteria_snapshot']), 100)
+        self.assertIn('mock', response.json()['evaluation_label'])
+        again = self.user_client.post(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
+        self.assertEqual(again.status_code, 200)
+        fetched = self.user_client.get(f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/reflection/')
+        self.assertEqual(fetched.json()['id'], response.json()['id'])

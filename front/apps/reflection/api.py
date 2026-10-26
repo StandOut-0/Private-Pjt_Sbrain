@@ -3,11 +3,14 @@ import uuid
 
 from django.db import transaction
 from django.http import JsonResponse
-from django.views.decorators.http import require_GET, require_POST
+from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from apps.accounts.models import UserAccount
 from apps.accounts.session import get_user_account
 from apps.reflection.models import QualityCriterion
+from apps.artifacts.models import Artifact
+from apps.projects.models import Project
+from apps.reflection.evaluator import evaluate_artifact
 
 
 def _error(status, code, message):
@@ -65,3 +68,35 @@ def replace_criteria(request):
             for item in items
         ])
     return JsonResponse({'items': _snapshot(), 'total_weight': 100})
+
+
+def _report_payload(report):
+    return {'id': report.pk, 'artifact_id': report.artifact_id, 'run_id': report.run_id,
+            'criteria_snapshot': report.criteria_snapshot, 'score_details': report.score_details,
+            'total_score': report.total_score, 'summary': report.summary,
+            'improvements': report.improvements, 'is_mock': report.is_mock,
+            'evaluation_label': '개발용 mock 평가' if report.is_mock else '실제 평가',
+            'created_at': report.created_at.isoformat().replace('+00:00', 'Z')}
+
+
+@require_http_methods(['GET', 'POST'])
+def artifact_reflection(request, project_id, artifact_id):
+    account = get_user_account(request)
+    if account is None:
+        return _error(401, 'AUTH_REQUIRED', '로그인이 필요합니다.')
+    project = Project.objects.filter(pk=project_id, owner=account).first()
+    if project is None:
+        return _error(404, 'PROJECT_NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+    artifact = Artifact.objects.filter(pk=artifact_id, project=project).first()
+    if artifact is None:
+        return _error(404, 'ARTIFACT_NOT_FOUND', '결과물을 찾을 수 없습니다.')
+    if request.method == 'GET':
+        report = getattr(artifact, 'reflection_report', None)
+        if report is None:
+            return _error(404, 'REFLECTION_NOT_FOUND', '평가 기록이 없습니다.')
+        return JsonResponse(_report_payload(report))
+    try:
+        report, created = evaluate_artifact(artifact)
+    except ValueError:
+        return _error(409, 'CRITERIA_NOT_READY', '활성 평가 기준의 가중치를 확인해주세요.')
+    return JsonResponse(_report_payload(report), status=201 if created else 200)

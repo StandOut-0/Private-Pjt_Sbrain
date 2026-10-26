@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.session import get_user_account
-from apps.execution.models import ProjectRun, Task
+from apps.execution.models import AgentExecution, ProjectRun, Task
 from apps.execution.supervisor import ensure_planning_task
 from apps.execution.events import record_event
 from apps.projects.models import Conversation, Message, Project
@@ -29,18 +29,25 @@ def _run_payload(run):
         task = run.planning_task
     except Task.DoesNotExist:
         task = None
+    latest_execution = None
+    if task:
+        latest_execution = task.executions.first()
     return {
         'id': run.pk,
         'project_id': run.project_id,
         'conversation_id': run.conversation_id,
         'source_message_id': run.source_message_id,
         'previous_run_id': run.previous_run_id,
+        'retry_count': run.retry_count,
         'status': run.status,
         'progress': 0,
         'created_at': run.created_at.isoformat().replace('+00:00', 'Z'),
         'started_at': run.started_at.isoformat().replace('+00:00', 'Z') if run.started_at else None,
         'finished_at': run.finished_at.isoformat().replace('+00:00', 'Z') if run.finished_at else None,
         'task': ({'id': task.pk, 'title': task.title, 'status': task.status} if task else None),
+        'failure': ({'code': latest_execution.error_code, 'message': latest_execution.error_message,
+                     'retryable': latest_execution.is_retryable}
+                    if latest_execution and latest_execution.status == AgentExecution.STATUS_FAILED else None),
     }
 
 
@@ -172,3 +179,49 @@ def project_events(request, project_id):
     from apps.execution.events import event_payload
     events = project.execution_events.select_related('run', 'task', 'execution')[:100]
     return JsonResponse({'items': [event_payload(event) for event in events]})
+
+
+@require_POST
+def retry_run(request, project_id, run_id):
+    account = get_user_account(request)
+    if account is None:
+        return _error(401, 'AUTH_REQUIRED', '로그인이 필요합니다.')
+    project = Project.objects.filter(pk=project_id, owner=account).first()
+    if project is None:
+        return _error(404, 'PROJECT_NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+    failed_run = ProjectRun.objects.filter(pk=run_id, project=project).select_related('conversation', 'source_message').first()
+    if failed_run is None:
+        return _error(404, 'RUN_NOT_FOUND', '실행을 찾을 수 없습니다.')
+    if failed_run.status != ProjectRun.STATUS_FAILED:
+        return _error(409, 'RUN_NOT_RETRYABLE', '실패한 실행만 재시도할 수 있습니다.')
+    task = getattr(failed_run, 'planning_task', None)
+    execution = task.executions.first() if task else None
+    if not execution or not execution.is_retryable:
+        return _error(409, 'FAILURE_NOT_RETRYABLE', '이 실패는 자동 재시도할 수 없습니다.')
+    if failed_run.retry_count >= 3:
+        return _error(409, 'RETRY_LIMIT_REACHED', '재시도 횟수 3회를 초과할 수 없습니다.')
+    try:
+        key = str(uuid.UUID(request.headers.get('Idempotency-Key', '').strip()))
+    except (ValueError, AttributeError):
+        return _error(422, 'VALIDATION_ERROR', 'Idempotency-Key에 UUID가 필요합니다.')
+    existing = ProjectRun.objects.filter(project=project, idempotency_key=key).first()
+    if existing:
+        if existing.previous_run_id == failed_run.pk:
+            return JsonResponse(_run_payload(existing), status=200)
+        return _error(409, 'IDEMPOTENCY_KEY_REUSED', '같은 요청 키가 다른 재시도에 이미 사용됐습니다.')
+    with transaction.atomic():
+        new_run = ProjectRun.objects.create(
+            project=project, requested_by=account, conversation=failed_run.conversation,
+            source_message=failed_run.source_message, previous_run=failed_run,
+            idempotency_key=key, status=ProjectRun.STATUS_QUEUED,
+            feedback=failed_run.feedback, instruction_snapshot=failed_run.instruction_snapshot,
+            retry_count=failed_run.retry_count + 1,
+        )
+        new_task = ensure_planning_task(new_run)
+        record_event(project=project, run=new_run, task=new_task, event_type='run.retry_queued',
+                     message=f'실패 지점에서 재시도 {new_run.retry_count}/3회를 대기열에 등록했습니다.',
+                     from_status=failed_run.status, to_status=new_run.status,
+                     metadata={'previous_run_id': failed_run.pk, 'retry_count': new_run.retry_count})
+    response = JsonResponse(_run_payload(new_run), status=202)
+    response['Location'] = reverse('project_api:run_detail', args=[project.pk, new_run.pk])
+    return response

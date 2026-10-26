@@ -76,6 +76,7 @@ class ProjectRun(models.Model):
     status = models.CharField(max_length=24, choices=STATUS_CHOICES, default=STATUS_QUEUED)
     feedback = models.TextField(blank=True, default='')
     instruction_snapshot = models.JSONField(null=True, blank=True)
+    retry_count = models.PositiveSmallIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)

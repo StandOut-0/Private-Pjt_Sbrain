@@ -135,3 +135,46 @@ class PlanningExecutionTests(TestCase):
         output = StringIO()
         call_command('process_runs', '--once', stdout=output)
         self.assertIn('No queued runs.', output.getvalue())
+
+    def _logged_client(self):
+        client = Client()
+        session = client.session
+        session['sb_user'] = {'user_id': self.owner.pk, 'role': 'user'}
+        session.save()
+        return client
+
+    def test_retryable_failure_creates_new_run_and_preserves_failed_attempt(self):
+        failed = process_run(self.run.pk, FailingProvider())
+        response = self._logged_client().post(
+            f'/api/v1/projects/{self.project.pk}/runs/{failed.pk}/retry/',
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        self.assertEqual(response.status_code, 202)
+        retry = ProjectRun.objects.get(pk=response.json()['id'])
+        self.assertEqual(retry.previous_run_id, failed.pk)
+        self.assertEqual(retry.retry_count, 1)
+        self.assertEqual(retry.instruction_snapshot, failed.instruction_snapshot)
+
+        succeeded = process_run(retry.pk, FakePlanningProvider())
+        failed.refresh_from_db()
+        self.assertEqual(failed.status, ProjectRun.STATUS_FAILED)
+        self.assertEqual(succeeded.status, ProjectRun.STATUS_SUCCEEDED)
+        self.assertEqual(Artifact.objects.filter(project=self.project).count(), 1)
+
+    def test_retry_is_limited_to_three_retryable_attempts(self):
+        current = process_run(self.run.pk, FailingProvider())
+        client = self._logged_client()
+        for attempt in range(1, 4):
+            response = client.post(
+                f'/api/v1/projects/{self.project.pk}/runs/{current.pk}/retry/',
+                HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+            )
+            self.assertEqual(response.status_code, 202)
+            current = process_run(response.json()['id'], FailingProvider())
+            self.assertEqual(current.retry_count, attempt)
+        blocked = client.post(
+            f'/api/v1/projects/{self.project.pk}/runs/{current.pk}/retry/',
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        self.assertEqual(blocked.status_code, 409)
+        self.assertEqual(blocked.json()['error']['code'], 'RETRY_LIMIT_REACHED')

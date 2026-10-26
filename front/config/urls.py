@@ -7,6 +7,7 @@ urlpatterns = [
     path('', include('apps.accounts.urls')),
     path('projects/', include('apps.projects.urls')),
     path('api/v1/', include(('apps.projects.api_urls', 'project_api'), namespace='project_api')),
+    path('api/v1/quality-criteria/', include(('apps.reflection.urls', 'reflection_api'), namespace='reflection_api')),
     path('manage/', include('apps.management.urls')),
     path('coming-soon/', include('apps.comingsoon.urls')),
 ]

@@ -1,0 +1,52 @@
+전체 구현 점검 및 테스트·보완 기록
+작성일: 2026-10-26
+대상: Day 1–20 완료분 및 이번 종합 점검 수정분
+
+1. 점검 범위
+
+- 기획안에 정의한 Day 1–20의 실행 결과와 각 일자 보고서(`docs/execution/day-01.md`–`day-20.md`)를 확인했다.
+- 계정·프로젝트 소유권, 프로젝트 실행 API와 Worker, 취소·재시도·재생성, Artifact 및 Reflection, 관리자 접근·화면 연결의 코드를 검토했다.
+- Django 전체 테스트, 설정 검사, migration drift 검사, React production build, diff 공백 검사를 수행했다.
+- 사용자 브라우저에서 실제 화면을 열어 확인하는 시각 QA는 이번 점검에 포함되지 않았다. Day 20 인수 보고서에도 미실시로 기록되어 있다.
+
+2. 발견 후 수정한 항목
+
+| 번호 | 우선순위 | 발견 사항 | 보완 내용 | 검증 |
+| --- | --- | --- | --- | --- |
+| 1 | 높음 | Django Admin에서 평가 기준을 직접 추가·수정·삭제하면 API의 활성 가중치 합계 100 검증을 우회할 수 있었다. 평가 기록도 관리자 화면에서 삭제할 수 있었다. | 평가 기준·평가 기록을 읽기 전용으로 전환하고 추가·삭제를 막았다. 기준 변경은 검증을 거치는 API 경로만 허용한다. | Admin 권한/읽기 전용 필드 회귀 테스트 |
+| 2 | 높음 | PRD 생성은 성공했으나 Artifact DB 저장에서 무결성 오류가 나면 Worker의 최종 상태 저장이 롤백되어 Run/Task가 계속 `running`으로 남을 수 있었다. | Artifact 저장을 savepoint로 격리하고 저장 예외를 안전한 실패로 변환했다. Run·Task·AgentExecution을 모두 실패 종료하고 내부 예외 내용은 사용자 데이터에 기록하지 않는다. | Artifact 저장 IntegrityError 주입 테스트 및 전체 실행 테스트 |
+| 3 | 보통 | 평가 기준 교체 API가 key 형식, 공백 label, 필드 최대 길이, sort_order 범위를 충분히 확인하지 않아 DB 오류 또는 잘못된 기준을 받을 수 있었다. | slug key, 필수 label, 각 필드 길이 및 0–32767 sort_order를 검증하며 잘못된 요청은 변경 전에 422로 거절한다. | 유효하지 않은 3종 입력과 기존 기준 보존 테스트 |
+| 4 | 보통 | 실행 중 취소 요청이 반복되면 두 번째 요청이 충돌 처리되고, 현재 Agent 실행 기록에는 중단 요청이 반영되지 않았다. | 취소 요청을 멱등적으로 202 응답하고 실행 중 AgentExecution에도 `cancel_requested` 상태를 기록한다. Worker의 응답 경계 처리 후 최종 취소 상태를 확인한다. | Worker 진행 중 실제 취소 API를 두 번 호출하고 최종 Run/Task/Execution 상태 확인 |
+| 5 | 보통 | Artifact 버전 생성의 재호출 안전성이 명시되지 않았고 같은 AgentExecution에서 중복 Artifact를 만들 가능성이 있었다. | 프로젝트 행 잠금 아래 버전을 계산하고 동일 AgentExecution Artifact가 이미 있으면 재사용하도록 했다. | 기존 재생성 테스트에서 버전 1, 2 및 결과 보존 확인 |
+
+3. 테스트 및 검사 결과
+
+- Django 전체 테스트: 56개 통과 (`front/.venv/Scripts/python.exe manage.py test --verbosity 1`)
+- Django system check: 통과 (`manage.py check`, issues 0)
+- migration drift: 통과 (`manage.py makemigrations --check --dry-run`, 변경 없음)
+- React production build: 통과 (`front/react`에서 `npm run build`, Vite 6.4.1)
+- Git whitespace 검사: 통과 (`git diff --check`)
+- 기존 종단 간 테스트는 프로젝트 생성 → 실행 → Artifact 저장·다운로드 → Reflection 저장/화면 표시 → 소유권 차단을 검증한다.
+- 추가 회귀 테스트는 평가 기준 Admin/API 권한, 잘못된 기준 입력, Artifact 저장 실패 종료, 실행 중 취소 멱등성을 검증한다.
+
+4. 확인한 현재 제한 및 후속 작업
+
+- 브라우저 실화면 수동 확인은 하지 않았다. 주요 페이지의 반응형 배치, 이미지/아이콘 로딩, 대화형 동작은 별도 브라우저 QA가 필요하다.
+- Planning은 결정형 `fake` provider, Reflection은 규칙 기반 mock이다. 외부 LLM 연결이나 실제 품질 점수·비용 측정으로 간주할 수 없다.
+- 실행 중 취소는 Provider 응답이 돌아온 시점에 반영된다. 현재 외부 Provider가 없으며, 향후 adapter는 호출 자체의 timeout/취소를 구현해야 한다.
+- 개발 DB는 SQLite이고 Worker supervisor, 내구성 있는 작업 큐, 백업·복구·보존 자동화는 구성되지 않았다. 다중 Worker 운영 및 production 배포는 별도 검증/구성이 필요하다.
+- 실 Provider 전환 전에는 secret 관리, timeout, 사용자별 quota·비용 한도, 개인정보 마스킹, 실패 재시도 정책을 확정해야 한다.
+- 위 제한은 Day 18·20 보고서와 `docs/operations/security-checklist.md`의 운영 차단 항목과 일치하며 이번 변경에서 운영 완료로 표시하지 않았다.
+
+5. 관련 코드 변경
+
+- `front/apps/execution/api.py`: 취소 요청 멱등성과 AgentExecution 상태 연결
+- `front/apps/execution/artifacts.py`, `front/apps/execution/planning.py`: Artifact 생성 안전성 및 실패 종료 처리
+- `front/apps/reflection/api.py`, `front/apps/reflection/admin.py`: 기준 입력 검증과 관리자 읽기 전용 제어
+- `front/apps/execution/tests.py`, `front/apps/reflection/tests.py`: 회귀 테스트 추가
+
+6. Git 처리
+
+- 기능 수정/테스트와 이 보고서를 별도 커밋으로 나눈다.
+- 원격 push는 하지 않는다.
+- 기존 사용자 편집 파일 `기획/4. 회의 - 아이디어 반영.txt`는 이번 작업에서 수정·stage하지 않는다.

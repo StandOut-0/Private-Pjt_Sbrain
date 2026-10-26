@@ -5,6 +5,7 @@ from django.urls import reverse
 
 from apps.accounts.models import UserAccount
 from apps.execution.models import ProjectRun
+from apps.execution.models import Task
 from apps.projects.models import Conversation, Message, Project
 
 
@@ -269,10 +270,15 @@ class ProjectOwnershipTests(TestCase):
 
         self.assertEqual(first.status_code, 202)
         self.assertEqual(first.json()['status'], ProjectRun.STATUS_QUEUED)
+        self.assertEqual(first.json()['task']['status'], Task.STATUS_QUEUED)
         self.assertEqual(first['Location'], reverse('project_api:run_detail', args=[self.project.pk, first.json()['id']]))
         self.assertEqual(duplicate.status_code, 200)
         self.assertEqual(duplicate.json()['id'], first.json()['id'])
         self.assertEqual(ProjectRun.objects.filter(project=self.project).count(), 1)
+        task = ProjectRun.objects.get(pk=first.json()['id']).planning_task
+        self.assertEqual(task.status, Task.STATUS_QUEUED)
+        self.assertEqual(ProjectRun.objects.get(pk=first.json()['id']).instruction_snapshot['next_agent'], 'planning')
+        self.assertEqual(Task.objects.filter(run_id=first.json()['id']).count(), 1)
         status = client.get(reverse('project_api:run_detail', args=[self.project.pk, first.json()['id']]))
         self.assertEqual(status.status_code, 200)
         self.assertEqual(status.json()['status'], ProjectRun.STATUS_QUEUED)
@@ -295,8 +301,16 @@ class ProjectOwnershipTests(TestCase):
         )
         invalid_key = client.post(url, data=json.dumps(first_body), content_type='application/json', HTTP_IDEMPOTENCY_KEY='not-a-uuid')
         stranger = self._client_for(self.other).post(url, data=json.dumps(first_body), content_type='application/json', HTTP_IDEMPOTENCY_KEY='f60da380-6c4f-4cde-af73-c316ea81413a')
+        assistant_message = Message.objects.create(conversation=other_conversation, role=Message.ROLE_ASSISTANT, content='prototype response')
+        assistant_source = client.post(
+            url,
+            data=json.dumps({'conversation_id': other_conversation.pk, 'source_message_id': assistant_message.pk}),
+            content_type='application/json',
+            HTTP_IDEMPOTENCY_KEY='3d22ed37-cfec-4d51-b52a-ce9a4cb5f8e4',
+        )
 
         self.assertEqual(reused.status_code, 409)
         self.assertEqual(reused.json()['error']['code'], 'IDEMPOTENCY_KEY_REUSED')
         self.assertEqual(invalid_key.status_code, 422)
         self.assertEqual(stranger.status_code, 404)
+        self.assertEqual(assistant_source.status_code, 404)

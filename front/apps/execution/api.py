@@ -7,7 +7,8 @@ from django.urls import reverse
 from django.views.decorators.http import require_GET, require_POST
 
 from apps.accounts.session import get_user_account
-from apps.execution.models import ProjectRun
+from apps.execution.models import ProjectRun, Task
+from apps.execution.supervisor import ensure_planning_task
 from apps.projects.models import Conversation, Message, Project
 
 
@@ -23,6 +24,10 @@ def _error(status, code, message):
 
 
 def _run_payload(run):
+    try:
+        task = run.planning_task
+    except Task.DoesNotExist:
+        task = None
     return {
         'id': run.pk,
         'project_id': run.project_id,
@@ -34,6 +39,7 @@ def _run_payload(run):
         'created_at': run.created_at.isoformat().replace('+00:00', 'Z'),
         'started_at': run.started_at.isoformat().replace('+00:00', 'Z') if run.started_at else None,
         'finished_at': run.finished_at.isoformat().replace('+00:00', 'Z') if run.finished_at else None,
+        'task': ({'id': task.pk, 'title': task.title, 'status': task.status} if task else None),
     }
 
 
@@ -108,6 +114,7 @@ def create_run(request, project_id):
     if existing:
         if existing.source_message_id != source_message.pk:
             return _error(409, 'IDEMPOTENCY_KEY_REUSED', '같은 요청 키가 다른 메시지에 이미 사용됐습니다.')
+        ensure_planning_task(existing)
         return JsonResponse(_run_payload(existing), status=200)
 
     try:
@@ -122,9 +129,11 @@ def create_run(request, project_id):
                 feedback=body.get('feedback', '').strip(),
                 status=ProjectRun.STATUS_QUEUED,
             )
+            ensure_planning_task(run)
     except IntegrityError:
         existing = ProjectRun.objects.filter(project=project, idempotency_key=idempotency_key).first()
         if existing and existing.source_message_id == source_message.pk:
+            ensure_planning_task(existing)
             return JsonResponse(_run_payload(existing), status=200)
         if existing:
             return _error(409, 'IDEMPOTENCY_KEY_REUSED', '같은 요청 키가 다른 메시지에 이미 사용됐습니다.')
@@ -145,4 +154,5 @@ def run_detail(request, project_id, run_id):
     run = ProjectRun.objects.filter(pk=run_id, project_id=project_id).first()
     if run is None:
         return _error(404, 'RUN_NOT_FOUND', '실행을 찾을 수 없습니다.')
+    ensure_planning_task(run)
     return JsonResponse(_run_payload(run))

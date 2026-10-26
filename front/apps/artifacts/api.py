@@ -59,7 +59,7 @@ def artifact_download(request, project_id, artifact_id):
     artifact = Artifact.objects.filter(pk=artifact_id, project=project).first()
     if artifact is None:
         return _error(404, 'ARTIFACT_NOT_FOUND', '결과물을 찾을 수 없습니다.')
-    response = HttpResponse(artifact.content, content_type=artifact.mime_type)
+    response = HttpResponse(artifact.content, content_type='application/json; charset=utf-8')
     response['Content-Disposition'] = f'attachment; filename="artifact-{artifact.pk}-v{artifact.version}.json"'
     response['X-Content-Type-Options'] = 'nosniff'
     return response

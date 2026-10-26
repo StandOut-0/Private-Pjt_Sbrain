@@ -139,8 +139,9 @@ def process_run(run_id, provider=None):
         outcome = (AgentExecution.STATUS_SUCCEEDED, '', '', json.dumps(result, ensure_ascii=False), False)
     except PlanningError as exc:
         outcome = (AgentExecution.STATUS_FAILED, exc.code, exc.public_message, '', exc.retryable)
-    except Exception:
-        logger.exception('Planning execution failed unexpectedly: run_id=%s execution_id=%s', run.pk, execution.pk)
+    except Exception as exc:
+        logger.error('Planning execution failed: run_id=%s execution_id=%s error_type=%s',
+                     run.pk, execution.pk, exc.__class__.__name__)
         outcome = (
             AgentExecution.STATUS_FAILED,
             'INTERNAL_ERROR',

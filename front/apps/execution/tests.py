@@ -104,12 +104,26 @@ class PlanningExecutionTests(TestCase):
         download = client.get(f'/api/v1/projects/{self.project.pk}/artifacts/{artifact.pk}/download/')
         self.assertEqual(download.status_code, 200)
         self.assertIn('attachment;', download['Content-Disposition'])
+        self.assertEqual(download['X-Content-Type-Options'], 'nosniff')
+        self.assertTrue(download['Content-Type'].startswith('application/json'))
         self.assertEqual(json.loads(download.content), json.loads(artifact.content))
 
         other = UserAccount.objects.create(identity_key='local:other@example.test', name='Other')
         other_project = Project.objects.create(owner=other, project_name='Other project')
         denied = client.get(f'/api/v1/projects/{other_project.pk}/artifacts/')
         self.assertEqual(denied.status_code, 404)
+        cross_project = client.get(f'/api/v1/projects/{other_project.pk}/artifacts/{artifact.pk}/download/')
+        self.assertEqual(cross_project.status_code, 404)
+
+    def test_run_api_rejects_oversized_json_body(self):
+        response = self._logged_client().post(
+            f'/api/v1/projects/{self.project.pk}/runs/',
+            data='x' * 65537,
+            content_type='application/json',
+            HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        self.assertEqual(response.status_code, 413)
+        self.assertEqual(response.json()['error']['code'], 'REQUEST_TOO_LARGE')
 
     def test_provider_failure_is_structured_and_does_not_leak_internal_details(self):
         run = process_run(self.run.pk, FailingProvider())

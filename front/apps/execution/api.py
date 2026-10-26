@@ -53,6 +53,8 @@ def _run_payload(run):
 
 
 def _parse_json(request):
+    if len(request.body) > 65536:
+        return None, _error(413, 'REQUEST_TOO_LARGE', '요청 본문은 64KB 이하여야 합니다.')
     try:
         body = json.loads(request.body or '{}')
     except (json.JSONDecodeError, UnicodeDecodeError):

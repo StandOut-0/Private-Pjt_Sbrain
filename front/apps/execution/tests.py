@@ -2,11 +2,12 @@ import json
 import uuid
 
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import Client, TestCase, override_settings
 
 from apps.accounts.models import UserAccount
 from apps.execution.models import AgentExecution, ProjectRun, Task
 from apps.execution.planning import FakePlanningProvider, PlanningError, process_run
+from apps.artifacts.models import Artifact
 from apps.projects.models import Conversation, Message, Project
 
 
@@ -64,9 +65,37 @@ class PlanningExecutionTests(TestCase):
         self.assertEqual(result['objective'], 'Create a small shop PRD')
         self.assertEqual(result['functional_requirements'], ['Include product search and checkout.'])
         self.assertIsNotNone(run.finished_at)
+        artifact = Artifact.objects.get(task=task)
+        self.assertEqual(artifact.project, self.project)
+        self.assertEqual(json.loads(artifact.content), result)
 
         process_run(run.pk, FakePlanningProvider())
         self.assertEqual(AgentExecution.objects.filter(task=task).count(), 1)
+        self.assertEqual(Artifact.objects.filter(task=task).count(), 1)
+
+    def test_artifact_endpoints_enforce_project_ownership_and_download_json(self):
+        run = process_run(self.run.pk, FakePlanningProvider())
+        artifact = Artifact.objects.get(task=run.planning_task)
+        client = Client()
+        session = client.session
+        session['sb_user'] = {'user_id': self.owner.pk, 'role': 'user'}
+        session.save()
+
+        listing = client.get(f'/api/v1/projects/{self.project.pk}/artifacts/')
+        self.assertEqual(listing.status_code, 200)
+        self.assertEqual(listing.json()['items'][0]['id'], artifact.pk)
+        detail = client.get(f'/api/v1/projects/{self.project.pk}/artifacts/{artifact.pk}/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.json()['content'], artifact.content)
+        download = client.get(f'/api/v1/projects/{self.project.pk}/artifacts/{artifact.pk}/download/')
+        self.assertEqual(download.status_code, 200)
+        self.assertIn('attachment;', download['Content-Disposition'])
+        self.assertEqual(json.loads(download.content), json.loads(artifact.content))
+
+        other = UserAccount.objects.create(identity_key='local:other@example.test', name='Other')
+        other_project = Project.objects.create(owner=other, project_name='Other project')
+        denied = client.get(f'/api/v1/projects/{other_project.pk}/artifacts/')
+        self.assertEqual(denied.status_code, 404)
 
     def test_provider_failure_is_structured_and_does_not_leak_internal_details(self):
         run = process_run(self.run.pk, FailingProvider())

@@ -145,6 +145,9 @@ def process_run(run_id, provider=None):
         run = ProjectRun.objects.select_for_update().get(pk=run_id)
         task = Task.objects.select_for_update().get(pk=execution.task_id)
         is_success = execution.status == AgentExecution.STATUS_SUCCEEDED
+        if is_success:
+            from apps.execution.artifacts import persist_prd_artifact
+            persist_prd_artifact(execution)
         terminal_status = ProjectRun.STATUS_SUCCEEDED if is_success else ProjectRun.STATUS_FAILED
         run.status = terminal_status
         run.finished_at = finished_at

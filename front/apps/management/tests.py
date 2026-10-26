@@ -10,6 +10,7 @@ from apps.execution.models import ProjectRun
 from apps.execution.models import AgentExecution
 from apps.execution.planning import FakePlanningProvider, process_run
 from apps.management.models import KnowledgeDocument
+from apps.management.retrieval import retrieve_knowledge
 from apps.projects.models import Conversation, Message, Project
 
 
@@ -82,7 +83,7 @@ class AdminExecutionObservabilityTests(TestCase):
         payload = json.loads(response.content.decode('utf-8').split(
             '<script id="sb-react-data" type="application/json">', 1
         )[1].split('</script>', 1)[0])
-        self.assertEqual(payload['data']['vector_documents'][0]['status'], '저장됨 · 미색인')
+        self.assertEqual(payload['data']['vector_documents'][0]['status'], '키워드 검색 가능 · 벡터 미색인')
         self.assertEqual(payload['data']['knowledge_stats'][0]['value'], 1)
 
     def test_admin_can_read_artifact_from_any_project_but_user_cannot(self):
@@ -127,4 +128,51 @@ class AdminExecutionObservabilityTests(TestCase):
         )[1].split('</script>', 1)[0])['data']
         self.assertTrue(payload['criteria'])
         self.assertEqual(sum(item['weight'] for item in payload['criteria'] if item['is_active']), 100)
+
+    def test_knowledge_retrieval_scopes_global_and_project_documents(self):
+        global_doc = KnowledgeDocument.objects.create(
+            title='Clinic portal basics', original_name='global.md', scope=KnowledgeDocument.SCOPE_GLOBAL,
+            content='Clinic portal requires appointment scheduling.', uploaded_by=self.admin,
+        )
+        project_doc = KnowledgeDocument.objects.create(
+            title='Clinic booking requirements', original_name='local.md', scope=KnowledgeDocument.SCOPE_PROJECT,
+            project=self.project, content='The clinic booking portal needs confirmation.', uploaded_by=self.admin,
+        )
+        another_project = Project.objects.create(owner=self.owner, project_name='Another')
+        KnowledgeDocument.objects.create(
+            title='Clinic private notes', original_name='private.md', scope=KnowledgeDocument.SCOPE_PROJECT,
+            project=another_project, content='Clinic portal private notes.', uploaded_by=self.admin,
+        )
+
+        references = retrieve_knowledge(self.project.pk, {'objective': 'Build a clinic booking portal'})
+
+        self.assertEqual({item['document_id'] for item in references}, {global_doc.pk, project_doc.pk})
+        self.assertEqual(references[0]['title'], project_doc.title)
+
+    def test_planning_execution_receives_relevant_knowledge_context(self):
+        KnowledgeDocument.objects.create(
+            title='Clinic booking requirements', original_name='clinic.md',
+            scope=KnowledgeDocument.SCOPE_PROJECT, project=self.project,
+            content='Clinic booking needs appointment confirmation and reminders.', uploaded_by=self.admin,
+        )
+        conversation = Conversation.objects.create(project=self.project, owner=self.owner)
+        message = Message.objects.create(
+            conversation=conversation, role='user', content='Build a clinic booking portal with reminders',
+        )
+        run = ProjectRun.objects.create(
+            project=self.project, requested_by=self.owner, conversation=conversation,
+            source_message=message, idempotency_key='knowledge-context-run',
+        )
+
+        process_run(run.pk, FakePlanningProvider())
+
+        run.refresh_from_db()
+        execution = run.planning_task.executions.get()
+        saved_input = json.loads(execution.input)
+        artifact = self.project.artifacts.get(agent_execution__task__run=run)
+        artifact_body = json.loads(artifact.content)
+        self.assertEqual(run.status, ProjectRun.STATUS_SUCCEEDED)
+        self.assertEqual(saved_input['knowledge_context'][0]['title'], 'Clinic booking requirements')
+        self.assertIn('appointment confirmation', saved_input['knowledge_context'][0]['excerpt'])
+        self.assertEqual(artifact_body['knowledge_sources'][0]['title'], 'Clinic booking requirements')
 

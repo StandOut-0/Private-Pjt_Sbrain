@@ -24,6 +24,9 @@ class PlanningError(Exception):
 class FakePlanningProvider:
     """Deterministic local provider used for repeatable MVP execution and tests."""
 
+    provider_name = 'fake'
+    model_name = 'unmetered'
+
     def generate(self, request):
         requirements = request.get('known_requirements') or []
         functional_requirements = requirements or [
@@ -113,6 +116,8 @@ def process_run(run_id, provider=None):
             input=json.dumps(run.instruction_snapshot, ensure_ascii=False),
             status=AgentExecution.STATUS_RUNNING,
             attempt_number=attempt_number,
+            provider_name=os.environ.get('PLANNING_PROVIDER', 'fake')[:80],
+            model_name='unmetered',
             started_at=started_at,
         )
         run.status = ProjectRun.STATUS_RUNNING
@@ -127,6 +132,9 @@ def process_run(run_id, provider=None):
 
     try:
         provider = provider or get_planning_provider()
+        execution.provider_name = getattr(provider, 'provider_name', provider.__class__.__name__.removesuffix('Provider').casefold())
+        execution.model_name = getattr(provider, 'model_name', 'unmetered')
+        execution.save(update_fields=['provider_name', 'model_name'])
         result = validate_prd(provider.generate(run.instruction_snapshot))
         outcome = (AgentExecution.STATUS_SUCCEEDED, '', '', json.dumps(result, ensure_ascii=False), False)
     except PlanningError as exc:

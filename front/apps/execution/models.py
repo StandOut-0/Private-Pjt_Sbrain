@@ -118,6 +118,11 @@ class AgentExecution(models.Model):
     error_code = models.CharField(max_length=80, blank=True, default='')
     error_message = models.TextField(blank=True, default='')
     is_retryable = models.BooleanField(default=False)
+    provider_name = models.CharField(max_length=80, blank=True, default='fake')
+    model_name = models.CharField(max_length=120, blank=True, default='unmetered')
+    input_tokens = models.PositiveIntegerField(null=True, blank=True)
+    output_tokens = models.PositiveIntegerField(null=True, blank=True)
+    estimated_cost_usd = models.DecimalField(max_digits=12, decimal_places=8, null=True, blank=True)
     started_at = models.DateTimeField(null=True, blank=True)
     finished_at = models.DateTimeField(null=True, blank=True)
 

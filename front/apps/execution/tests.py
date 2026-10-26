@@ -234,3 +234,47 @@ class PlanningExecutionTests(TestCase):
         self.assertEqual([item.version for item in artifacts], ['1', '2'])
         self.assertEqual(regenerated.previous_run_id, original.pk)
         self.assertEqual(original.status, ProjectRun.STATUS_SUCCEEDED)
+
+    def test_owner_end_to_end_project_run_artifact_reflection_and_access_boundary(self):
+        client = self._logged_client()
+        created = client.post(
+            '/api/v1/projects/',
+            data=json.dumps({'title': 'E2E launch plan', 'summary': 'Day 19 acceptance',
+                             'initial_message': 'Create a launch plan\nInclude milestone tracking and owner assignment.'}),
+            content_type='application/json',
+        )
+        self.assertEqual(created.status_code, 201)
+        project = created.json()['project']
+        conversation = created.json()['conversation']
+        source = created.json()['initial_message']
+        submitted = client.post(
+            f"/api/v1/projects/{project['id']}/runs/",
+            data=json.dumps({'conversation_id': conversation['id'], 'source_message_id': source['id']}),
+            content_type='application/json', HTTP_IDEMPOTENCY_KEY=str(uuid.uuid4()),
+        )
+        self.assertEqual(submitted.status_code, 202)
+        run = process_run(submitted.json()['id'], FakePlanningProvider())
+        self.assertEqual(run.status, ProjectRun.STATUS_SUCCEEDED)
+        poll = client.get(f"/api/v1/projects/{project['id']}/runs/{run.pk}/")
+        self.assertEqual(poll.json()['status'], ProjectRun.STATUS_SUCCEEDED)
+        artifacts = client.get(f"/api/v1/projects/{project['id']}/artifacts/").json()['items']
+        self.assertEqual(len(artifacts), 1)
+        artifact_id = artifacts[0]['id']
+        evaluated = client.post(f"/api/v1/projects/{project['id']}/artifacts/{artifact_id}/reflection/")
+        self.assertEqual(evaluated.status_code, 201)
+        self.assertEqual(evaluated.json()['run_id'], run.pk)
+        detail_page = client.get(f"/projects/{project['id']}/")
+        page_data = detail_page.content.decode('utf-8').split('<script id="sb-react-data" type="application/json">', 1)[1].split('</script>', 1)[0]
+        detail_payload = json.loads(page_data)['data']['project']
+        self.assertEqual(detail_payload['artifacts'][0]['id'], artifact_id)
+        self.assertEqual(detail_payload['latest_reflection']['total_score'], evaluated.json()['total_score'])
+        events = client.get(f"/api/v1/projects/{project['id']}/events/").json()['items']
+        self.assertTrue(any(event['type'] == 'run.succeeded' for event in events))
+
+        other = UserAccount.objects.create(identity_key='local:e2e-other@example.test', name='Other')
+        other_client = Client()
+        session = other_client.session
+        session['sb_user'] = {'user_id': other.pk, 'role': 'user'}
+        session.save()
+        self.assertEqual(other_client.get(f"/api/v1/projects/{project['id']}/artifacts/").status_code, 404)
+        self.assertEqual(other_client.get(f"/api/v1/projects/{project['id']}/artifacts/{artifact_id}/download/").status_code, 404)

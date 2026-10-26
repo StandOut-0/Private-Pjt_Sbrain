@@ -7,6 +7,7 @@ from pathlib import Path
 from apps import mockdata
 from apps.accounts.session import get_user_account, login_required
 from apps.projects.models import Conversation, Project
+from apps.reflection.models import ReflectionReport
 from apps.projects.ownership import message_payload, project_card_payload
 from apps.projects.services import ProjectInputError, append_message, create_conversation, create_project
 from apps.react_pages import render_react
@@ -114,6 +115,34 @@ def project_detail(request, project_id=None):
         if stored_project is None:
             raise Http404('project not found')
         project = project_card_payload(stored_project)
+        project['artifacts'] = [
+            {
+                'id': artifact.pk,
+                'title': artifact.title,
+                'type': artifact.artifact_type,
+                'logical_key': artifact.logical_key,
+                'version': artifact.version,
+                'description': artifact.description,
+                'created_at': artifact.created_at.isoformat().replace('+00:00', 'Z'),
+                'download_url': f'/api/v1/projects/{stored_project.pk}/artifacts/{artifact.pk}/download/',
+                'reflection_url': f'/api/v1/projects/{stored_project.pk}/artifacts/{artifact.pk}/reflection/',
+            }
+            for artifact in stored_project.artifacts.all()
+        ]
+        latest_artifact = stored_project.artifacts.first()
+        project['latest_reflection'] = None
+        if latest_artifact:
+            report = ReflectionReport.objects.filter(artifact=latest_artifact).first()
+            if report:
+                project['latest_reflection'] = {
+                    'id': report.pk,
+                    'artifact_id': report.artifact_id,
+                    'total_score': report.total_score,
+                    'summary': report.summary,
+                    'score_details': report.score_details,
+                    'improvements': report.improvements,
+                    'is_mock': report.is_mock,
+                }
 
         context = {
             'project': project,

@@ -1,6 +1,6 @@
 전체 구현 점검 및 테스트·보완 기록
 작성일: 2026-10-26
-대상: Day 1–20 완료분 및 이번 종합 점검 수정분
+대상: Day 1–20 완료분, 종합 점검 수정, 무료 로컬 LLM 적용
 
 1. 점검 범위
 
@@ -18,24 +18,30 @@
 | 3 | 보통 | 평가 기준 교체 API가 key 형식, 공백 label, 필드 최대 길이, sort_order 범위를 충분히 확인하지 않아 DB 오류 또는 잘못된 기준을 받을 수 있었다. | slug key, 필수 label, 각 필드 길이 및 0–32767 sort_order를 검증하며 잘못된 요청은 변경 전에 422로 거절한다. | 유효하지 않은 3종 입력과 기존 기준 보존 테스트 |
 | 4 | 보통 | 실행 중 취소 요청이 반복되면 두 번째 요청이 충돌 처리되고, 현재 Agent 실행 기록에는 중단 요청이 반영되지 않았다. | 취소 요청을 멱등적으로 202 응답하고 실행 중 AgentExecution에도 `cancel_requested` 상태를 기록한다. Worker의 응답 경계 처리 후 최종 취소 상태를 확인한다. | Worker 진행 중 실제 취소 API를 두 번 호출하고 최종 Run/Task/Execution 상태 확인 |
 | 5 | 보통 | Artifact 버전 생성의 재호출 안전성이 명시되지 않았고 같은 AgentExecution에서 중복 Artifact를 만들 가능성이 있었다. | 프로젝트 행 잠금 아래 버전을 계산하고 동일 AgentExecution Artifact가 이미 있으면 재사용하도록 했다. | 기존 재생성 테스트에서 버전 1, 2 및 결과 보존 확인 |
+| 6 | 높음 | Planning이 Fake provider로만 동작해 실제 LLM PRD 생성을 할 수 없었다. | 기본 provider를 로컬 Ollama로 연결하고 `gemma4:latest` JSON 생성, 연결/timeout/모델 오류, token 사용량 저장을 추가했다. 첫 live 시도는 180초 timeout으로 실패해 thinking 비활성화와 출력 상한을 넣었다. 외부 API가 아닌 loopback만 호출하며 cloud 모델 이름을 거절한다. | Ollama CLI 응답, Django Worker live test에서 PRD와 Artifact 생성 확인 |
 
 3. 테스트 및 검사 결과
 
-- Django 전체 테스트: 56개 통과 (`front/.venv/Scripts/python.exe manage.py test --verbosity 1`)
+- Django 전체 테스트: 61개 발견, 60개 통과 및 Ollama live test 1개 기본 생략 (`front/.venv/Scripts/python.exe manage.py test --verbosity 1`)
+- 실제 로컬 LLM 종단 테스트: 1개 통과 (`RUN_LOCAL_LLM_TEST=1`, `gemma4:latest`, 71초). 첫 요청 timeout을 반영해 thinking을 비활성화하고 출력 token 상한을 적용한 뒤, Django Worker의 PRD JSON 검증·Artifact 저장이 완료됐다.
 - Django system check: 통과 (`manage.py check`, issues 0)
 - migration drift: 통과 (`manage.py makemigrations --check --dry-run`, 변경 없음)
 - React production build: 통과 (`front/react`에서 `npm run build`, Vite 6.4.1)
 - Git whitespace 검사: 통과 (`git diff --check`)
 - 기존 종단 간 테스트는 프로젝트 생성 → 실행 → Artifact 저장·다운로드 → Reflection 저장/화면 표시 → 소유권 차단을 검증한다.
 - 추가 회귀 테스트는 평가 기준 Admin/API 권한, 잘못된 기준 입력, Artifact 저장 실패 종료, 실행 중 취소 멱등성을 검증한다.
+- Ollama HTTP 응답 해석, 비용 0 기록, token 수 기록, 서비스 연결 실패 및 cloud 모델 차단을 회귀 테스트로 검증했다.
 
 4. 확인한 현재 제한 및 후속 작업
 
 - 브라우저 실화면 수동 확인은 하지 않았다. 주요 페이지의 반응형 배치, 이미지/아이콘 로딩, 대화형 동작은 별도 브라우저 QA가 필요하다.
-- Planning은 결정형 `fake` provider, Reflection은 규칙 기반 mock이다. 외부 LLM 연결이나 실제 품질 점수·비용 측정으로 간주할 수 없다.
+- Planning은 기본으로 PC의 Ollama `gemma4:latest`에서 LLM 추론을 한다. `fake` provider는 테스트 용도로 남아 있고 Reflection은 규칙 기반 mock이다. Reflection 점수는 실제 LLM 평가가 아니다.
+- 로컬 Ollama 호출에는 provider API 사용료가 없지만 하드웨어 속도·메모리·전력 사용은 발생한다. 실제 품질은 사용자 입력과 컴퓨터 환경에 따라 달라진다.
+- Hosted free API는 계정별 quota·정책이 바뀔 수 있다. 이번 기본 설정은 hosted API를 호출하지 않는다. 무료 선택지 비교는 `기획/5. 무료 LLM 모델 서치.txt`를 참고한다.
 - 실행 중 취소는 Provider 응답이 돌아온 시점에 반영된다. 현재 외부 Provider가 없으며, 향후 adapter는 호출 자체의 timeout/취소를 구현해야 한다.
 - 개발 DB는 SQLite이고 Worker supervisor, 내구성 있는 작업 큐, 백업·복구·보존 자동화는 구성되지 않았다. 다중 Worker 운영 및 production 배포는 별도 검증/구성이 필요하다.
-- 실 Provider 전환 전에는 secret 관리, timeout, 사용자별 quota·비용 한도, 개인정보 마스킹, 실패 재시도 정책을 확정해야 한다.
+- Ollama live integration test는 `RUN_LOCAL_LLM_TEST=1`일 때만 수행한다. 실제 테스트에서 LLM이 완성된 PRD를 내는 데 71초 걸렸다. 기본 Django 회귀 테스트는 네트워크 없이 Fake provider 또는 mock HTTP 응답을 사용한다.
+- Ollama 서비스 중지, 모델 미설치, timeout은 구조화된 실패로 표시된다. Hosted provider 연결은 적용하지 않았다.
 - 위 제한은 Day 18·20 보고서와 `docs/operations/security-checklist.md`의 운영 차단 항목과 일치하며 이번 변경에서 운영 완료로 표시하지 않았다.
 
 5. 관련 코드 변경
@@ -44,6 +50,8 @@
 - `front/apps/execution/artifacts.py`, `front/apps/execution/planning.py`: Artifact 생성 안전성 및 실패 종료 처리
 - `front/apps/reflection/api.py`, `front/apps/reflection/admin.py`: 기준 입력 검증과 관리자 읽기 전용 제어
 - `front/apps/execution/tests.py`, `front/apps/reflection/tests.py`: 회귀 테스트 추가
+- `front/README.md`: Ollama 실행·전환·검증 방법 추가
+- `기획/5. 무료 LLM 모델 서치.txt`: 무료 hosted API 및 local model 조사
 
 6. Git 처리
 

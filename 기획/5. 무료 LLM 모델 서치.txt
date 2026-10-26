@@ -1,0 +1,62 @@
+무료 LLM 모델 및 연결 방식 조사
+조사일: 2026-10-26
+적용 프로젝트: Second Brain Planning 실행
+
+1. 결론
+
+- 무료 API 제공자의 제공량은 무제한·영구 보장이 아니다. 모델 구성, 계정별 쿼터, 서비스 약관이 바뀔 수 있다.
+- 이 PC에는 Ollama와 `gemma4:latest`가 이미 설치되어 있다. 실제 로컬 추론 응답까지 확인했으므로 우선 이 모델을 사용한다.
+- 앱의 기본 Planning provider를 로컬 Ollama로 연결한다. API 키나 외부 API가 필요 없고, 입력 문장은 이 PC에서 처리한다. 모델 다운로드 용량, RAM/GPU 사용량, 전기 사용은 사용자 컴퓨터가 부담한다.
+- 기존 결정형 `fake` provider는 환경변수로 선택할 수 있어 자동 테스트와 반복 가능한 예시 실행에 보존한다.
+- 호스팅 API가 필요하면 OpenRouter 무료 모델을 대안으로 검토할 수 있다. 무료 계정에는 현재 50 요청/일·20 요청/분 한도가 있으며 모델이 바뀔 수 있다. 유료 경로를 실수로 선택하지 않도록 이 앱의 기본 연결에는 추가하지 않는다.
+
+2. 선택지 비교
+
+| 선택지 | 무료 사용 형태 | 반복 사용 한계·조건 | 이 프로젝트 적용 |
+| --- | --- | --- | --- |
+| Ollama 로컬 모델 | 설치된 모델을 PC에서 직접 실행. API key 불필요. | 호출별 토큰 비용/일일 클라우드 quota 없음. 로컬 하드웨어·메모리·속도·전력에 제한. 모델 라이선스와 저장 공간은 별도 확인. | **적용**. `gemma4:latest`를 기본 모델로 사용. `:cloud` 모델은 유료/외부 호출 방지를 위해 차단. |
+| OpenRouter Free Models | API key로 무료 모델을 라우팅. 최신 무료 목록에 NVIDIA Nemotron과 Meta Llama 계열이 포함될 수 있음. | 무료 계정은 50 요청/일, 20 요청/분. 무료 모델 풀과 사용량은 변경·제한될 수 있고, 제공자가 혼잡할 수 있음. 10달러 이상 충전 시 일일 한도 상승 안내가 있으나 과금이므로 이 프로젝트의 무료 운용 권장 경로에서 제외. | 문서화만. key를 저장하거나 전송하지 않음. |
+| NVIDIA NIM API Catalog | NVIDIA Developer Program 가입자는 연구·개발·프로토타이핑용 NIM API 및 로컬 설치형 microservice에 무료 접근 가능. | API별 사용 제한이 적용되며 Developer Program 제공은 상용 운영용 SLA가 아니다. 사용량 한도와 이용 약관을 호출 전에 확인해야 함. | 향후 선택지. 현재 로컬 Ollama가 이미 설치되어 우선순위에서 제외. |
+| Groq API | 지원 모델·계정별 rate limit 안에서 API 테스트. | 모델별 RPM/RPD/TPM/TPD가 다르고 계정 한도를 확인해야 한다. 무료 한도가 상시 무제한은 아님. | 조사만. |
+| Gemini API Free Tier | 일부 Gemini 모델 무료 구간이 제공됨. | 모델·프로젝트·계정별 rate limit 변동. 무료/유료 데이터 이용 조건도 구분해서 검토해야 한다. | 조사만. |
+
+3. 무료 모델 API를 무제한으로 단정할 수 없는 이유
+
+- 호스팅 inference에는 공급자가 정한 quota, 속도 제한, 수용량 및 이용 조건이 적용된다.
+- OpenRouter 무료 계정은 50 요청/일·20 요청/분이다. 무료 모델이 항상 같은 모델인 것도 아니다. 모델 또는 provider가 중단되면 결과 품질·응답 시간도 바뀔 수 있다.
+- NVIDIA NIM 무료 프로그램은 프로토타입·연구·개발·테스트 용도이며 운영 보장으로 보면 안 된다.
+- 무료 모델은 프롬프트에 내부 기획/개인정보/키를 넣기 전 데이터 취급 조건을 확인해야 한다. 이 프로젝트의 로컬 Ollama 기본값은 프롬프트를 외부 inference API로 전송하지 않는다.
+- “무료로 계속”의 현실적인 경로는 로컬 모델을 이 PC에서 실행하는 것이며, 무료 API quota를 우회하거나 여러 계정을 만들어 한도를 늘리는 방식은 적용하지 않는다.
+
+4. 적용 설정
+
+- 기본: `PLANNING_PROVIDER=ollama`
+- 기본 모델: `OLLAMA_MODEL=gemma4:latest`
+- 연결: `http://127.0.0.1:11434/api/chat` (로컬 주소만 호출)
+- 실행 제한: `OLLAMA_TIMEOUT_SECONDS` 기본 180초, 허용 10–600초
+- 출력: JSON 형식으로 PRD를 생성하고 기존 PRD 계약 검증을 통과한 경우만 저장한다.
+- 메타데이터: Ollama 응답의 prompt/eval token 수를 기록한다. 추정 inference 비용은 0달러로 저장하고 PC 전력·하드웨어 비용은 계산하지 않는다.
+- Cloud model 이름(`:cloud`, `-cloud`)은 차단한다. 외부 provider로 전환하려면 코드 변경 대신 별도 검토·설정이 필요하다.
+- 실행 Worker가 Ollama API를 호출하므로 Ollama 앱/서비스가 켜져 있고 대상 모델이 로컬에 있어야 한다.
+
+5. 공식 자료
+
+- Ollama API / 모델 사용 예시: https://ollama.com/library/gemma4
+- Ollama OpenAI 호환 로컬 API: https://ollama.com/blog/openai-compatibility
+- NVIDIA NIM Developer Program FAQ: https://docs.api.nvidia.com/nim/docs/product
+- OpenRouter 무료 계정·요청 한도: https://openrouter.ai/pricing/
+- OpenRouter 무료 모델 목록 및 무료 Router: https://openrouter.ai/collections/free-models
+- OpenRouter 무료 계정 rate limit 안내: https://openrouter.ai/blog/tutorials/how-to-get-the-lowest-cost-llm-inference-on-openrouter/
+- Groq 모델별 rate limits: https://console.groq.com/docs/rate-limits
+- Gemini API Free Tier 및 billing: https://ai.google.dev/gemini-api/docs/billing
+- Gemini API rate limits: https://ai.google.dev/gemini-api/docs/rate-limits
+
+6. 테스트 연결 절차
+
+1. PowerShell에서 `ollama list`로 `gemma4:latest`가 설치됐는지 확인한다.
+2. 설치되지 않았다면 `ollama pull gemma4:latest`를 실행한다.
+3. `ollama run gemma4:latest "Reply with exactly: LOCAL_LLM_READY"`로 로컬 추론을 확인한다.
+4. Second Brain Worker를 실행한다. Ollama는 기본 provider이며 다른 설정이 필요하지 않다.
+5. Integration 테스트를 명시적으로 실행하려면 프로젝트 PowerShell에서 `$env:RUN_LOCAL_LLM_TEST='1'; .\front\.venv\Scripts\python.exe front\manage.py test apps.execution.tests.PlanningExecutionTests.test_live_ollama_generates_and_persists_a_prd`를 실행한다.
+
+실제 확인 기록: `ollama 0.40.6`, `gemma4:latest` 설치 확인. 로컬 CLI prompt에 `LOCAL_LLM_READY` 응답을 받았고, 앱의 Django Worker 경로에서도 PRD 생성·저장에 성공했다. 상세 시간과 최종 테스트는 문서 6에 기록한다.

@@ -1,6 +1,6 @@
 # Project Execution API v1 — 계약 초안
 
-- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7, Run·멱등성은 Day 8, Supervisor Task는 Day 9, fake Planning 실행은 Day 10, DB Artifact와 소유권 API는 Day 11, 품질 기준과 mock Reflection은 Day 12~13, 공통 실행 이벤트는 Day 14, 실패 지점 재시도는 Day 15 구현 완료.
+- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7, Run·멱등성은 Day 8, Supervisor Task는 Day 9, fake Planning 실행은 Day 10, DB Artifact와 소유권 API는 Day 11, 품질 기준과 mock Reflection은 Day 12~13, 공통 실행 이벤트는 Day 14, 실패 지점 재시도는 Day 15, 중단·재생성 API와 React 제어는 Day 16 구현 완료.
 - 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
 - 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
 
@@ -138,6 +138,7 @@ POST body:
 - Artifact의 `.../{artifact_id}/reflection/` POST는 활성 기준으로 평가를 저장하고, GET은 결과를 반환한다. 평가 시점의 기준 snapshot, 항목별 점수·근거·가중치, 개선안은 Artifact에 연결되어 보존된다. 현재 평가는 명시적으로 개발용 mock이며 실제 LLM 심사가 아니다.
 - `GET /api/v1/projects/{id}/events/`는 소유자 프로젝트의 Run·Task·Execution 이벤트를 최신순 제공한다. 프로젝트 상세의 최근 활동도 동일 이벤트 레코드에서 읽는다.
 - `POST /api/v1/projects/{id}/runs/{run_id}/retry/`는 재시도 가능한 실패만 새 queued Run으로 만든다. `Idempotency-Key` UUID가 필수이며 이전 Run과 instruction snapshot을 보존한다. 연속 재시도는 최대 3회이며 오류 payload에 code·사용자 메시지·retryable을 포함한다.
+- `POST /api/v1/projects/{id}/runs/{run_id}/cancel/`은 queued 실행을 즉시 취소하고 running 실행은 `cancel_requested`로 표시한다. Worker는 Provider 응답 경계에서 취소 상태를 확인하고 결과 저장 없이 cancelled 처리한다. `POST .../{run_id}/regenerate/`는 새 사용자 메시지와 피드백으로 새 Run을 만들며 이전 결과·Artifact 버전을 유지한다.
 - 동일 Project·같은 `Idempotency-Key`·같은 `source_message_id` 재요청은 새 Run을 만들지 않고 기존 Run을 `200 OK`로 반환한다. 첫 응답을 못 받은 클라이언트가 안전하게 재시도할 수 있다.
 - 키가 같은데 `source_message_id`가 다르면 `409 IDEMPOTENCY_KEY_REUSED`를 반환한다. DB의 `(project_id, idempotency_key)` unique 제약이 동시 요청을 최종 방어한다.
 - 이 POST는 Worker를 동기 실행하지 않는다. `queued`를 저장하고 별도 실행 경계에 넘긴다. 동시 실행 상한은 이 계약에서 임의로 추가하지 않으며 운영값 검토 때 결정한다.

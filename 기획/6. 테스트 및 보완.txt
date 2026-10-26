@@ -123,4 +123,12 @@
 - Chat은 대화 저장과 Planning 실행 요청을 지원하지만 자유 형식 LLM 대화 응답은 제공하지 않는다.
 - 브라우저 음성 인식은 브라우저 지원/마이크 권한이 필요하며 서버 음성 인식은 사용하지 않는다.
 
-추가 검증 결과: `apps.management` 및 `apps.projects` 24개 테스트 통과, Django 전체 73개 통과(로컬 Ollama 실호출 2개 생략), `makemigrations --check --dry-run`에서 drift 없음, React production build와 TypeScript 검사를 통과했다. 기존 로컬 DB에 `management.0001_initial` migration을 적용했다. 이 보고서와 구현 수정은 다음 커밋으로 반영하며 push는 하지 않는다.
+추가 검증 결과: `apps.management` 및 `apps.projects` 25개 테스트 통과, Django 전체 73개 통과(로컬 Ollama 실호출 2개 생략), `makemigrations --check --dry-run`에서 drift 없음, React production build와 TypeScript 검사를 통과했다. 기존 로컬 DB에 `management.0001_initial` migration을 적용했다. 이 보고서와 구현 수정은 다음 커밋으로 반영하며 push는 하지 않는다.
+
+9. Knowledge 문서 검색 연결 (2026-10-26)
+
+- 업로드된 문서는 이제 Planning 실행 때 검색된다. 전체 공통 문서와 해당 프로젝트 문서만 대상으로 하며, 최근 문서 최대 100개에서 제목/본문 키워드 일치를 계산해 상위 3건을 고른다. DB에서 본문 앞 12,000자만 읽고, LLM에는 문서별 발췌 최대 1,600자만 전달한다.
+- 검색 근거를 실행 snapshot 및 결과 Artifact의 `knowledge_sources`에 기록한다. Planning 시스템 지침은 참고 문서 안의 명령문을 신뢰하지 않고 사용자 요청과 충돌 시 따르지 않도록 안내한다.
+- 관리자 Knowledge 화면은 문서가 키워드 검색에 참조될 수 있고 벡터 의미 검색은 연결되지 않은 상태임을 구분해 안내한다. 검색 품질 평가 숫자를 임의로 표시하지 않는다.
+- 검증: Knowledge 범위·순위·Planning 입력 및 Artifact 출처 테스트를 추가했고 `apps.management` 9개, `apps.execution` 20개 테스트를 통과했다(로컬 Ollama 실호출 1개 생략). React build 및 TypeScript 검사도 통과했다.
+- Google OAuth와 실얼굴 비교는 실제 제공자/인증 설정 및 안전한 등록 절차가 없어 미연결 상태로 둔다. Creative·Engineering·Data·AI Agent는 실제 실행 구현이 없으므로 계속 미실행으로 표시한다.

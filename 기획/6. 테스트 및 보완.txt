@@ -19,6 +19,8 @@
 | 4 | 보통 | 실행 중 취소 요청이 반복되면 두 번째 요청이 충돌 처리되고, 현재 Agent 실행 기록에는 중단 요청이 반영되지 않았다. | 취소 요청을 멱등적으로 202 응답하고 실행 중 AgentExecution에도 `cancel_requested` 상태를 기록한다. Worker의 응답 경계 처리 후 최종 취소 상태를 확인한다. | Worker 진행 중 실제 취소 API를 두 번 호출하고 최종 Run/Task/Execution 상태 확인 |
 | 5 | 보통 | Artifact 버전 생성의 재호출 안전성이 명시되지 않았고 같은 AgentExecution에서 중복 Artifact를 만들 가능성이 있었다. | 프로젝트 행 잠금 아래 버전을 계산하고 동일 AgentExecution Artifact가 이미 있으면 재사용하도록 했다. | 기존 재생성 테스트에서 버전 1, 2 및 결과 보존 확인 |
 | 6 | 높음 | Planning이 Fake provider로만 동작해 실제 LLM PRD 생성을 할 수 없었다. | 기본 provider를 로컬 Ollama로 연결하고 `gemma4:latest` JSON 생성, 연결/timeout/모델 오류, token 사용량 저장을 추가했다. 첫 live 시도는 180초 timeout으로 실패해 thinking 비활성화와 출력 상한을 넣었다. 외부 API가 아닌 loopback만 호출하며 cloud 모델 이름을 거절한다. | Ollama CLI 응답, Django Worker live test에서 PRD와 Artifact 생성 확인 |
+| 7 | 보통 | FAQ가 취소·재생성 기능이 아직 연결되지 않았다고 잘못 안내했다. | 실행 중 취소가 응답 경계에서 반영되고 재생성은 기존 결과를 보존한다는 현재 동작에 맞춰 안내를 수정했다. | React production build 및 전체 Django 회귀 테스트 |
+| 8 | 낮음 | 전체 TypeScript 검사에서 `AppShell.tsx`의 사용하지 않는 `FormEvent` import가 오류였다. | 미사용 import를 제거했다. | `tsc --noEmit` 재실행 통과 |
 
 3. 테스트 및 검사 결과
 
@@ -26,6 +28,7 @@
 - 실제 로컬 LLM 종단 테스트: Planning 1개 통과 (`RUN_LOCAL_LLM_TEST=1`, `gemma4:latest`, 기존 71초) 및 Reflection 1개 통과 (동일 설정, 160초). Django API와 Worker/Artifact에 이어 실제 모델이 기준별 Reflection 보고서를 생성하고 비 mock 평가로 저장하는 것까지 확인했다.
 - Django system check: 통과 (`manage.py check`, issues 0)
 - migration drift: 통과 (`manage.py makemigrations --check --dry-run`, 변경 없음)
+- React TypeScript 검사: 통과 (`front/react`에서 `tsc --noEmit`; 발견된 미사용 import 제거 후 재실행)
 - React production build: 통과 (`front/react`에서 `npm run build`, Vite 6.4.1)
 - Git whitespace 검사: 통과 (`git diff --check`)
 - 기존 종단 간 테스트는 프로젝트 생성 → 실행 → Artifact 저장·다운로드 → Reflection 저장/화면 표시 → 소유권 차단을 검증한다. 추가 Reflection 테스트는 유효하지 않은 모델 결과는 저장하지 않고, Ollama 장애는 재시도 가능한 오류로 반환하는 것을 확인한다.
@@ -57,6 +60,8 @@
 | 16장의 Day 1–20 실행 기록 | `docs/execution/day-01.md`부터 `day-20.md`까지 파일 존재. 색인에서 1–6일 누락되어 있었음 | 색인 수정. 내용 근거는 각 날짜 보고서와 테스트 결과를 참조 |
 | 17장의 React 10일 계획 | 기술 의존성·전환 현황은 17-3/17-5에 요약. 10개 작업별 독립 일일 보고서는 없음 | 실제 시각 QA 미완료. 다음 검수 때 URL별 브라우저 결과를 기록할 것 |
 
+재검증 (2026-10-26): 전체 Django 테스트 64개 발견, 62개 통과, 2개 opt-in live LLM test 생략 (약 158초). React TypeScript 검사, production build, migration drift 검사도 통과했다. Planning/Reflection의 live Ollama test는 각각 별도로 통과했으며 브라우저 도구 초기화 오류로 실제 화면 수동 QA는 계속 미완료다.
+
 **종합 판정:** Reflection은 로컬 모델 평가로 구현했고 모델이 없거나 응답이 잘못되면 mock 점수를 내지 않고 오류로 반환한다. 15-2의 평가 게이트는 코드·실제 모델 검증 기준으로 충족한다. 브라우저 시각/사용자 인수는 UI tool 문제로 아직 완료하지 못했으며, SQLite 기반 운영·durable worker·백업 자동화도 운영 배포 차단 항목으로 남는다. 전체 사용자의 MVP 최종 인수는 실제 브라우저 검수 뒤 승인해야 한다.
 
 6. 관련 코드·문서 변경
@@ -73,6 +78,8 @@
 - `front/apps/reflection/evaluator.py`, `front/apps/reflection/api.py`: 로컬 Ollama 평가와 오류 검증
 - `front/react/src/pages/AllPages.tsx`: 실제 Reflection 결과·개선점 표시 및 재평가 동작
 - `front/apps/reflection/tests.py`: 평가 결과 schema, 실패 경로 및 opt-in live test
+- `front/react/src/pages/AllPages.tsx`: FAQ 취소·재생성 설명을 실제 동작에 맞춰 수정
+- `front/react/src/components/AppShell.tsx`: TypeScript 검사에서 발견한 미사용 import 제거
 
 7. Git 처리
 

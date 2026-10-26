@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 import { Bell, BookOpen, ChevronDown, Compass, Menu, Search, Settings, X } from 'lucide-react';
 import type { AppPayload } from '../api';
 import { RouteLink } from './RouteLink';

@@ -244,6 +244,8 @@ def cancel_run(request, project_id, run_id):
             return _error(404, 'RUN_NOT_FOUND', '실행을 찾을 수 없습니다.')
         if run.status == ProjectRun.STATUS_CANCELLED:
             return JsonResponse(_run_payload(run), status=200)
+        if run.status == ProjectRun.STATUS_CANCEL_REQUESTED:
+            return JsonResponse(_run_payload(run), status=202)
         if run.status == ProjectRun.STATUS_QUEUED:
             previous = run.status
             run.status = ProjectRun.STATUS_CANCELLED
@@ -261,7 +263,12 @@ def cancel_run(request, project_id, run_id):
             run.status = ProjectRun.STATUS_CANCEL_REQUESTED
             run.cancel_requested_at = timezone.now()
             run.save(update_fields=['status', 'cancel_requested_at'])
-            record_event(project=project, run=run, event_type='run.cancel_requested',
+            task = getattr(run, 'planning_task', None)
+            execution = task.executions.first() if task else None
+            if execution and execution.status == AgentExecution.STATUS_RUNNING:
+                execution.status = AgentExecution.STATUS_CANCEL_REQUESTED
+                execution.save(update_fields=['status'])
+            record_event(project=project, run=run, task=task, execution=execution, event_type='run.cancel_requested',
                          message='Agent 응답 후 실행을 중단하도록 요청했습니다.',
                          from_status=ProjectRun.STATUS_RUNNING, to_status=run.status)
             return JsonResponse(_run_payload(run), status=202)

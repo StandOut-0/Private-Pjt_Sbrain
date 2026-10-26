@@ -2,6 +2,7 @@ import json
 import uuid
 
 from django.core.management import call_command
+from django.db import IntegrityError
 from django.test import Client, TestCase, override_settings
 
 from apps.accounts.models import UserAccount
@@ -24,11 +25,20 @@ class InvalidProvider:
 
 
 class CancelDuringProvider:
-    def __init__(self, run_id):
+    def __init__(self, run_id, client=None, project_id=None):
         self.run_id = run_id
+        self.client = client
+        self.project_id = project_id
+        self.cancel_statuses = []
 
     def generate(self, request):
-        ProjectRun.objects.filter(pk=self.run_id).update(status=ProjectRun.STATUS_CANCEL_REQUESTED)
+        if self.client:
+            response = self.client.post(f'/api/v1/projects/{self.project_id}/runs/{self.run_id}/cancel/')
+            self.cancel_statuses.append(response.status_code)
+            repeated = self.client.post(f'/api/v1/projects/{self.project_id}/runs/{self.run_id}/cancel/')
+            self.cancel_statuses.append(repeated.status_code)
+        else:
+            ProjectRun.objects.filter(pk=self.run_id).update(status=ProjectRun.STATUS_CANCEL_REQUESTED)
         return FakePlanningProvider().generate(request)
 
 
@@ -143,6 +153,19 @@ class PlanningExecutionTests(TestCase):
         self.assertEqual(execution.error_code, 'INVALID_PROVIDER_OUTPUT')
         self.assertNotIn('stack', execution.error_message.casefold())
 
+    def test_artifact_persistence_failure_finishes_run_in_failed_state(self):
+        from unittest.mock import patch
+        with patch('apps.execution.artifacts.persist_prd_artifact', side_effect=IntegrityError('duplicate artifact')):
+            run = process_run(self.run.pk, FakePlanningProvider())
+        run.refresh_from_db()
+        execution = AgentExecution.objects.get(task__run=run)
+        self.assertEqual(run.status, ProjectRun.STATUS_FAILED)
+        self.assertEqual(run.planning_task.status, Task.STATUS_FAILED)
+        self.assertEqual(execution.status, AgentExecution.STATUS_FAILED)
+        self.assertEqual(execution.error_code, 'ARTIFACT_PERSIST_FAILED')
+        self.assertEqual(execution.output, '')
+        self.assertIsNotNone(run.finished_at)
+
     @override_settings(DEBUG=False)
     def test_external_provider_is_not_allowed_outside_development(self):
         from unittest.mock import patch
@@ -203,13 +226,15 @@ class PlanningExecutionTests(TestCase):
         self.assertEqual(blocked.json()['error']['code'], 'RETRY_LIMIT_REACHED')
 
     def test_cancel_requested_during_provider_discards_result(self):
-        run = process_run(self.run.pk, CancelDuringProvider(self.run.pk))
+        provider = CancelDuringProvider(self.run.pk, self._logged_client(), self.project.pk)
+        run = process_run(self.run.pk, provider)
         run.refresh_from_db()
         execution = AgentExecution.objects.get(task__run=run)
         self.assertEqual(run.status, ProjectRun.STATUS_CANCELLED)
         self.assertEqual(run.planning_task.status, Task.STATUS_CANCELLED)
         self.assertEqual(execution.status, AgentExecution.STATUS_CANCELLED)
         self.assertEqual(execution.output, '')
+        self.assertEqual(provider.cancel_statuses, [202, 202])
         self.assertFalse(Artifact.objects.filter(project=self.project).exists())
 
     def test_queued_run_can_be_cancelled_by_owner(self):

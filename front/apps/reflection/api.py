@@ -1,4 +1,5 @@
 import json
+import re
 import uuid
 
 from django.db import transaction
@@ -11,6 +12,8 @@ from apps.reflection.models import QualityCriterion
 from apps.artifacts.models import Artifact
 from apps.projects.models import Project
 from apps.reflection.evaluator import evaluate_artifact
+
+CRITERION_KEY_RE = re.compile(r'^[a-z0-9]+(?:-[a-z0-9]+)*$')
 
 
 def _error(status, code, message):
@@ -49,11 +52,16 @@ def replace_criteria(request):
     for item in items:
         if not isinstance(item, dict) or set(item) != {'key', 'label', 'description', 'weight', 'is_active', 'sort_order'}:
             return _error(422, 'VALIDATION_ERROR', '평가 기준 항목 형식이 올바르지 않습니다.')
-        if not isinstance(item['key'], str) or not item['key'] or item['key'] in keys:
+        if (not isinstance(item['key'], str) or len(item['key']) > 50
+                or not CRITERION_KEY_RE.fullmatch(item['key']) or item['key'] in keys):
             return _error(422, 'VALIDATION_ERROR', '평가 기준 key는 중복 없이 입력해야 합니다.')
         if not isinstance(item['weight'], int) or isinstance(item['weight'], bool) or not 0 <= item['weight'] <= 100:
             return _error(422, 'VALIDATION_ERROR', '가중치는 0에서 100 사이 정수여야 합니다.')
-        if not isinstance(item['is_active'], bool) or not isinstance(item['label'], str) or not isinstance(item['description'], str):
+        if (not isinstance(item['is_active'], bool)
+                or not isinstance(item['label'], str) or not item['label'].strip() or len(item['label']) > 120
+                or not isinstance(item['description'], str) or len(item['description']) > 300
+                or not isinstance(item['sort_order'], int) or isinstance(item['sort_order'], bool)
+                or not 0 <= item['sort_order'] <= 32767):
             return _error(422, 'VALIDATION_ERROR', '평가 기준 값 형식이 올바르지 않습니다.')
         keys.add(item['key'])
         if item['is_active']:
@@ -63,7 +71,7 @@ def replace_criteria(request):
     with transaction.atomic():
         QualityCriterion.objects.all().delete()
         QualityCriterion.objects.bulk_create([
-            QualityCriterion(key=item['key'], label=item['label'][:120], description=item['description'][:300],
+            QualityCriterion(key=item['key'], label=item['label'].strip(), description=item['description'],
                              weight=item['weight'], is_active=item['is_active'], sort_order=item['sort_order'])
             for item in items
         ])

@@ -1,5 +1,6 @@
 import json
 
+from django.contrib import admin
 from django.test import Client, TestCase
 
 from apps.accounts.models import UserAccount
@@ -46,6 +47,27 @@ class QualityCriterionTests(TestCase):
         self.assertEqual(rejected.status_code, 422)
         self.assertEqual(rejected.json()['error']['code'], 'WEIGHT_SUM_INVALID')
         self.assertEqual(sum(QualityCriterion.objects.filter(is_active=True).values_list('weight', flat=True)), 100)
+
+    def test_invalid_criterion_fields_are_rejected_without_changing_existing_values(self):
+        invalid_items = [
+            {'key': 'bad key', 'label': 'A', 'description': '', 'weight': 100, 'is_active': True, 'sort_order': 0},
+            {'key': 'bad-order', 'label': 'A', 'description': '', 'weight': 100, 'is_active': True, 'sort_order': -1},
+            {'key': 'blank-label', 'label': ' ', 'description': '', 'weight': 100, 'is_active': True, 'sort_order': 0},
+        ]
+        before = list(QualityCriterion.objects.values_list('key', 'weight'))
+        for items in invalid_items:
+            response = self.admin_client.post('/api/v1/quality-criteria/replace/',
+                                              data=json.dumps({'items': items}), content_type='application/json')
+            self.assertEqual(response.status_code, 422)
+            self.assertEqual(response.json()['error']['code'], 'VALIDATION_ERROR')
+            self.assertEqual(list(QualityCriterion.objects.values_list('key', 'weight')), before)
+
+    def test_criterion_admin_is_read_only(self):
+        model_admin = admin.site._registry[QualityCriterion]
+        request = type('Request', (), {})()
+        self.assertFalse(model_admin.has_add_permission(request))
+        self.assertFalse(model_admin.has_delete_permission(request))
+        self.assertIn('weight', model_admin.get_readonly_fields(request))
 
     def test_artifact_evaluation_persists_criteria_snapshot_and_is_repeatable(self):
         project = Project.objects.create(owner=self.user, project_name='Reflection project')

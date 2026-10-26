@@ -176,7 +176,19 @@ def process_run(run_id, provider=None):
         is_success = execution.status == AgentExecution.STATUS_SUCCEEDED
         if is_success:
             from apps.execution.artifacts import persist_prd_artifact
-            persist_prd_artifact(execution)
+            try:
+                with transaction.atomic():
+                    persist_prd_artifact(execution)
+            except Exception as exc:
+                logger.error('PRD artifact persistence failed: run_id=%s execution_id=%s error_type=%s',
+                             run.pk, execution.pk, exc.__class__.__name__)
+                execution.status = AgentExecution.STATUS_FAILED
+                execution.error_code = 'ARTIFACT_PERSIST_FAILED'
+                execution.error_message = '기획 결과물을 저장하지 못했습니다. 잠시 뒤 다시 시도해주세요.'
+                execution.output = ''
+                execution.is_retryable = False
+                execution.save(update_fields=['status', 'error_code', 'error_message', 'output', 'is_retryable'])
+                is_success = False
         terminal_status = ProjectRun.STATUS_SUCCEEDED if is_success else ProjectRun.STATUS_FAILED
         run.status = terminal_status
         run.finished_at = finished_at

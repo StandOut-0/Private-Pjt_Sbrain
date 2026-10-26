@@ -1,6 +1,6 @@
 # Project Execution API v1 — 계약 초안
 
-- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7, Run·멱등성은 Day 8, Supervisor Task는 Day 9, fake Planning 실행은 Day 10, DB Artifact와 소유권 API는 Day 11, 품질 기준과 mock Reflection은 Day 12~13, 공통 실행 이벤트와 Timeline 데이터는 Day 14 구현 완료.
+- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7, Run·멱등성은 Day 8, Supervisor Task는 Day 9, fake Planning 실행은 Day 10, DB Artifact와 소유권 API는 Day 11, 품질 기준과 mock Reflection은 Day 12~13, 공통 실행 이벤트는 Day 14, 실패 지점 재시도는 Day 15 구현 완료.
 - 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
 - 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
 
@@ -137,6 +137,7 @@ POST body:
 - 완료한 Planning PRD는 프로젝트·Task·AgentExecution에 연결된 DB Artifact로 버전 저장한다. `GET /api/v1/projects/{id}/artifacts/`는 소유자 결과 목록, `GET .../{artifact_id}/`는 상세 JSON, `GET .../{artifact_id}/download/`는 JSON 첨부 다운로드를 제공한다. 파일 경로나 저장소 내부 위치는 응답하지 않는다.
 - Artifact의 `.../{artifact_id}/reflection/` POST는 활성 기준으로 평가를 저장하고, GET은 결과를 반환한다. 평가 시점의 기준 snapshot, 항목별 점수·근거·가중치, 개선안은 Artifact에 연결되어 보존된다. 현재 평가는 명시적으로 개발용 mock이며 실제 LLM 심사가 아니다.
 - `GET /api/v1/projects/{id}/events/`는 소유자 프로젝트의 Run·Task·Execution 이벤트를 최신순 제공한다. 프로젝트 상세의 최근 활동도 동일 이벤트 레코드에서 읽는다.
+- `POST /api/v1/projects/{id}/runs/{run_id}/retry/`는 재시도 가능한 실패만 새 queued Run으로 만든다. `Idempotency-Key` UUID가 필수이며 이전 Run과 instruction snapshot을 보존한다. 연속 재시도는 최대 3회이며 오류 payload에 code·사용자 메시지·retryable을 포함한다.
 - 동일 Project·같은 `Idempotency-Key`·같은 `source_message_id` 재요청은 새 Run을 만들지 않고 기존 Run을 `200 OK`로 반환한다. 첫 응답을 못 받은 클라이언트가 안전하게 재시도할 수 있다.
 - 키가 같은데 `source_message_id`가 다르면 `409 IDEMPOTENCY_KEY_REUSED`를 반환한다. DB의 `(project_id, idempotency_key)` unique 제약이 동시 요청을 최종 방어한다.
 - 이 POST는 Worker를 동기 실행하지 않는다. `queued`를 저장하고 별도 실행 경계에 넘긴다. 동시 실행 상한은 이 계약에서 임의로 추가하지 않으며 운영값 검토 때 결정한다.

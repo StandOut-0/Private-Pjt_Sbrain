@@ -2212,7 +2212,7 @@ Day 8 — Run 요청: 사용자 요청에서 PROJECT_RUN을 만들고 중복 클
 Day 9 — Supervisor 최소 경로: 사용자 요청을 구조화하고 필요한 Planning Task 하나를 생성하는 최소 분해를 연결한다. 산출물: 추적 가능한 Run → Task. 실행 기록: `docs/execution/day-09.md`.
 Day 10 — Planning Agent: 입력 계약에 맞춰 PRD 결과를 생성하고 오류를 구조화한다. 외부 LLM은 개발 설정에서만 연결한다. 검증 게이트: 가짜 호출처로 PRD 결과를 재현할 수 있다. 실행 기록: `docs/execution/day-10.md`.
 Day 11 — Artifact 버전: Planning 결과를 파일 또는 DB 산출물로 저장하고 logical key·version·소유권·다운로드 권한을 연결한다. 산출물: 결과 목록과 상세 조회. 실행 기록: `docs/execution/day-11.md`.
-Day 12 — Reflection 기준: 활성 품질 기준과 가중치 합계 검증을 연결하고 평가 당시 기준 snapshot을 보존한다. 산출물: 평가 요청·응답 계약.
+Day 12 — Reflection 기준: 활성 품질 기준과 가중치 합계 검증을 연결하고 평가 당시 기준 snapshot을 보존한다. 산출물: 평가 요청·응답 계약. 실행 기록: `docs/execution/day-12.md`.
 Day 13 — Reflection Agent: 결과 평가, 근거·감점 항목·총점 저장 및 조회를 연결한다. Mock 점수는 개발 데이터임을 표시한다. 검증 게이트: 평가 결과가 실행과 Artifact 버전에 연결된다.
 Day 14 — 실행 이벤트: Run·Task·Execution 상태 전이와 공통 이벤트를 저장하고 Timeline / Activity Log가 같은 이벤트를 읽게 한다. 산출물: 서버 원본 상태 화면.
 Day 15 — 실패·재시도: timeout·일시 오류·영구 오류 경로, 횟수 제한, 사용자 메시지, 실패 지점 재개를 연결한다. 검증 게이트: 오류 시 이전 성공 결과가 보존된다.

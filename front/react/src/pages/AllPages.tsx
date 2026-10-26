@@ -227,16 +227,16 @@ function Notifications({ notifications }: { notifications: NonNullable<AppPayloa
   const icon: Record<string, string> = { success: 'bi-check-circle', error: 'bi-exclamation-triangle', artifact: 'bi-file-earmark-text' };
   return <section className="react-page sb-notifications-page">
     <div className="sb-breadcrumb">알림</div>
-    <header className="sb-notifications-heading"><div><h1 className="sb-section-title mb-1">알림</h1><p>프로젝트와 Agent의 최근 소식을 확인하세요.</p></div><span>{notifications.filter(item=>!item.read).length}개 읽지 않음</span></header>
+    <header className="sb-notifications-heading"><div><h1 className="sb-section-title mb-1">알림</h1><p>프로젝트 작업의 실제 완료·오류·취소 기록입니다.</p></div><span>최근 이벤트 {notifications.length}건</span></header>
     <div className="sb-notifications-list" aria-live="polite">
-      {notifications.map(item=><article className={`sb-notification-card ${item.read?'':'is-unread'}`} key={item.id}>
+      {notifications.map(item=><article className="sb-notification-card" key={item.id}>
         <span className={`sb-notification-icon type-${item.type}`}><i className={`bi ${icon[item.type]||'bi-bell'}`}/></span>
-        <div className="sb-notification-copy"><div className="sb-notification-title-row"><h2>{item.title}</h2>{!item.read&&<span>새 알림</span>}</div><p>{item.message}</p><time>{item.time}</time></div>
+        <div className="sb-notification-copy"><div className="sb-notification-title-row"><h2>{item.title}</h2></div><p>{item.message}</p><time>{item.time}</time></div>
         <Link className="sb-notification-open" to={item.url}>관련 프로젝트 보기 <i className="bi bi-arrow-up-right"/></Link>
       </article>)}
       {!notifications.length&&<div className="sb-notifications-empty"><i className="bi bi-bell-slash"/><h2>알림이 없습니다</h2><p>새로운 프로젝트 소식이 생기면 이곳에 표시됩니다.</p></div>}
     </div>
-    <p className="sb-notifications-note"><i className="bi bi-info-circle"/> 현재 알림은 화면 확인을 위한 시연용 데이터입니다. 실제 Agent 이벤트와 알림 저장 기능은 아직 연결되지 않았습니다.</p>
+    <p className="sb-notifications-note"><i className="bi bi-info-circle"/> 프로젝트 실행 기록을 바탕으로 표시합니다. 읽음 상태 저장과 이메일·푸시 알림은 아직 지원하지 않습니다.</p>
   </section>;
 }
 

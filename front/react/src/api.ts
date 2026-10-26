@@ -25,7 +25,7 @@ export async function getDashboardData(): Promise<DashboardData> {
   return { ...payload.data, links: { ...payload.links, ...payload.data.links } };
 }
 
-export type AppPayload = { page: string; data: Record<string, any>; navProjects?: any[]; notifications?: Array<{ id: string; title: string; message: string; time: string; type: string; read: boolean; url: string }>; links: Record<string, string>; user: { name: string; role: string; role_label: string; is_admin: boolean; email?: string } | null };
+export type AppPayload = { page: string; data: Record<string, any>; navProjects?: any[]; notifications?: Array<{ id: string; title: string; message: string; time: string; type: string; url: string }>; links: Record<string, string>; user: { name: string; role: string; role_label: string; is_admin: boolean; email?: string } | null };
 export function getPayload(): AppPayload {
   const node = document.getElementById('sb-react-data');
   return node?.textContent ? JSON.parse(node.textContent) as AppPayload : { page: 'dashboard', data: {}, links: {}, user: null };

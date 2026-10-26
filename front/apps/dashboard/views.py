@@ -1,4 +1,3 @@
-from apps import mockdata
 from apps.accounts.session import get_user_account, login_required
 from apps.projects.models import Project
 from apps.projects.ownership import project_card_payload
@@ -19,12 +18,7 @@ def faq(request):
 
 @login_required
 def notifications(request):
-    return render_react(
-        request,
-        'notifications',
-        {'notifications': mockdata.get_notifications()},
-        active_menu='notifications',
-    )
+    return render_react(request, 'notifications', active_menu='notifications')
 
 
 @login_required

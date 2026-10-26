@@ -22,6 +22,7 @@
 | 7 | 보통 | FAQ가 취소·재생성 기능이 아직 연결되지 않았다고 잘못 안내했다. | 실행 중 취소가 응답 경계에서 반영되고 재생성은 기존 결과를 보존한다는 현재 동작에 맞춰 안내를 수정했다. | React production build 및 전체 Django 회귀 테스트 |
 | 8 | 낮음 | 전체 TypeScript 검사에서 `AppShell.tsx`의 사용하지 않는 `FormEvent` import가 오류였다. | 미사용 import를 제거했다. | `tsc --noEmit` 재실행 통과 |
 | 9 | 보통 | 로그인 페이지의 `Google로 로그인` 버튼이 OAuth 인증처럼 보이지만 실제로는 임시 계정 세션이었다. | Google OAuth 미연동 상태를 표시하고 버튼을 비활성화했다. 기본 체험 로그인과 코드 `SECONDBRAIN`을 분명히 표시했으며 관리자 로그인도 Face 시뮬레이션임을 안내한다. | accounts 11개 테스트 통과, TypeScript 검사 및 React production build 통과 |
+| 10 | 보통 | 대시보드와 알림 페이지에 PRD-001/002의 완료·오류 알림이 고정 샘플로 표시되어 실제 작업 여부를 오인하게 했다. | 고정 샘플을 제거하고 로그인 계정이 소유한 프로젝트의 완료·실패·취소 `ExecutionEvent`만 최근 알림과 상단 메뉴에 표시한다. 실제 기록이 없으면 빈 상태를 보여주며, 존재하지 않는 읽음 저장 기능을 암시하지 않도록 읽지 않음 표시는 제거했다. | 알림 페이지 회귀 테스트: 무기록 빈 목록, 실제 소유 프로젝트 이벤트 표시, 타 계정 이벤트 제외 |
 
 3. 테스트 및 검사 결과
 
@@ -83,6 +84,10 @@
 - `front/react/src/pages/AllPages.tsx`: FAQ 취소·재생성 설명을 실제 동작에 맞춰 수정
 - `front/react/src/components/AppShell.tsx`: TypeScript 검사에서 발견한 미사용 import 제거
 - `front/README.md`, `front/react/src/pages/AllPages.tsx`: 실제 OAuth/Face 미연동 상태와 작동하는 체험 로그인 경로를 표시
+- `front/apps/dashboard/notifications.py`, `front/apps/react_pages.py`, `front/apps/dashboard/views.py`: 소유 프로젝트의 실제 실행 이벤트를 최근 알림으로 연결
+- `front/apps/dashboard/tests.py`: 알림 빈 상태, 프로젝트 소유권 필터링 회귀 테스트 추가
+- `front/apps/mockdata.py`, `front/react/src/components/AppShell.tsx`, `front/react/src/pages/AllPages.tsx`, `front/react/src/api.ts`: 고정 알림 제거 및 실제 이벤트 기반 UI 반영
+- `기획/6. 테스트 및 보완.txt`: 고정 데모 알림 발견과 수정 내역 기록
 
 7. Git 처리
 

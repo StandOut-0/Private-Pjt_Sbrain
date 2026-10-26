@@ -8,6 +8,7 @@ from django.templatetags.static import static
 from apps import mockdata
 from apps.accounts.session import get_user
 from apps.accounts.session import get_user_account
+from apps.dashboard.notifications import get_user_notifications
 from apps.projects.models import Project
 from apps.projects.ownership import project_card_payload
 
@@ -53,7 +54,7 @@ def render_react(request, page, data=None, *, shell=True, status=200, active_men
             'comingSoon': '/coming-soon/', 'comingSoonManage': '/coming-soon/manage/',
             'faq': '/faq/', 'guide': '/user-guide/', 'notifications': '/notifications/',
         },
-        'notifications': mockdata.get_notifications(),
+        'notifications': get_user_notifications(account),
         'csrfToken': request.META.get('CSRF_COOKIE', ''),
     }
     template = 'react/app.html' if shell else 'react/auth.html'

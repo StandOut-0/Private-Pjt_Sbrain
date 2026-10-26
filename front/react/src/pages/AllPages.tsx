@@ -43,7 +43,7 @@ function AgentNode({icon,name,description,state}:{icon:string;name:string;descri
 type ChatConversation = { id: number; project_id: number; title: string; updated_at: string };
 type ChatMessage = { id: number; conversation_id: number; role: 'user' | 'assistant' | 'system'; content: string; created_at: string };
 
-async function chatRequest<T>(url: string, method = 'GET', body?: unknown): Promise<T> {
+async function chatRequest<T>(url: string, method = 'GET', body?: unknown, extraHeaders: Record<string,string> = {}): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (method !== 'GET') {
     headers['Content-Type'] = 'application/json';
@@ -51,7 +51,7 @@ async function chatRequest<T>(url: string, method = 'GET', body?: unknown): Prom
   }
   const response = await fetch(url, {
     method,
-    headers,
+    headers: { ...headers, ...extraHeaders },
     ...(body === undefined ? {} : { body: JSON.stringify(body) }),
   });
   const payload = await response.json();
@@ -127,6 +127,10 @@ function ChatPanel({projectId,chatGuides}:{projectId:number;chatGuides:Record<st
       if(activeConversationId===conversationId)setMessages(current=>[...current,userMessage]);
       setInput('');
       setConversations(current=>current.map(item=>item.id===conversationId?{...item,updated_at:userMessage.created_at}:item));
+      await chatRequest(`${projectApi}runs/`,'POST',{
+        conversation_id:conversationId,
+        source_message_id:userMessage.id,
+      },{'Idempotency-Key':crypto.randomUUID()});
       const reply=await chatRequest<{reply:string;action?:string;title?:string;assistant_message:ChatMessage}>(`/projects/${projectId}/chat/`,'POST',{message:content,conversation_id:conversationId});
       if(activeConversationId===conversationId)setMessages(current=>[...current,reply.assistant_message]);
       setConversations(current=>current.map(item=>item.id===conversationId?{...item,updated_at:reply.assistant_message.created_at}:item));

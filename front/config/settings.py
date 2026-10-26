@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'apps.accounts',
     'apps.dashboard',
     'apps.projects',
+    'apps.execution',
     'apps.management',
     'apps.comingsoon',
 ]

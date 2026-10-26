@@ -1,6 +1,6 @@
 # Project Execution API v1 — 계약 초안
 
-- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7 구현 완료. Run·Artifact 경로는 후속 구현 대상.
+- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7, Run 요청·멱등성·상태 조회는 Day 8 구현 완료. Task·Artifact 경로는 후속 구현 대상.
 - 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
 - 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
 

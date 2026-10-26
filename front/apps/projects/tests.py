@@ -4,6 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 from apps.accounts.models import UserAccount
+from apps.execution.models import ProjectRun
 from apps.projects.models import Conversation, Message, Project
 
 
@@ -255,3 +256,47 @@ class ProjectOwnershipTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()['assistant_message']['role'], Message.ROLE_ASSISTANT)
         self.assertEqual(conversation.messages.count(), 2)
+
+    def test_run_request_is_queued_and_idempotent(self):
+        client = self._client_for(self.owner)
+        conversation = Conversation.objects.create(project=self.project, owner=self.owner, title='Run request')
+        source = Message.objects.create(conversation=conversation, role=Message.ROLE_USER, content='Create a PRD')
+        url = reverse('project_api:run_collection', args=[self.project.pk])
+        key = 'f7b2a101-c5cd-43d6-aea3-28b053a212df'
+        body = {'conversation_id': conversation.pk, 'source_message_id': source.pk}
+        first = client.post(url, data=json.dumps(body), content_type='application/json', HTTP_IDEMPOTENCY_KEY=key)
+        duplicate = client.post(url, data=json.dumps(body), content_type='application/json', HTTP_IDEMPOTENCY_KEY=key)
+
+        self.assertEqual(first.status_code, 202)
+        self.assertEqual(first.json()['status'], ProjectRun.STATUS_QUEUED)
+        self.assertEqual(first['Location'], reverse('project_api:run_detail', args=[self.project.pk, first.json()['id']]))
+        self.assertEqual(duplicate.status_code, 200)
+        self.assertEqual(duplicate.json()['id'], first.json()['id'])
+        self.assertEqual(ProjectRun.objects.filter(project=self.project).count(), 1)
+        status = client.get(reverse('project_api:run_detail', args=[self.project.pk, first.json()['id']]))
+        self.assertEqual(status.status_code, 200)
+        self.assertEqual(status.json()['status'], ProjectRun.STATUS_QUEUED)
+
+    def test_run_rejects_reused_key_with_another_message_and_non_owned_context(self):
+        client = self._client_for(self.owner)
+        other_conversation = Conversation.objects.create(project=self.project, owner=self.owner, title='Another run')
+        first_conversation = Conversation.objects.create(project=self.project, owner=self.owner, title='First run')
+        first_message = Message.objects.create(conversation=first_conversation, role=Message.ROLE_USER, content='first')
+        second_message = Message.objects.create(conversation=other_conversation, role=Message.ROLE_USER, content='second')
+        url = reverse('project_api:run_collection', args=[self.project.pk])
+        key = '2436f1d3-30d8-4a6b-a287-3da3b56260a5'
+        first_body = {'conversation_id': first_message.conversation_id, 'source_message_id': first_message.pk}
+        client.post(url, data=json.dumps(first_body), content_type='application/json', HTTP_IDEMPOTENCY_KEY=key)
+        reused = client.post(
+            url,
+            data=json.dumps({'conversation_id': other_conversation.pk, 'source_message_id': second_message.pk}),
+            content_type='application/json',
+            HTTP_IDEMPOTENCY_KEY=key,
+        )
+        invalid_key = client.post(url, data=json.dumps(first_body), content_type='application/json', HTTP_IDEMPOTENCY_KEY='not-a-uuid')
+        stranger = self._client_for(self.other).post(url, data=json.dumps(first_body), content_type='application/json', HTTP_IDEMPOTENCY_KEY='f60da380-6c4f-4cde-af73-c316ea81413a')
+
+        self.assertEqual(reused.status_code, 409)
+        self.assertEqual(reused.json()['error']['code'], 'IDEMPOTENCY_KEY_REUSED')
+        self.assertEqual(invalid_key.status_code, 422)
+        self.assertEqual(stranger.status_code, 404)

@@ -95,9 +95,9 @@ python manage.py runserver
 `Activate.ps1` 실행이 차단되면(실행 정책 오류) Set-ExecutionPolicy -Scope CurrentUser RemoteSigned 명령 뒤 다시 시도하세요.
 |  |  |
 | --- | --- |
-| 일반 사용자 | `Google로 로그인` 버튼 (실제 OAuth 아님) |
-| 관리자 | `관리자로 로그인` → Face 인증 화면 → `얼굴 인증` 버튼 |
-| 체험 | `체험 로그인` → 인증 코드 `SECONDBRAIN` |
+| 일반 사용자 | 현재 Google OAuth 미연동. 버튼은 비활성화되어 있으며 실제 Google 로그인을 가장하지 않음 |
+| 관리자 시연 | `관리자 체험 로그인` → Face 인증 시뮬레이션 (실제 생체 인증 아님) |
+| 일반 기능 체험 | `체험 로그인` → 인증 코드 `SECONDBRAIN` |
 
 
 ## 4. 자주 나는 오류

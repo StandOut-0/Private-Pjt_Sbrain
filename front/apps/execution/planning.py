@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.execution.models import Agent, AgentExecution, ProjectRun, Task
 from apps.execution.supervisor import ensure_planning_task
+from apps.execution.events import record_event
 
 logger = logging.getLogger(__name__)
 
@@ -120,6 +121,9 @@ def process_run(run_id, provider=None):
         task.status = Task.STATUS_RUNNING
         task.started_at = task.started_at or started_at
         task.save(update_fields=['status', 'started_at', 'updated_at'])
+        record_event(project=run.project, run=run, task=task, execution=execution,
+                     event_type='agent.started', message='Planning Agent가 PRD 작성을 시작했습니다.',
+                     from_status=ProjectRun.STATUS_QUEUED, to_status=ProjectRun.STATUS_RUNNING)
 
     try:
         provider = provider or get_planning_provider()
@@ -155,4 +159,14 @@ def process_run(run_id, provider=None):
         task.status = Task.STATUS_SUCCEEDED if is_success else Task.STATUS_FAILED
         task.finished_at = finished_at
         task.save(update_fields=['status', 'finished_at', 'updated_at'])
+        final_status = 'succeeded' if is_success else 'failed'
+        record_event(project=run.project, run=run, task=task, execution=execution,
+                     event_type=f'agent.{final_status}',
+                     message='Planning 결과물을 저장했습니다.' if is_success else execution.error_message,
+                     from_status='running', to_status=final_status,
+                     metadata={'error_code': execution.error_code} if execution.error_code else {})
+        record_event(project=run.project, run=run, task=task,
+                     event_type=f'run.{final_status}',
+                     message='프로젝트 실행이 완료되었습니다.' if is_success else '프로젝트 실행에 실패했습니다.',
+                     from_status='running', to_status=final_status)
     return run

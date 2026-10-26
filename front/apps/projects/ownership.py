@@ -30,6 +30,8 @@ def project_card_payload(project):
         Project.STATUS_COMPLETED: 'done',
         Project.STATUS_ARCHIVED: 'ready',
     }.get(project.status, 'ready')
+    from apps.execution.events import event_payload
+    activities = [event_payload(event) for event in project.execution_events.all()[:30]]
     return {
         **project_payload(project),
         'code': f'Project {project.pk:02d}',
@@ -37,7 +39,7 @@ def project_card_payload(project):
         'status_label': project.get_status_display(),
         'progress': 0,
         'stages': [],
-        'activities': [],
+        'activities': activities,
         'tree': [],
     }
 

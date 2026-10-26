@@ -126,3 +126,21 @@ class AgentExecution(models.Model):
         constraints = [
             models.UniqueConstraint(fields=['task', 'agent', 'attempt_number'], name='sb_exec_task_agent_attempt_uniq'),
         ]
+
+
+class ExecutionEvent(models.Model):
+    project = models.ForeignKey('projects.Project', on_delete=models.CASCADE, related_name='execution_events')
+    run = models.ForeignKey(ProjectRun, null=True, blank=True, on_delete=models.CASCADE, related_name='events')
+    task = models.ForeignKey(Task, null=True, blank=True, on_delete=models.CASCADE, related_name='events')
+    execution = models.ForeignKey(AgentExecution, null=True, blank=True, on_delete=models.CASCADE, related_name='events')
+    event_type = models.CharField(max_length=80)
+    from_status = models.CharField(max_length=24, blank=True, default='')
+    to_status = models.CharField(max_length=24, blank=True, default='')
+    message = models.CharField(max_length=300)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'sb_execution_event'
+        ordering = ['-created_at', '-id']
+        indexes = [models.Index(fields=['project', '-created_at'], name='sb_event_proj_created_idx')]

@@ -9,6 +9,7 @@ from django.views.decorators.http import require_GET, require_POST
 from apps.accounts.session import get_user_account
 from apps.execution.models import ProjectRun, Task
 from apps.execution.supervisor import ensure_planning_task
+from apps.execution.events import record_event
 from apps.projects.models import Conversation, Message, Project
 
 
@@ -130,6 +131,8 @@ def create_run(request, project_id):
                 status=ProjectRun.STATUS_QUEUED,
             )
             ensure_planning_task(run)
+            record_event(project=project, run=run, task=run.planning_task, event_type='run.queued',
+                         message='프로젝트 실행이 대기열에 등록되었습니다.', to_status=run.status)
     except IntegrityError:
         existing = ProjectRun.objects.filter(project=project, idempotency_key=idempotency_key).first()
         if existing and existing.source_message_id == source_message.pk:
@@ -156,3 +159,16 @@ def run_detail(request, project_id, run_id):
         return _error(404, 'RUN_NOT_FOUND', '실행을 찾을 수 없습니다.')
     ensure_planning_task(run)
     return JsonResponse(_run_payload(run))
+
+
+@require_GET
+def project_events(request, project_id):
+    account = get_user_account(request)
+    if account is None:
+        return _error(401, 'AUTH_REQUIRED', '로그인이 필요합니다.')
+    project = Project.objects.filter(pk=project_id, owner=account).first()
+    if project is None:
+        return _error(404, 'PROJECT_NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
+    from apps.execution.events import event_payload
+    events = project.execution_events.select_related('run', 'task', 'execution')[:100]
+    return JsonResponse({'items': [event_payload(event) for event in events]})

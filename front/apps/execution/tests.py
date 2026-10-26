@@ -9,6 +9,8 @@ from apps.execution.models import AgentExecution, ProjectRun, Task
 from apps.execution.planning import FakePlanningProvider, PlanningError, process_run
 from apps.artifacts.models import Artifact
 from apps.projects.models import Conversation, Message, Project
+from apps.projects.ownership import project_card_payload
+from apps.execution.models import ExecutionEvent
 
 
 class FailingProvider:
@@ -72,6 +74,9 @@ class PlanningExecutionTests(TestCase):
         process_run(run.pk, FakePlanningProvider())
         self.assertEqual(AgentExecution.objects.filter(task=task).count(), 1)
         self.assertEqual(Artifact.objects.filter(task=task).count(), 1)
+        events = list(ExecutionEvent.objects.filter(run=run).order_by('created_at', 'id'))
+        self.assertEqual([event.event_type for event in events], ['agent.started', 'agent.succeeded', 'run.succeeded'])
+        self.assertEqual(len(project_card_payload(self.project)['activities']), 3)
 
     def test_artifact_endpoints_enforce_project_ownership_and_download_json(self):
         run = process_run(self.run.pk, FakePlanningProvider())

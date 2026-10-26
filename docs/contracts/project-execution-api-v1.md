@@ -1,6 +1,6 @@
 # Project Execution API v1 — 계약 초안
 
-- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7, Run 요청·멱등성은 Day 8, Supervisor Task 생성은 Day 9 구현 완료. Planning·Artifact 경로는 후속 구현 대상.
+- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7, Run·멱등성은 Day 8, Supervisor Task는 Day 9, fake Planning 실행은 Day 10 구현 완료. Artifact 경로는 후속 구현 대상.
 - 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
 - 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
 
@@ -133,6 +133,7 @@ POST body:
 - 서버는 Project·Conversation·Message의 소유자와 소속이 모두 같은지 확인한다. `source_message_id`는 해당 Conversation의 `user` 메시지여야 한다.
 - `requested_by`, 상태, 실행 순서는 서버가 설정한다. 새 Run은 `queued`로 저장한 뒤 `202 Accepted`와 Run 자원, `Location: /api/v1/projects/{project_id}/runs/{run_id}`를 반환한다.
 - 서버는 요청 내용을 instruction snapshot으로 구조화하고, 같은 트랜잭션에서 `queued` Planning Task 하나를 연결한다. MVP의 Supervisor 구조화는 규칙 기반이며 LLM 호출은 하지 않는다. Run 응답에는 연결된 Task의 `id`, `title`, `status`가 포함된다.
+- Run POST는 worker를 동기 호출하지 않는다. 별도 `manage.py process_runs` worker가 queued Run을 가져가 Planning execution을 수행하고 `GET` 상태 조회에서 결과 상태를 확인한다. 기본 provider는 재현 가능한 fake이며, 외부 provider adapter는 아직 없다.
 - 동일 Project·같은 `Idempotency-Key`·같은 `source_message_id` 재요청은 새 Run을 만들지 않고 기존 Run을 `200 OK`로 반환한다. 첫 응답을 못 받은 클라이언트가 안전하게 재시도할 수 있다.
 - 키가 같은데 `source_message_id`가 다르면 `409 IDEMPOTENCY_KEY_REUSED`를 반환한다. DB의 `(project_id, idempotency_key)` unique 제약이 동시 요청을 최종 방어한다.
 - 이 POST는 Worker를 동기 실행하지 않는다. `queued`를 저장하고 별도 실행 경계에 넘긴다. 동시 실행 상한은 이 계약에서 임의로 추가하지 않으며 운영값 검토 때 결정한다.

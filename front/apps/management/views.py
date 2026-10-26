@@ -218,13 +218,13 @@ def results(request):
         knowledge_documents = knowledge_documents.filter(title__icontains=rag_query)
     if rag_project:
         knowledge_documents = knowledge_documents.filter(project__project_name=rag_project)
-    if rag_status and rag_status != '저장됨 · 미색인':
+    if rag_status and rag_status != '키워드 검색 가능 · 벡터 미색인':
         knowledge_documents = knowledge_documents.none()
     vector_documents = [{
         'project': document.project.project_name if document.project else '전체 공통',
         'document': document.title,
-        'chunks': '—',
-        'status': '저장됨 · 미색인',
+        'chunks': '키워드',
+        'status': '키워드 검색 가능 · 벡터 미색인',
     } for document in knowledge_documents]
     upload_error = ''
     if request.method == 'POST' and request.POST.get('action') == 'knowledge-upload':
@@ -269,7 +269,7 @@ def results(request):
         'selected': selected,
         'results_tab': 'knowledge' if request.GET.get('tab') == 'knowledge' else 'files',
         'rag_filters': {'q': rag_query, 'project': rag_project, 'status': rag_status},
-        'rag_statuses': ['저장됨 · 미색인'],
+        'rag_statuses': ['키워드 검색 가능 · 벡터 미색인'],
         'keyword': keyword,
         'tree': tree,
         'knowledge_stats': [
@@ -283,7 +283,7 @@ def results(request):
         'upload_error': upload_error,
         'uploaded': request.GET.get('uploaded') == '1',
         'active_menu': 'results',
-        'statuses': ['저장됨 · 미색인'],
+        'statuses': ['키워드 검색 가능 · 벡터 미색인'],
         'zip_url': f'/manage/results/download.zip{"?project=" + str(selected_project.pk) if selected_project else ""}',
     }
     return render_react(request, 'results', context, status=400 if upload_error else 200, active_menu='results')

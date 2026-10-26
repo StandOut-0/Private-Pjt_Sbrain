@@ -157,6 +157,28 @@ cd front
 python manage.py process_runs
 ```
 
+### 무료 로컬 LLM 사용
+
+Planning은 기본으로 로컬 Ollama의 `gemma4:latest` 모델을 사용합니다. Ollama가 실행 중이고 모델이 로컬에 설치되어 있어야 합니다. API key나 외부 inference API는 사용하지 않습니다.
+
+```powershell
+ollama list
+ollama pull gemma4:latest
+ollama run gemma4:latest "Reply with exactly: LOCAL_LLM_READY"
+```
+
+기본값을 쓰지 않고 Worker 실행 환경을 분명히 지정하려면 Worker용 PowerShell에서 다음처럼 설정한 뒤 실행하세요.
+
+```powershell
+$env:PLANNING_PROVIDER = "ollama"
+$env:OLLAMA_MODEL = "gemma4:latest"
+python manage.py process_runs
+```
+
+자동화 테스트나 고정 결과가 필요한 경우 `PLANNING_PROVIDER=fake`로 결정형 Fake provider를 선택할 수 있습니다. Ollama의 `:cloud` 모델은 무료 로컬 사용과 혼동되거나 외부 inference가 되지 않도록 차단합니다. 로컬 추론은 호출료가 없지만 PC의 속도·메모리·전력 사용량은 발생합니다.
+
+무료 호스팅 대안과 현재 quota 조사 결과는 [`../기획/5. 무료 LLM 모델 서치.txt`](../기획/5.%20무료%20LLM%20모델%20서치.txt)에 정리했습니다. Hosted free API는 한도가 있고 영구·무제한 무료가 보장되지 않아 기본 경로로 쓰지 않습니다.
+
 React 소스를 변경한 뒤에는 정적 bundle을 다시 생성합니다.
 
 ```powershell
@@ -190,7 +212,7 @@ npm run build
 
 - Django 앱: `projects`의 Project/Conversation/Message, `execution`의 Run/Task/AgentExecution/Event, `artifacts`의 버전 결과물, `reflection`의 평가 기준·평가 기록.
 - 각 앱의 migration이 `front/apps/*/migrations/`에 있습니다. 개발 기본 DB는 `front/db.sqlite3`이며 `manage.py migrate`로 구성합니다.
-- Planning은 `PLANNING_PROVIDER=fake`가 기본값이며 외부 provider adapter는 없습니다. Reflection 또한 규칙 기반 mock이며 결과에 mock 라벨을 표시합니다.
+- Planning은 로컬 Ollama `gemma4:latest`가 기본값이며 `PLANNING_PROVIDER=fake`로 반복 가능한 결정형 결과를 선택할 수 있습니다. 실행 기록에 모델명과 로컬 토큰 수를 저장하며 inference 비용은 0으로 기록합니다. Reflection은 여전히 규칙 기반 mock이며 결과에 mock 라벨을 표시합니다.
 - `AgentExecution`의 token 수와 USD 추정 비용은 nullable입니다. fake provider는 계측하지 않으므로 0이 아닌 `미계측`으로 표시합니다.
 
 ### 인수 체크리스트
@@ -202,6 +224,7 @@ npm run build
 - [x] Timeline 이벤트, 재시도 최대 3회, 취소/재생성 및 이전 결과 보존
 - [x] 관리자 DB 실행 조회와 미계측 사용량 표현
 - [x] Django 전체 테스트, system check, migration drift, React production build
+- [x] 실제 로컬 Ollama `gemma4:latest` 연동 테스트 (`RUN_LOCAL_LLM_TEST=1`, 이 PC에서 71초)
 - [ ] 브라우저 수동 시각 검수 및 운영 환경의 실제 사용자 인수
 - [ ] 운영 DB/Worker supervisor/Provider adapter/backup·restore·retention 구성
 

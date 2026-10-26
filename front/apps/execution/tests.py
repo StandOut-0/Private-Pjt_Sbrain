@@ -1,5 +1,7 @@
 import json
+import os
 import uuid
+from unittest import skipUnless
 
 from django.core.management import call_command
 from django.db import IntegrityError
@@ -7,7 +9,7 @@ from django.test import Client, TestCase, override_settings
 
 from apps.accounts.models import UserAccount
 from apps.execution.models import AgentExecution, ProjectRun, Task
-from apps.execution.planning import FakePlanningProvider, PlanningError, process_run
+from apps.execution.planning import FakePlanningProvider, OllamaPlanningProvider, PlanningError, get_planning_provider, process_run
 from apps.artifacts.models import Artifact
 from apps.projects.models import Conversation, Message, Project
 from apps.projects.ownership import project_card_payload
@@ -72,6 +74,78 @@ class PlanningExecutionTests(TestCase):
 
         self.assertEqual(first, second)
         self.assertEqual(first['functional_requirements'], ['Include product search and checkout.'])
+
+    def test_ollama_provider_parses_prd_and_records_local_usage(self):
+        from unittest.mock import patch
+
+        class MockResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *args):
+                return False
+
+            def read(self):
+                return json.dumps({
+                    'model': 'gemma4:latest',
+                    'message': {'content': json.dumps({
+                        'title': '테스트 PRD', 'summary': '요약', 'objective': '목표',
+                        'target_users': ['사용자'], 'functional_requirements': ['기능'],
+                        'user_flow': ['요청', '검토'], 'acceptance_criteria': ['완료 기준'],
+                        'assumptions': [], 'open_questions': [], 'priority': 'normal',
+                    }, ensure_ascii=False)},
+                    'prompt_eval_count': 40,
+                    'eval_count': 25,
+                }).encode()
+
+        provider = OllamaPlanningProvider()
+        with patch('apps.execution.planning.urllib.request.urlopen', return_value=MockResponse()) as urlopen:
+            result = provider.generate({'objective': '테스트 PRD'})
+        request = urlopen.call_args.args[0]
+        sent = json.loads(request.data.decode())
+        self.assertEqual(request.full_url, 'http://127.0.0.1:11434/api/chat')
+        self.assertEqual(sent['model'], 'gemma4:latest')
+        self.assertEqual(sent['format'], 'json')
+        self.assertFalse(sent['think'])
+        self.assertEqual(result['provider'], 'ollama')
+        self.assertEqual(provider.last_usage['input_tokens'], 40)
+        self.assertEqual(provider.last_usage['output_tokens'], 25)
+        self.assertEqual(provider.last_usage['estimated_cost_usd'], 0)
+
+    def test_ollama_provider_maps_missing_service_to_retryable_error(self):
+        from unittest.mock import patch
+        from urllib.error import URLError
+
+        provider = OllamaPlanningProvider()
+        with patch('apps.execution.planning.urllib.request.urlopen', side_effect=URLError('offline')):
+            with self.assertRaises(PlanningError) as caught:
+                provider.generate({'objective': '테스트'})
+        self.assertEqual(caught.exception.code, 'OLLAMA_UNAVAILABLE')
+        self.assertTrue(caught.exception.retryable)
+
+    def test_ollama_cloud_model_is_rejected_to_avoid_paid_remote_inference(self):
+        from unittest.mock import patch
+        with patch.dict('os.environ', {'OLLAMA_MODEL': 'gemma4:31b-cloud'}):
+            with self.assertRaises(PlanningError) as caught:
+                OllamaPlanningProvider()
+        self.assertEqual(caught.exception.code, 'OLLAMA_LOCAL_MODEL_REQUIRED')
+
+    def test_local_ollama_is_the_default_planning_provider(self):
+        from unittest.mock import patch
+        with patch.dict('os.environ', {'PLANNING_PROVIDER': 'ollama'}, clear=False):
+            self.assertIsInstance(get_planning_provider(), OllamaPlanningProvider)
+
+    @skipUnless(os.environ.get('RUN_LOCAL_LLM_TEST') == '1', 'Set RUN_LOCAL_LLM_TEST=1 to run local Ollama integration.')
+    def test_live_ollama_generates_and_persists_a_prd(self):
+        from unittest.mock import patch
+        with patch.dict('os.environ', {'PLANNING_PROVIDER': 'ollama', 'OLLAMA_MODEL': 'gemma4:latest'}):
+            run = process_run(self.run.pk)
+        execution = AgentExecution.objects.get(task__run=run)
+        self.assertEqual(run.status, ProjectRun.STATUS_SUCCEEDED, execution.error_message)
+        self.assertEqual(execution.provider_name, 'ollama')
+        self.assertEqual(execution.model_name, 'gemma4:latest')
+        self.assertGreater(execution.output_tokens, 0)
+        self.assertEqual(float(execution.estimated_cost_usd), 0)
 
     def test_worker_completes_run_and_stores_structured_prd(self):
         run = process_run(self.run.pk, FakePlanningProvider())

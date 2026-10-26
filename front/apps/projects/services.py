@@ -73,3 +73,34 @@ def update_project(project, *, title=None, summary=None, status=None):
         update_fields.append('updated_at')
         project.save(update_fields=update_fields)
     return project
+
+
+@transaction.atomic
+def create_conversation(*, project, owner, title=None):
+    if title is not None and not isinstance(title, str):
+        raise ProjectInputError('대화 제목은 문자열이어야 합니다.')
+    normalized_title = title.strip() if title is not None else ''
+    if len(normalized_title) > 200:
+        raise ProjectInputError('대화 제목은 200자 이하여야 합니다.')
+    conversation = Conversation.objects.create(
+        project=project,
+        owner=owner,
+        title=normalized_title or project.project_name,
+    )
+    project.save(update_fields=['updated_at'])
+    return conversation
+
+
+@transaction.atomic
+def append_message(*, conversation, content, role=Message.ROLE_USER):
+    if not isinstance(content, str):
+        raise ProjectInputError('메시지는 문자열이어야 합니다.')
+    content = content.strip()
+    if not 1 <= len(content) <= 10000:
+        raise ProjectInputError('메시지는 1자 이상 10,000자 이하여야 합니다.')
+    if role not in {Message.ROLE_USER, Message.ROLE_ASSISTANT, Message.ROLE_SYSTEM}:
+        raise ProjectInputError('지원하지 않는 메시지 역할입니다.')
+    message = Message.objects.create(conversation=conversation, role=role, content=content)
+    conversation.save(update_fields=['updated_at'])
+    conversation.project.save(update_fields=['updated_at'])
+    return message

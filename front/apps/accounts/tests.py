@@ -3,6 +3,7 @@ from django.urls import reverse
 
 from apps.accounts.models import UserAccount
 from apps.projects.models import Project
+from apps.projects.models import Conversation, Message
 
 
 class SmokeTest(TestCase):
@@ -117,5 +118,12 @@ class SmokeTest(TestCase):
 
     def test_chat_reply(self):
         self.login()
-        response = self.client.post(reverse('projects:chat_reply', args=[1]), {'message': '쇼핑몰 서비스를 기획해줘'})
+        account = UserAccount.objects.get(pk=self.client.session['sb_user']['user_id'])
+        project = Project.objects.create(owner=account, project_name='Test shop')
+        conversation = Conversation.objects.create(project=project, owner=account, title='Test chat')
+        response = self.client.post(reverse('projects:chat_reply', args=[project.pk]), {
+            'message': '쇼핑몰 서비스를 기획해줘',
+            'conversation_id': conversation.pk,
+        })
         self.assertIn('Planning Agent', response.json()['reply'])
+        self.assertEqual(conversation.messages.filter(role=Message.ROLE_ASSISTANT).count(), 1)

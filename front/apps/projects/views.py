@@ -1,13 +1,14 @@
 from django.http import Http404, JsonResponse
 from django.shortcuts import redirect, render
+import json
 import re
 from pathlib import Path
 
 from apps import mockdata
 from apps.accounts.session import get_user_account, login_required
-from apps.projects.models import Project
-from apps.projects.ownership import project_card_payload
-from apps.projects.services import ProjectInputError, create_project
+from apps.projects.models import Conversation, Project
+from apps.projects.ownership import message_payload, project_card_payload
+from apps.projects.services import ProjectInputError, append_message, create_conversation, create_project
 from apps.react_pages import render_react
 
 
@@ -128,18 +129,67 @@ def project_detail(request, project_id=None):
 @login_required
 def chat_reply(request, project_id):
     """Chatbot 임시 응답. Supervisor Agent 연동 전까지 되묻는 흐름만 재현한다."""
-    message = request.POST.get('message', '').strip()
+    if request.content_type == 'application/json':
+        try:
+            body = json.loads(request.body or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({'error': {'code': 'INVALID_JSON', 'message': '요청 본문은 올바른 JSON이어야 합니다.'}}, status=400)
+        if not isinstance(body, dict):
+            return JsonResponse({'error': {'code': 'INVALID_BODY', 'message': '요청 본문은 JSON 객체여야 합니다.'}}, status=400)
+    else:
+        body = request.POST
+
+    message_value = body.get('message', '')
+    if not isinstance(message_value, str) or not message_value.strip() or len(message_value.strip()) > 10000:
+        return JsonResponse({'error': {'code': 'VALIDATION_ERROR', 'message': '메시지는 1자 이상 10,000자 이하여야 합니다.'}}, status=422)
+
+    account = get_user_account(request)
+    project = Project.objects.filter(pk=project_id, owner=account).first()
+    if project is None:
+        return JsonResponse({'error': {'code': 'PROJECT_NOT_FOUND', 'message': '프로젝트를 찾을 수 없습니다.'}}, status=404)
+    try:
+        conversation_id = int(body.get('conversation_id')) if body.get('conversation_id') else None
+    except (TypeError, ValueError):
+        return JsonResponse({'error': {'code': 'VALIDATION_ERROR', 'message': '대화 정보가 올바르지 않습니다.'}}, status=422)
+    conversation = (
+        Conversation.objects.filter(pk=conversation_id, project=project, owner=account).first()
+        if conversation_id else Conversation.objects.filter(project=project, owner=account).first()
+    )
+    if conversation is None and conversation_id:
+        return JsonResponse({'error': {'code': 'CONVERSATION_NOT_FOUND', 'message': '대화를 찾을 수 없습니다.'}}, status=404)
+    if conversation is None:
+        conversation = create_conversation(project=project, owner=account)
+
+    message = message_value.strip()
+    if not conversation_id and message:
+        append_message(conversation=conversation, content=message, role='user')
     if any(phrase in message for phrase in ('새 프로젝트', '프로젝트 생성', '프로젝트 만들어', '프로젝트 만들기')):
         match = re.search(r'(?:프로젝트(?:\s*이름)?\s*[:：]\s*)(.+)', message)
-        return JsonResponse({
-            'reply': '새 프로젝트 입력창을 열었습니다. 이름과 설명을 입력한 뒤 생성할 수 있어요.',
-            'action': 'open_project_create',
-            'title': match.group(1).strip() if match else '',
-        })
-    if not message:
+        reply = '새 프로젝트 입력창을 열었습니다. 이름과 설명을 입력한 뒤 생성할 수 있어요.'
+        title = match.group(1).strip() if match else ''
+        action = 'open_project_create'
+    elif not message:
         reply = '무엇을 도와드릴까요?'
+        title = ''
+        action = ''
     elif '기획' in message or '만들' in message:
         reply = '확인했습니다. Planning Agent로 요구사항을 정리할까요? 주요 고객층도 알려주세요.'
+        title = ''
+        action = ''
     else:
         reply = f'"{message}" 요청을 이렇게 진행할까요? Supervisor Agent가 작업을 분해합니다.'
-    return JsonResponse({'reply': reply, 'agent': 'Supervisor'})
+        title = ''
+        action = ''
+
+    assistant_message = append_message(
+        conversation=conversation,
+        content=reply,
+        role='assistant',
+    )
+    return JsonResponse({
+            'reply': reply,
+            'agent': 'Supervisor',
+            'action': action,
+            'title': title,
+            'assistant_message': message_payload(assistant_message),
+        })

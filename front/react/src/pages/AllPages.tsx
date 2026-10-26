@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { RouteLink as Link } from '../components/RouteLink';
 import { Sparkles } from 'lucide-react';
 import type { AppPayload } from '../api';
@@ -40,7 +40,125 @@ function ProjectDetail({ data }: { data:any }) {
 
 function AgentNode({icon,name,description,state}:{icon:string;name:string;description:string;state:'done'|'running'|'waiting'|'decision'}){const label=state==='done'?'완료':state==='running'?'진행 중':state==='decision'?'대기':'대기';return <div className={`sb-agent-node is-${state}`}><div className="sb-agent-icon"><i className={`bi ${icon}`}/></div><div><b>{name}</b><small>{description}</small></div><span className="sb-agent-state">{label}</span></div>}
 
-function ChatPanel({projectId,chatGuides}:{projectId:number;chatGuides:Record<string,string>}){const [tab,setTab]=useState('guide');return <><button className="btn btn-primary sb-chat-fab" type="button" id="sb-chat-open"><i className="bi bi-chat-dots me-1"/> AI <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger sb-chat-badge" id="sb-chat-badge">4</span></button><section><div className="sb-chat-panel" id="sb-chat-panel"><div className="sb-chat-head"><span>Second Brain</span><div className="d-flex gap-2"><button className="btn btn-sm sb-icon-btn" type="button" id="sb-chat-expand" title="크게 보기"><i className="bi bi-arrows-fullscreen"/></button><button className="btn btn-sm sb-icon-btn" type="button" id="sb-chat-close"><i className="bi bi-x-lg"/></button></div></div><div className="sb-chat-body" id="sb-chat-body"><div className="sb-chat-sidebar" id="sb-chat-sidebar"><div className="sb-chat-sidebar-header"><span className="fw-semibold">채팅방</span><button className="btn btn-sm btn-primary" id="sb-new-chat"><i className="bi bi-plus-lg"/> 새 대화</button></div><div className="sb-chat-rooms">{[['planning','Planning Agent','기획 및 요구사항 분석...',3,'bi-clipboard-data'],['design','Design Agent','UI/UX 디자인 작업...',1,'bi-palette'],['engineering','Engineering Agent','Frontend/Backend 개발...',0,'bi-code-slash']].map(([key,name,preview,badge,icon]:any)=><div className={`sb-chat-room ${key==='planning'?'active':''}`} data-room={key} key={key}><div className="sb-chat-room-icon"><i className={`bi ${icon}`}/></div><div className="sb-chat-room-info"><div className="sb-chat-room-name">{name}</div><div className="sb-chat-room-preview">{preview}</div></div>{badge>0&&<div className="sb-chat-room-badge">{badge}</div>}</div>)}</div></div><div className="sb-chat-main"><div className="sb-chat-animation"><div className="sb-chat-gif-container"><img src="/static/img/loading.gif" alt="AI 준비 중" className="sb-chat-gif"/></div><div className="sb-chat-welcome-text"><div className="sb-chat-greeting">안녕하세요! 👋</div><div className="sb-chat-status">준비 중입니다...</div><div className="sb-chat-loading-text">프로젝트 내용을 살펴보고 있어요.</div></div></div><div className="sb-msg sb-msg-ai">프로젝트를 빠르게 구현하고싶다면 아래 내용을 작성해주세요. 내용은 한 번에 보내주시면 됩니다.</div><div className="sb-msg sb-msg-ai"><div className="sb-chat-tabs" data-react-chat-tabs>{[['guide','프로젝트 구현 가이드'],['logo','로고만들기'],['onepage','원페이지만들기'],['survey','설문조사페이지만들기']].map(([key,label]:any)=><button className={`sb-chat-tab-btn ${tab===key?'active':''}`} data-tab={key} onClick={event=>{event.preventDefault();event.stopPropagation();setTab(key)}} type="button" key={key}>{label}</button>)}</div><div className="sb-chat-tab-content" id="tab-content"><div className="sb-chat-guide-title">{tab==='guide'?'[프로젝트 구현 가이드]':tab==='logo'?'[로고 만들기 가이드]':tab==='onepage'?'[원페이지 만들기 가이드]':'[설문조사 페이지 만들기 가이드]'}</div><pre className="sb-chat-guide-text">{chatGuides[tab]||''}</pre></div></div></div></div><form className="sb-chat-foot" id="sb-chat-form" data-url={`/projects/${projectId}/chat/`} data-loading-src="/static/img/loading.gif"><input type="hidden" name="csrfmiddlewaretoken" value={csrfToken()}/><input className="form-control form-control-sm" id="sb-chat-input" name="message" placeholder="메시지 입력..." autoComplete="off"/><button className="btn btn-outline-secondary btn-sm" type="button" title="음성 입력"><i className="bi bi-mic"/></button><button className="btn btn-primary btn-sm" type="submit"><i className="bi bi-send"/></button></form></div></section></>}
+type ChatConversation = { id: number; project_id: number; title: string; updated_at: string };
+type ChatMessage = { id: number; conversation_id: number; role: 'user' | 'assistant' | 'system'; content: string; created_at: string };
+
+async function chatRequest<T>(url: string, method = 'GET', body?: unknown): Promise<T> {
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  if (method !== 'GET') {
+    headers['Content-Type'] = 'application/json';
+    headers['X-CSRFToken'] = csrfToken();
+  }
+  const response = await fetch(url, {
+    method,
+    headers,
+    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error?.message || '대화를 불러오지 못했습니다.');
+  return payload as T;
+}
+
+function ChatPanel({projectId,chatGuides}:{projectId:number;chatGuides:Record<string,string>}) {
+  const [tab,setTab]=useState('guide');
+  const [isOpen,setIsOpen]=useState(false);
+  const [isExpanded,setIsExpanded]=useState(false);
+  const [conversations,setConversations]=useState<ChatConversation[]>([]);
+  const [activeConversationId,setActiveConversationId]=useState<number|null>(null);
+  const [messages,setMessages]=useState<ChatMessage[]>([]);
+  const [input,setInput]=useState('');
+  const [loading,setLoading]=useState(true);
+  const [sending,setSending]=useState(false);
+  const [error,setError]=useState('');
+  const inputRef=useRef<HTMLInputElement>(null);
+  const messagesEndRef=useRef<HTMLDivElement>(null);
+  const projectApi=`/api/v1/projects/${projectId}/`;
+
+  useEffect(()=>{
+    let cancelled=false;
+    async function loadConversations(){
+      setLoading(true);setError('');
+      try{
+        const result=await chatRequest<{items:ChatConversation[]}>(`${projectApi}conversations/`);
+        let items=result.items;
+        if(!items.length){
+          await chatRequest<ChatConversation>(`${projectApi}conversations/`,'POST',{});
+          items=(await chatRequest<{items:ChatConversation[]}>(`${projectApi}conversations/`)).items;
+        }
+        if(!cancelled){setConversations(items);setActiveConversationId(items[0]?.id??null)}
+      }catch(err){if(!cancelled)setError(err instanceof Error?err.message:'대화를 불러오지 못했습니다.')}
+      finally{if(!cancelled)setLoading(false)}
+    }
+    void loadConversations();
+    return()=>{cancelled=true};
+  },[projectApi]);
+
+  useEffect(()=>{
+    if(activeConversationId===null)return;
+    let cancelled=false;
+    setMessages([]);setLoading(true);setError('');
+    void chatRequest<{items:ChatMessage[]}>(`${projectApi}conversations/${activeConversationId}/messages/`)
+      .then(result=>{if(!cancelled)setMessages(result.items)})
+      .catch(err=>{if(!cancelled)setError(err instanceof Error?err.message:'메시지를 불러오지 못했습니다.')})
+      .finally(()=>{if(!cancelled)setLoading(false)});
+    return()=>{cancelled=true};
+  },[projectApi,activeConversationId]);
+
+  useEffect(()=>{messagesEndRef.current?.scrollIntoView({behavior:'smooth',block:'end'})},[messages]);
+  useEffect(()=>{if(isOpen)inputRef.current?.focus()},[isOpen]);
+
+  async function createConversation(){
+    setError('');
+    try{
+      const created=await chatRequest<ChatConversation>(`${projectApi}conversations/`,'POST',{title:'새 대화'});
+      setConversations(current=>[created,...current]);
+      setActiveConversationId(created.id);
+    }catch(err){setError(err instanceof Error?err.message:'새 대화를 만들지 못했습니다.')}
+  }
+
+  async function sendMessage(event:FormEvent<HTMLFormElement>){
+    event.preventDefault();
+    const content=input.trim();
+    const conversationId=activeConversationId;
+    if(!content||conversationId===null||sending)return;
+    setSending(true);setError('');
+    try{
+      const userMessage=await chatRequest<ChatMessage>(`${projectApi}conversations/${conversationId}/messages/`,'POST',{content});
+      if(activeConversationId===conversationId)setMessages(current=>[...current,userMessage]);
+      setInput('');
+      setConversations(current=>current.map(item=>item.id===conversationId?{...item,updated_at:userMessage.created_at}:item));
+      const reply=await chatRequest<{reply:string;action?:string;title?:string;assistant_message:ChatMessage}>(`/projects/${projectId}/chat/`,'POST',{message:content,conversation_id:conversationId});
+      if(activeConversationId===conversationId)setMessages(current=>[...current,reply.assistant_message]);
+      setConversations(current=>current.map(item=>item.id===conversationId?{...item,updated_at:reply.assistant_message.created_at}:item));
+      if(reply.action==='open_project_create')window.dispatchEvent(new CustomEvent('sb:open-project-create',{detail:{title:reply.title||''}}));
+    }catch(err){setError(err instanceof Error?err.message:'메시지를 보내지 못했습니다.')}
+    finally{setSending(false)}
+  }
+
+  const activeConversation=conversations.find(item=>item.id===activeConversationId);
+  return <>
+    <button className="btn btn-primary sb-chat-fab" type="button" id="sb-chat-open" style={{display:isOpen?'none':undefined}} onClick={()=>setIsOpen(true)}><i className="bi bi-chat-dots me-1"/> AI <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger sb-chat-badge" id="sb-chat-badge">4</span></button>
+    <section>
+      <div className={`sb-chat-panel ${isOpen?'open':''} ${isExpanded?'expanded':''}`} id="sb-chat-panel">
+        <div className="sb-chat-head"><span>Second Brain</span><div className="d-flex gap-2"><button className="btn btn-sm sb-icon-btn" type="button" id="sb-chat-expand" title="크게 보기" aria-pressed={isExpanded} onClick={()=>setIsExpanded(value=>!value)}><i className="bi bi-arrows-fullscreen"/></button><button className="btn btn-sm sb-icon-btn" type="button" id="sb-chat-close" aria-label="채팅 닫기" onClick={()=>setIsOpen(false)}><i className="bi bi-x-lg"/></button></div></div>
+        <div className="sb-chat-body" id="sb-chat-body">
+          <div className="sb-chat-sidebar" id="sb-chat-sidebar"><div className="sb-chat-sidebar-header"><span className="fw-semibold">채팅방</span><button className="btn btn-sm btn-primary" id="sb-new-chat" type="button" onClick={()=>void createConversation()}><i className="bi bi-plus-lg"/> 새 대화</button></div><div className="sb-chat-rooms">{conversations.map((conversation,index)=><div className={`sb-chat-room ${conversation.id===activeConversationId?'active':''}`} data-room={conversation.id} key={conversation.id} role="button" tabIndex={0} onClick={()=>setActiveConversationId(conversation.id)} onKeyDown={event=>{if(event.key==='Enter'||event.key===' ')setActiveConversationId(conversation.id)}}><span className="sb-chat-room-icon"><i className={`bi ${index%2===0?'bi-clipboard-data':'bi-chat-dots'}`}/></span><span className="sb-chat-room-info"><span className="sb-chat-room-name">{conversation.title}</span><span className="sb-chat-room-preview">{conversation.id===activeConversationId&&messages.length?messages[messages.length-1].content:'대화를 시작해보세요.'}</span></span></div>)}</div></div>
+          <div className="sb-chat-main">
+            <div className="sb-chat-animation"><div className="sb-chat-gif-container"><img src="/static/img/loading.gif" alt="AI 준비 중" className="sb-chat-gif"/></div><div className="sb-chat-welcome-text"><div className="sb-chat-greeting">안녕하세요! 👋</div><div className="sb-chat-status">준비 중입니다...</div><div className="sb-chat-loading-text">프로젝트 내용을 살펴보고 있어요.</div></div></div>
+            <div className="sb-msg sb-msg-ai">프로젝트를 빠르게 구현하고싶다면 아래 내용을 작성해주세요. 내용은 한 번에 보내주시면 됩니다.</div>
+            <div className="sb-msg sb-msg-ai"><div className="sb-chat-tabs" data-react-chat-tabs>{[['guide','프로젝트 구현 가이드'],['logo','로고만들기'],['onepage','원페이지만들기'],['survey','설문조사페이지만들기']].map(([key,label]:any)=><button className={`sb-chat-tab-btn ${tab===key?'active':''}`} data-tab={key} onClick={event=>{event.preventDefault();event.stopPropagation();setTab(key)}} type="button" key={key}>{label}</button>)}</div><div className="sb-chat-tab-content" id="tab-content"><div className="sb-chat-guide-title">{tab==='guide'?'[프로젝트 구현 가이드]':tab==='logo'?'[로고 만들기 가이드]':tab==='onepage'?'[원페이지 만들기 가이드]':'[설문조사 페이지 만들기 가이드]'}</div><pre className="sb-chat-guide-text">{chatGuides[tab]||''}</pre></div></div>
+            {loading&&<div className="small text-secondary" role="status">대화를 불러오는 중입니다...</div>}
+            {error&&<div className="alert alert-danger py-2 small" role="alert">{error}</div>}
+            {messages.map(message=><div className={`sb-msg ${message.role==='user'?'sb-msg-user':'sb-msg-ai'}`} key={message.id} data-message-id={message.id}>{message.content}</div>)}
+            {!loading&&!messages.length&&activeConversation&&<div className="small text-secondary" role="status">새 대화입니다. 프로젝트에 대해 이야기해보세요.</div>}
+            <div ref={messagesEndRef}/>
+          </div>
+        </div>
+        <form className="sb-chat-foot" onSubmit={sendMessage}><input type="hidden" name="csrfmiddlewaretoken" value={csrfToken()}/><input ref={inputRef} className="form-control form-control-sm" id="sb-chat-input" name="message" value={input} onChange={event=>setInput(event.target.value)} placeholder="메시지 입력..." autoComplete="off" maxLength={10000}/><button className="btn btn-outline-secondary btn-sm" type="button" title="음성 입력"><i className="bi bi-mic"/></button><button className="btn btn-primary btn-sm" type="submit" disabled={sending||loading||!input.trim()} aria-label="메시지 보내기"><i className="bi bi-send"/></button></form>
+      </div>
+    </section>
+  </>;
+}
 
 function ProjectList({ data, links }: {data:any;links:Record<string,string>}) {
   const projects = data.projects || [];

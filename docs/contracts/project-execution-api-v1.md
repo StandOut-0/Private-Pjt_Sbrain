@@ -1,6 +1,6 @@
 # Project Execution API v1 — 계약 초안
 
-- 상태: Project 목록·생성·상세·수정과 초기 목표 저장은 Day 6 구현 완료. Conversation/Message 조회·추가, Run·Artifact 경로는 후속 구현 대상.
+- 상태: Project 흐름은 Day 6, Conversation·Message 흐름은 Day 7 구현 완료. Run·Artifact 경로는 후속 구현 대상.
 - 기반: Django 세션 인증, 기존 프로젝트 URL과 DBML 핵심 실행 경로
 - 범위: Project 생성·조회, Conversation·Message 저장, Run 요청·상태 조회, Artifact 조회·다운로드
 
@@ -86,6 +86,12 @@
 
 ### 4. Conversation 생성
 
+`GET /api/v1/projects/{project_id}/conversations/`는 Project 소유자의 대화 목록을 `updated_at DESC, id DESC` 순으로 반환한다.
+
+```json
+{"items":[{"id":7,"project_id":41,"title":"반려동물 쇼핑몰 기획","created_at":"2026-10-20T03:10:00Z","updated_at":"2026-10-20T03:10:00Z"}]}
+```
+
 `POST /api/v1/projects/{project_id}/conversations/`
 
 ```json
@@ -105,7 +111,7 @@ POST body:
 {"content": "주요 고객을 1인 가구로 잡아줘."}
 ```
 
-서버가 `role: "user"`를 부여한다. `content`는 trim 후 1–10,000자다. 응답은 `201 Created`와 `{ "id", "conversation_id", "role", "content", "created_at" }`. Assistant·Agent 메시지는 서버 실행 결과로만 생성한다.
+서버가 `role: "user"`를 부여한다. `content`는 trim 후 1–10,000자다. 응답은 `201 Created`와 `{ "id", "conversation_id", "role", "content", "created_at" }`. 클라이언트는 role을 지정할 수 없다. 기존 프로젝트 화면의 임시 Supervisor 응답은 서버가 생성해 저장하고, 이후 Run 실행 응답은 같은 원칙으로 서버가 기록한다.
 
 조회는 같은 Conversation의 메시지를 `created_at ASC, id ASC`로 페이지화한다. URL의 Project, Conversation, 세션 User 소유 관계가 모두 일치해야 한다.
 
@@ -185,5 +191,6 @@ Artifact 응답은 `{ "id", "project_id", "task_id", "logical_key", "version", "
 
 - Django JSON API 전용 인증 실패·CSRF 실패 응답을 HTML 페이지 응답과 분리한다.
 - 프로젝트·Conversation·Message·Run 저장을 같은 소유권 서비스와 트랜잭션 경계로 연결한다.
+- Conversation 목록·Message 조회/저장 시 Project·Conversation·User의 소유 관계를 모두 검증한다.
 - 동시 동일 idempotency 요청에서 DB unique 충돌을 잡고 기존 Run을 다시 읽는다.
 - 파일 다운로드 요청마다 DB 메타데이터와 실제 저장 경로를 서버에서 검증한다.

@@ -1,3 +1,5 @@
+import json
+
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -170,3 +172,86 @@ class ProjectOwnershipTests(TestCase):
         self.assertEqual(len(second['items']), 2)
         self.assertIsNone(second['next_cursor'])
         self.assertTrue(set(item['id'] for item in first['items']).isdisjoint(item['id'] for item in second['items']))
+
+    def test_conversation_and_messages_survive_repeated_reads(self):
+        client = self._client_for(self.owner)
+        conversation_url = reverse('project_api:conversation_collection', args=[self.project.pk])
+        created = client.post(
+            conversation_url,
+            data='{"title":"Planning discussion"}',
+            content_type='application/json',
+        )
+        conversation = created.json()
+        messages_url = reverse(
+            'project_api:conversation_messages',
+            args=[self.project.pk, conversation['id']],
+        )
+        sent = client.post(
+            messages_url,
+            data='{"content":"  Define the first release.  "}',
+            content_type='application/json',
+        )
+
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(sent.status_code, 201)
+        self.assertEqual(sent.json()['content'], 'Define the first release.')
+        first_read = client.get(messages_url).json()
+        refreshed_read = self._client_for(self.owner).get(messages_url).json()
+        self.assertEqual(first_read, refreshed_read)
+        self.assertEqual([message['content'] for message in refreshed_read['items']], ['Define the first release.'])
+        self.assertEqual(refreshed_read['items'][0]['role'], Message.ROLE_USER)
+
+    def test_conversation_message_apis_enforce_project_conversation_owner_chain(self):
+        conversation = Conversation.objects.create(
+            project=self.project,
+            owner=self.owner,
+            title='Private discussion',
+        )
+        client = self._client_for(self.other)
+        collection = client.get(reverse('project_api:conversation_collection', args=[self.project.pk]))
+        messages = client.get(reverse(
+            'project_api:conversation_messages',
+            args=[self.project.pk, conversation.pk],
+        ))
+        mismatched_project = self._client_for(self.owner).get(reverse(
+            'project_api:conversation_messages',
+            args=[Project.objects.create(owner=self.owner, project_name='Different project').pk, conversation.pk],
+        ))
+
+        self.assertEqual(collection.status_code, 404)
+        self.assertEqual(messages.status_code, 404)
+        self.assertEqual(messages.json()['error']['code'], 'CONVERSATION_NOT_FOUND')
+        self.assertEqual(mismatched_project.status_code, 404)
+
+    def test_message_validation_and_ascending_cursor_pagination(self):
+        client = self._client_for(self.owner)
+        conversation = Conversation.objects.create(project=self.project, owner=self.owner, title='Cursor test')
+        messages_url = reverse('project_api:conversation_messages', args=[self.project.pk, conversation.pk])
+        empty = client.post(messages_url, data='{"content":"   "}', content_type='application/json')
+        for index in range(3):
+            response = client.post(messages_url, data=f'{{"content":"message {index}"}}', content_type='application/json')
+            self.assertEqual(response.status_code, 201)
+
+        first = client.get(messages_url, {'limit': 2}).json()
+        second = client.get(messages_url, {'limit': 2, 'cursor': first['next_cursor']}).json()
+
+        self.assertEqual(empty.status_code, 422)
+        self.assertEqual([item['content'] for item in first['items']], ['message 0', 'message 1'])
+        self.assertEqual([item['content'] for item in second['items']], ['message 2'])
+        self.assertIsNone(second['next_cursor'])
+
+    def test_chat_reply_persists_server_assistant_response(self):
+        client = self._client_for(self.owner)
+        conversation = Conversation.objects.create(project=self.project, owner=self.owner, title='Existing chat')
+        message_url = reverse('project_api:conversation_messages', args=[self.project.pk, conversation.pk])
+        client.post(message_url, data='{"content":"쇼핑몰 서비스를 기획해줘"}', content_type='application/json')
+
+        response = client.post(
+            reverse('projects:chat_reply', args=[self.project.pk]),
+            data=json.dumps({'message': '쇼핑몰 서비스를 기획해줘', 'conversation_id': conversation.pk}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['assistant_message']['role'], Message.ROLE_ASSISTANT)
+        self.assertEqual(conversation.messages.count(), 2)

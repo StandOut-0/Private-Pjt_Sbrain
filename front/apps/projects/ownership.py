@@ -40,3 +40,23 @@ def project_card_payload(project):
         'activities': [],
         'tree': [],
     }
+
+
+def conversation_payload(conversation):
+    return {
+        'id': conversation.pk,
+        'project_id': conversation.project_id,
+        'title': conversation.title,
+        'created_at': conversation.created_at.isoformat().replace('+00:00', 'Z'),
+        'updated_at': conversation.updated_at.isoformat().replace('+00:00', 'Z'),
+    }
+
+
+def message_payload(message):
+    return {
+        'id': message.pk,
+        'conversation_id': message.conversation_id,
+        'role': message.role,
+        'content': message.content,
+        'created_at': message.created_at.isoformat().replace('+00:00', 'Z'),
+    }

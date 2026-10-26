@@ -41,6 +41,30 @@ class ProjectOwnershipTests(TestCase):
         session.save()
         return client
 
+    def test_project_delete_requires_owner_post_and_removes_database_record(self):
+        client = self._client_for(self.owner)
+        delete_url = reverse('projects:delete', args=[self.project.pk])
+
+        self.assertEqual(client.get(delete_url).status_code, 405)
+        self.assertEqual(self._client_for(self.other).post(delete_url).status_code, 404)
+        response = client.post(delete_url)
+
+        self.assertRedirects(response, reverse('projects:list') + '?deleted=1')
+        self.assertFalse(Project.objects.filter(pk=self.project.pk).exists())
+
+    def test_project_delete_is_blocked_while_a_run_is_active(self):
+        conversation = Conversation.objects.create(project=self.project, owner=self.owner)
+        message = Message.objects.create(conversation=conversation, role=Message.ROLE_USER, content='Create a plan')
+        ProjectRun.objects.create(
+            project=self.project, requested_by=self.owner, conversation=conversation,
+            source_message=message, idempotency_key='active-delete-guard', status=ProjectRun.STATUS_RUNNING,
+        )
+
+        response = self._client_for(self.owner).post(reverse('projects:delete', args=[self.project.pk]))
+
+        self.assertRedirects(response, reverse('projects:detail', args=[self.project.pk]) + '?delete_error=running')
+        self.assertTrue(Project.objects.filter(pk=self.project.pk).exists())
+
     def test_owner_can_read_project_page_and_api(self):
         client = self._client_for(self.owner)
 

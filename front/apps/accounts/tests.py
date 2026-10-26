@@ -163,5 +163,5 @@ class SmokeTest(TestCase):
             'message': '쇼핑몰 서비스를 기획해줘',
             'conversation_id': conversation.pk,
         })
-        self.assertIn('Planning Agent', response.json()['reply'])
+        self.assertIn('대화형 AI 답변은 아직 연결되지 않았습니다', response.json()['reply'])
         self.assertEqual(conversation.messages.filter(role=Message.ROLE_ASSISTANT).count(), 1)

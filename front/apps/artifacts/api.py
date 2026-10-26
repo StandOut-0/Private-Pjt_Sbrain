@@ -4,6 +4,7 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.http import require_GET
 
 from apps.accounts.session import get_user_account
+from apps.accounts.models import UserAccount
 from apps.artifacts.models import Artifact
 from apps.projects.models import Project
 
@@ -26,7 +27,10 @@ def _authorized(request, project_id):
     account = get_user_account(request)
     if account is None:
         return None, _error(401, 'AUTH_REQUIRED', '로그인이 필요합니다.')
-    project = Project.objects.filter(pk=project_id, owner=account).first()
+    projects = Project.objects.filter(pk=project_id)
+    if account.role != UserAccount.ROLE_ADMIN:
+        projects = projects.filter(owner=account)
+    project = projects.first()
     if project is None:
         return None, _error(404, 'PROJECT_NOT_FOUND', '프로젝트를 찾을 수 없습니다.')
     return project, None

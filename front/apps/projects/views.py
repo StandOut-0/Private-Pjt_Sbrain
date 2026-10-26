@@ -1,11 +1,15 @@
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponseNotAllowed, JsonResponse
 from django.shortcuts import redirect, render
+from django.urls import reverse
+from django.utils import timezone
 import json
 import re
 from pathlib import Path
 
 from apps import mockdata
 from apps.accounts.session import get_user_account, login_required
+from apps.artifacts.models import Artifact
+from apps.execution.models import ProjectRun
 from apps.projects.models import Conversation, Project
 from apps.reflection.models import ReflectionReport
 from apps.projects.ownership import message_payload, project_card_payload
@@ -27,6 +31,22 @@ def _chat_guides():
         key: (guide_root / filename).read_text(encoding='utf-8')
         for key, filename in CHAT_GUIDE_FILES.items()
     }
+
+
+def _artifact_tree(project):
+    files = []
+    for artifact in Artifact.objects.select_related('agent_execution__agent').filter(project=project):
+        files.append({
+            'id': artifact.pk,
+            'name': f'{artifact.title}.json',
+            'kind': 'text',
+            'agent': artifact.agent_execution.agent.name,
+            'size': f'{len(artifact.content.encode("utf-8")):,} bytes',
+            'updated_at': timezone.localtime(artifact.created_at).strftime('%Y-%m-%d %H:%M'),
+            'detail_url': f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/',
+            'download_url': f'/api/v1/projects/{project.pk}/artifacts/{artifact.pk}/download/',
+        })
+    return [{'name': project.project_name, 'files': files}] if files else []
 
 
 @login_required
@@ -51,6 +71,7 @@ def project_list(request):
         'total_projects': all_projects.count(),
         'project_statuses': sorted(valid_statuses),
         'filters': {'q': keyword, 'status': status},
+        'deleted': request.GET.get('deleted') == '1',
         'active_menu': 'projects',
     }
     return render_react(request, 'project-list', context, active_menu='projects')
@@ -73,10 +94,35 @@ def project_create(request):
 
 
 @login_required
+def project_delete(request, project_id):
+    if request.method != 'POST':
+        return HttpResponseNotAllowed(['POST'])
+    account = get_user_account(request)
+    project = Project.objects.filter(pk=project_id, owner=account).first()
+    if project is None:
+        raise Http404('project not found')
+    active_runs = ProjectRun.objects.filter(
+        project=project,
+        status__in=[ProjectRun.STATUS_QUEUED, ProjectRun.STATUS_RUNNING, ProjectRun.STATUS_CANCEL_REQUESTED],
+    )
+    if active_runs.exists():
+        return redirect(f"{reverse('projects:detail', args=[project.pk])}?delete_error=running")
+    project.delete()
+    return redirect(f"{reverse('projects:list')}?deleted=1")
+
+
+@login_required
 def project_detail(request, project_id=None):
     if project_id is None:
-        # 관리자: 전체 프로젝트
-        projects = mockdata.get_projects()
+        # 관리자 can inspect all projects; regular users see only their own.
+        account = get_user_account(request)
+        project_query = Project.objects.all() if account.role == 'admin' else Project.objects.filter(owner=account)
+        projects = []
+        for stored_project in project_query:
+            project_data = project_card_payload(stored_project)
+            project_data['tree'] = _artifact_tree(stored_project)
+            project_data['zip_url'] = f'/manage/results/download.zip?project={stored_project.pk}' if account.role == 'admin' else None
+            projects.append(project_data)
 
         # 전체 서비스 진행률
         if projects:
@@ -148,6 +194,7 @@ def project_detail(request, project_id=None):
             'project': project,
             'chat_guide': mockdata.CHAT_GUIDE,
             'chat_guides': _chat_guides(),
+            'delete_error': request.GET.get('delete_error') == 'running',
             'active_menu': 'projects',
             'active_project_id': project['id'],
         }
@@ -157,7 +204,7 @@ def project_detail(request, project_id=None):
 
 @login_required
 def chat_reply(request, project_id):
-    """Chatbot 임시 응답. Supervisor Agent 연동 전까지 되묻는 흐름만 재현한다."""
+    """Return an honest status message; conversational model responses are not wired yet."""
     if request.content_type == 'application/json':
         try:
             body = json.loads(request.body or '{}')
@@ -201,12 +248,16 @@ def chat_reply(request, project_id):
         reply = '무엇을 도와드릴까요?'
         title = ''
         action = ''
-    elif '기획' in message or '만들' in message:
-        reply = '확인했습니다. Planning Agent로 요구사항을 정리할까요? 주요 고객층도 알려주세요.'
-        title = ''
-        action = ''
     else:
-        reply = f'"{message}" 요청을 이렇게 진행할까요? Supervisor Agent가 작업을 분해합니다.'
+        run = ProjectRun.objects.filter(
+            project=project,
+            conversation=conversation,
+            source_message__content=message,
+        ).order_by('-created_at').first()
+        if run:
+            reply = '요청을 대화에 저장하고 Planning Agent 실행을 요청했습니다. 처리 결과는 프로젝트 결과물과 실행 이력에서 확인할 수 있습니다.'
+        else:
+            reply = '메시지를 저장했습니다. 대화형 AI 답변은 아직 연결되지 않았습니다.'
         title = ''
         action = ''
 

@@ -1,15 +1,24 @@
 import base64
+from io import BytesIO
+from pathlib import Path
+from zipfile import ZIP_DEFLATED, ZipFile
 
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
+from django.utils import timezone
+from django.utils.text import get_valid_filename
+
 from apps import mockdata
+from apps.accounts.models import AdminFacePhoto
 from apps.accounts.session import admin_required, get_user_account
-from apps.react_pages import render_react
+from apps.artifacts.models import Artifact
+from apps.execution.models import AgentExecution
+from apps.management.models import KnowledgeDocument
 from apps.execution.models import Task
 from apps.projects.models import Project
-from apps.accounts.models import AdminFacePhoto
+from apps.reflection.models import QualityCriterion
+from apps.react_pages import render_react
 from datetime import timedelta
-from django.utils import timezone
 
 MAX_FACE_PHOTO_BYTES = 5 * 1024 * 1024
 FACE_IMAGE_SIGNATURES = (
@@ -98,28 +107,78 @@ def task_list(request):
 
 @admin_required
 def agent_list(request):
-    agents = mockdata.get_agents()
+    catalog = mockdata.get_agents()
+    workers = [_agent_runtime_payload(agent) for agent in mockdata.get_worker_agents()]
+    supervisor = _agent_runtime_payload(mockdata.get_agent('supervisor'))
+    agents = [supervisor, *workers]
     context = {
-        'supervisor': mockdata.get_agent('supervisor'),
-        'workers': mockdata.get_worker_agents(),
-        'running_count': len([
-            agent for agent in agents
-            if agent['group'] != 'engineering' and agent['status'] == 'running'
-        ]),
-        'total_count': len([agent for agent in agents if agent['group'] != 'engineering']),
+        'supervisor': supervisor,
+        'workers': workers,
+        'running_count': sum(agent['status'] == 'running' for agent in agents),
+        'total_count': len(catalog),
         'active_menu': 'agents',
     }
     return render_react(request, 'agents', context, active_menu='agents')
 
 
+def _agent_runtime_payload(catalog_agent):
+    """Keep role descriptions as catalog data, but derive all operational claims from executions."""
+    agent = dict(catalog_agent)
+    execution = AgentExecution.objects.filter(agent__key=agent['key']).select_related(
+        'task__project'
+    ).first()
+    if execution is None:
+        agent.update({
+            'status': 'waiting', 'status_label': '미실행',
+            'project': '실행 이력 없음', 'task': '아직 실행된 작업이 없습니다.',
+            'steps': [],
+            'metrics': [{'label': '실행 횟수', 'value': '0'}, {'label': '성공률', 'value': '—'}, {'label': '평균 실행시간', 'value': '—'}],
+        })
+        return agent
+
+    state = {
+        AgentExecution.STATUS_QUEUED: ('waiting', '대기'),
+        AgentExecution.STATUS_RUNNING: ('running', '실행 중'),
+        AgentExecution.STATUS_CANCEL_REQUESTED: ('running', '중단 요청'),
+        AgentExecution.STATUS_SUCCEEDED: ('done', '완료'),
+        AgentExecution.STATUS_FAILED: ('failed', '실패'),
+        AgentExecution.STATUS_CANCELLED: ('failed', '취소'),
+    }.get(execution.status, ('waiting', execution.get_status_display()))
+    all_executions = AgentExecution.objects.filter(agent__key=agent['key'])
+    succeeded = all_executions.filter(status=AgentExecution.STATUS_SUCCEEDED).count()
+    total = all_executions.count()
+    durations = [
+        (item.finished_at - item.started_at).total_seconds()
+        for item in all_executions.filter(started_at__isnull=False, finished_at__isnull=False)
+    ]
+    agent.update({
+        'status': state[0], 'status_label': state[1],
+        'project': execution.task.project.project_name,
+        'task': execution.task.title,
+        'steps': [{'name': 'Agent 실행', 'state': 'done' if execution.status in (AgentExecution.STATUS_SUCCEEDED, AgentExecution.STATUS_FAILED, AgentExecution.STATUS_CANCELLED) else ('running' if execution.status == AgentExecution.STATUS_RUNNING else 'todo')}],
+        'metrics': [
+            {'label': '실행 횟수', 'value': str(total)},
+            {'label': '성공률', 'value': f'{succeeded / total * 100:.1f}%' if total else '—'},
+            {'label': '평균 실행시간', 'value': f'{sum(durations) / len(durations):.1f} sec' if durations else '미계측'},
+        ],
+    })
+    return agent
+
+
 @admin_required
 def agent_detail(request, key):
-    agent = mockdata.get_agent(key)
-    if not agent:
+    catalog_agent = mockdata.get_agent(key)
+    if not catalog_agent:
         raise Http404('agent not found')
+    agent = _agent_runtime_payload(catalog_agent)
     context = {
         'agent': agent,
-        'children': [mockdata.get_agent(child) for child in agent['children']],
+        'children': [_agent_runtime_payload(mockdata.get_agent(child)) for child in agent['children']],
+        'criteria': [
+            {'key': item.key, 'label': item.label, 'description': item.description,
+             'weight': item.weight, 'is_active': item.is_active, 'sort_order': item.sort_order}
+            for item in QualityCriterion.objects.all()
+        ] if key == 'reflection' else [],
         'active_menu': 'agents',
         'active_agent': key,
     }
@@ -130,43 +189,122 @@ def agent_detail(request, key):
 def results(request):
     project_id = request.GET.get('project', '')
     keyword = request.GET.get('q', '').strip()
-    projects = mockdata.get_projects()
-    selected = mockdata.get_project(project_id) if project_id else None
-    if selected:
-        tree = selected['tree']
-    else:
-        tree = [
-            {'name': f"{project['title']} / {folder['name']}", 'files': folder['files']}
-            for project in projects
-            for folder in project['tree']
-        ]
+    projects = list(Project.objects.order_by('project_name'))
+    selected_project = next((project for project in projects if str(project.pk) == project_id), None)
+    selected = {'id': selected_project.pk, 'title': selected_project.project_name} if selected_project else None
+    artifacts = Artifact.objects.select_related('project', 'agent_execution__agent').order_by('-created_at', '-id')
+    if selected_project:
+        artifacts = artifacts.filter(project=selected_project)
     if keyword:
-        tree = [dict(folder, files=[file for file in folder['files']
-                                  if keyword.casefold() in file['name'].casefold()])
-                for folder in tree]
-        tree = [folder for folder in tree if folder['files']]
+        artifacts = artifacts.filter(title__icontains=keyword)
+    grouped_artifacts = {}
+    for artifact in artifacts:
+        grouped_artifacts.setdefault(artifact.project.project_name, []).append({
+            'id': artifact.pk,
+            'name': f'{artifact.title}.json',
+            'kind': 'text',
+            'agent': artifact.agent_execution.agent.name,
+            'size': f'{len(artifact.content.encode("utf-8")):,} bytes',
+            'updated_at': timezone.localtime(artifact.created_at).strftime('%Y-%m-%d %H:%M'),
+            'detail_url': f'/api/v1/projects/{artifact.project_id}/artifacts/{artifact.pk}/',
+            'download_url': f'/api/v1/projects/{artifact.project_id}/artifacts/{artifact.pk}/download/',
+        })
+    tree = [{'name': name, 'files': files} for name, files in grouped_artifacts.items()]
     rag_query = request.GET.get('rag_q', '').strip()
     rag_project = request.GET.get('rag_project', '')
     rag_status = request.GET.get('rag_status', '')
-    vector_documents = [document for document in mockdata.VECTOR_DOCUMENTS
-                        if (not rag_query or rag_query.casefold() in document['document'].casefold())
-                        and (not rag_project or document['project'] == rag_project)
-                        and (not rag_status or document['status'] == rag_status)]
+    knowledge_documents = KnowledgeDocument.objects.select_related('project')
+    if rag_query:
+        knowledge_documents = knowledge_documents.filter(title__icontains=rag_query)
+    if rag_project:
+        knowledge_documents = knowledge_documents.filter(project__project_name=rag_project)
+    if rag_status and rag_status != '저장됨 · 미색인':
+        knowledge_documents = knowledge_documents.none()
+    vector_documents = [{
+        'project': document.project.project_name if document.project else '전체 공통',
+        'document': document.title,
+        'chunks': '—',
+        'status': '저장됨 · 미색인',
+    } for document in knowledge_documents]
+    upload_error = ''
+    if request.method == 'POST' and request.POST.get('action') == 'knowledge-upload':
+        upload = request.FILES.get('file')
+        scope = request.POST.get('scope', KnowledgeDocument.SCOPE_GLOBAL)
+        project_id_value = request.POST.get('project', '').strip()
+        project = Project.objects.filter(pk=project_id_value).first() if project_id_value.isdigit() else None
+        if not upload:
+            upload_error = '업로드할 TXT 또는 Markdown 파일을 선택해주세요.'
+        elif upload.size > 1_048_576:
+            upload_error = '문서 파일은 1MB 이하로 업로드해주세요.'
+        elif Path(upload.name).suffix.casefold() not in {'.txt', '.md'}:
+            upload_error = '현재는 TXT와 Markdown 파일만 저장할 수 있습니다.'
+        elif scope not in {KnowledgeDocument.SCOPE_GLOBAL, KnowledgeDocument.SCOPE_PROJECT}:
+            upload_error = '문서 적용 범위를 선택해주세요.'
+        elif scope == KnowledgeDocument.SCOPE_PROJECT and project is None:
+            upload_error = '프로젝트별 문서에는 프로젝트를 선택해주세요.'
+        else:
+            try:
+                content = upload.read(1_048_577).decode('utf-8-sig')
+            except UnicodeDecodeError:
+                upload_error = 'UTF-8 인코딩 문서만 업로드할 수 있습니다.'
+            else:
+                if len(content.encode('utf-8')) > 1_048_576:
+                    upload_error = '문서 파일은 1MB 이하로 업로드해주세요.'
+                elif not content.strip():
+                    upload_error = '내용이 비어 있는 문서는 등록할 수 없습니다.'
+                else:
+                    KnowledgeDocument.objects.create(
+                        title=Path(upload.name).stem[:200],
+                        original_name=get_valid_filename(upload.name)[:255],
+                        scope=scope,
+                        project=project if scope == KnowledgeDocument.SCOPE_PROJECT else None,
+                        content=content,
+                        uploaded_by=get_user_account(request),
+                    )
+                    return redirect('/manage/results/?tab=knowledge&uploaded=1')
+    knowledge_documents = KnowledgeDocument.objects.all()
+    document_count = knowledge_documents.count()
     context = {
-        'projects': projects,
+        'projects': [{'id': project.pk, 'title': project.project_name} for project in projects],
         'selected': selected,
         'results_tab': 'knowledge' if request.GET.get('tab') == 'knowledge' else 'files',
         'rag_filters': {'q': rag_query, 'project': rag_project, 'status': rag_status},
-        'rag_statuses': sorted({document['status'] for document in mockdata.VECTOR_DOCUMENTS}),
+        'rag_statuses': ['저장됨 · 미색인'],
         'keyword': keyword,
         'tree': tree,
-        'knowledge_stats': mockdata.KNOWLEDGE_STATS,
+        'knowledge_stats': [
+            {'label': '등록 문서', 'value': document_count},
+            {'label': '전체 공통', 'value': knowledge_documents.filter(scope=KnowledgeDocument.SCOPE_GLOBAL).count()},
+            {'label': '프로젝트별', 'value': knowledge_documents.filter(scope=KnowledgeDocument.SCOPE_PROJECT).count()},
+            {'label': '벡터 색인', 'value': '미연결'},
+        ],
         'vector_documents': vector_documents,
-        'search_metrics': mockdata.SEARCH_METRICS,
+        'search_metrics': [],
+        'upload_error': upload_error,
+        'uploaded': request.GET.get('uploaded') == '1',
         'active_menu': 'results',
-        'statuses': sorted({document['status'] for document in mockdata.VECTOR_DOCUMENTS}),
+        'statuses': ['저장됨 · 미색인'],
+        'zip_url': f'/manage/results/download.zip{"?project=" + str(selected_project.pk) if selected_project else ""}',
     }
-    return render_react(request, 'results', context, active_menu='results')
+    return render_react(request, 'results', context, status=400 if upload_error else 200, active_menu='results')
+
+
+@admin_required
+def download_results_zip(request):
+    project_id = request.GET.get('project', '')
+    artifacts = Artifact.objects.select_related('project').order_by('project__project_name', 'created_at', 'id')
+    if project_id:
+        artifacts = artifacts.filter(project_id=project_id)
+    buffer = BytesIO()
+    with ZipFile(buffer, 'w', ZIP_DEFLATED) as archive:
+        for artifact in artifacts:
+            folder = get_valid_filename(artifact.project.project_name) or f'project-{artifact.project_id}'
+            title = get_valid_filename(artifact.title) or f'artifact-{artifact.pk}'
+            archive.writestr(f'{folder}/{title}-v{artifact.version}.json', artifact.content)
+    response = HttpResponse(buffer.getvalue(), content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename="sbrain-results.zip"'
+    response['X-Content-Type-Options'] = 'nosniff'
+    return response
 
 
 @admin_required

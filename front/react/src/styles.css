@@ -112,6 +112,7 @@ body { margin: 0; min-width: 320px; min-height: 100vh; }
 .sb-admin-face-form label { font-size:12px; font-weight:650; }
 .sb-admin-face-form small { color:var(--sb-muted); font-size:10px; }
 .sb-admin-face-form button { justify-self:start; }
+.sb-artifact-preview { width:100%; max-height:420px; margin:0; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; color:var(--sb-ink); font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace; text-align:left; }
 /* Keep the previous Django page geometry while React supplies the content. */
 .sb-content:has(.sb-overview) { padding:24px 28px 48px; }
 .sb-content:has(.sb-agents-page),.sb-content:has(.sb-results-page),.sb-content:has(.sb-ideas-management),.sb-content:has(.sb-feature-detail),.sb-content:has(.sb-future),.sb-content:has(.sb-faq),.sb-content:has(.sb-guide) { padding:24px 28px 48px; }
